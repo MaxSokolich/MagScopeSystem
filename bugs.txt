@@ -1,0 +1,36 @@
+Bugs:
+1) serial communication acting funny
+6) add color back to gui buttons
+7) allow live adjustment of fps [SEMI COMPLETED]
+9) fix scale bar and objective selecting
+10) scale text and hud based on resize scale
+11) remove redundant bot_loc initial_pos variabes
+14) maybe make it so you can input an image of the microrobot for baseline bluring. Basically a zeroing aspect. 
+15) test 3D tracking, add Z position
+16) have no idea what the blur is actually doing
+17) try moments for centroid
+
+
+Components:
+- add DDS module
+- add hall effect sensors
+- add motorized stage
+
+
+
+BU:
+
+path 1
+- MPC
+- RRT path planning
+- bring the learning part into the picture 
+
+path 2
+- pattern formation in cells
+- single robot cell manipulation
+
+
+path 3
+- multi agent
+- generate different robots and characterize them
+- determine reachability and adjust to determine optimal robot combination
