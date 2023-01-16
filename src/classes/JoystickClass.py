@@ -143,6 +143,15 @@ try:
     BUTTON = [X,Y]
 
     def READ_JS():
+        """
+        reads joystick data
+
+        Args:
+            None
+
+        Returns:
+            call LSTICK, RSTICK, and BUTTON to get info
+        """
         evbuf = jsdev.read(8)
         if evbuf is not None:
             tim, value, type, number = struct.unpack('IhBB', evbuf)
