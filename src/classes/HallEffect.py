@@ -1,4 +1,3 @@
-import time
 import board
 import busio
 import numpy as np
@@ -7,15 +6,6 @@ import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 from scipy.interpolate import interp1d
 
-
-
-
-'''
-lets say for example 
-negative maximum = 13076
-zeroed = 20358
-positive maximum = 27851
-'''
 class HallEffect:
     """
     Class for managing the Hall Effect sensors via i2c
@@ -32,43 +22,49 @@ class HallEffect:
         self.chanNegY = AnalogIn(self.ads, ADS.P2)  # one of the 4 coil config Em
         self.chanNegX = AnalogIn(self.ads, ADS.P3)
 
-        self.min_val = float("inf")
-        self.max_val = -float("inf")
-
-    
     def createBounds(self):
-        #call this in readField maybe
-        pass
-        #return nmax,zero,pmax
-
-    
-    
-    def readFIELD(self, channel):
         """
-            reads hall effect sensor field data given an analog obejct
-            need to figure out how to account for reverse polarity
-            Args:
-                channel:   AnalogIN channel object 1-4
-                arr: list to append values to calculate min max from
-                min, max: min and max raw values of sensor
-            Returns:
-                None
-            """
+        creates initial bounds to be updated when field is being read
+        Args:
+            none
+        Returns:
+            list of min max bounds
+        """
+        #call this in readField maybe
+        neg_max = float("inf")
+        pos_max = -float("inf")
+        return [neg_max, pos_max]
+   
+    def readFIELD(self, channel,bound):
+        """
+        reads hall effect sensor field data given an analog obejct
+        Args:
+            channel:   AnalogIN channel object 1-4
+            bound: class object that stores the min and max bounds generated from sensor
+        Returns:
+            mapped_field: scaled field value -100 to 100
+        """
         VAL = channel.value
-        if VAL < self.min_val:
-            self.min_val = VAL
-        if VAL > self.max_val:
-            self.max_val = VAL
-
-        m = interp1d([self.min_val,self.max_val],[100,0])
-        print([VAL,self.min_val,self.max_val, int(m(VAL))])
+        if VAL < bound[0]:
+            bound[0] = VAL
+        if VAL > bound[1]:
+            bound[1] = VAL
+        m = interp1d([bound[0],bound[1]],[-100,100])
+        mapped_field = int(m(VAL))
+        return mapped_field
         
 
 
 if __name__ == "__main__":
-
     Sense = HallEffect()
+    posY = Sense.createBounds() #create bounds for positive Y EM sensor
+    posX = Sense.createBounds() #create bounds for positive X EM sensor
+    negY = Sense.createBounds() #create bounds for negative Y EM sensor
+    negX = Sense.createBounds() #create bounds for negative X EM sensor
+    
     while True:
-        Sense.readFIELD(Sense.chanPosX)
+        XFIELD = Sense.readFIELD(Sense.chanPosX, posX)
+        print(XFIELD)
+        print(posX)
     
 
