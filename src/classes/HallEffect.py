@@ -37,7 +37,7 @@ class HallEffect:
 
     
     def createBounds(self):
-        
+        #call this in readField maybe
         pass
         #return nmax,zero,pmax
 
