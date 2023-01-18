@@ -38,14 +38,16 @@ resize_scale =50
 while True:
     fps.update()
     suc, frame = cam.read()
-    print(frame.shape)
+    
+    
     resize_ratio = (
                 width * resize_scale // 100,
                 height * resize_scale // 100,
             )
     frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
-    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-    
+    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #frame = cv2.demosaicing(frame,cv2.COLOR_BayerBG2BGR)
+    print(frame.shape)
     cv2.putText(
             frame,
             str(int(fps.get_fps())),

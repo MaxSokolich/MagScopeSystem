@@ -33,7 +33,7 @@ CONTROL_PARAMS = {
 # maxframerate = 130
 # exptime = 10us - 30s
 # iamge buffer = 240 MB
-CAMERA_PARAMS = {"resize_scale": 50, "framerate": 60, "exposure": 5000, "Obj": 10}
+CAMERA_PARAMS = {"resize_scale": 50, "framerate": 20, "exposure": 5000, "Obj": 10}
 
 STATUS_PARAMS = {
     "rolling_status": False,
@@ -583,7 +583,7 @@ class GUI:
 
         output_name = str(self.get_widget(self.main_window, "output_name").get())
         
-        
+        #track all robots if the widget is checked(true)
         if self.get_widget(self.main_window, "trackall_checkbox").var.get():
             tracker.create_robotlist(video_name)
 

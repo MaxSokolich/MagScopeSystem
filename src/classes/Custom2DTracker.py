@@ -142,7 +142,7 @@ class Tracker:
             self.num_bots = 0
             self.node = 0
             if params["arduino"].conn is not None:
-                params["arduino"].send(0, 0, 4)
+                params["arduino"].send(4, 0, 0)
 
     def track_robot_position(
         self,
@@ -720,8 +720,7 @@ class Tracker:
             success, frame = cam.read()
        
             self.curr_frame = frame
-            if filepath is None:
-                frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+
             if not success or frame is None:
                 print("Game Over")
                 break
