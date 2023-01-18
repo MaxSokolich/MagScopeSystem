@@ -54,7 +54,7 @@ class HallEffect:
         return mapped_field
         
 
-
+'''
 if __name__ == "__main__":
     Sense = HallEffect()
     posY = Sense.createBounds() #create bounds for positive Y EM sensor
@@ -67,4 +67,4 @@ if __name__ == "__main__":
         print(XFIELD)
         print(posX)
     
-
+'''
