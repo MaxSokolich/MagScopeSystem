@@ -24,30 +24,46 @@ class count_fps:
         return self.fps
 
 
+def mouse_points(event,x,y,flags,params):
+    global b
+    if event == cv2.EVENT_LBUTTONDOWN:
+        
+        b = [x,y]
 
 
+            
+b = [0,0]
 fps = count_fps()       
 cam = EasyPySpin.VideoCapture(0)
 width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
-cam.set(cv2.CAP_PROP_FPS,30)
+cam.set(cv2.CAP_PROP_FPS,24)
 print(cam.get(cv2.CAP_PROP_FPS))
-resize_scale =50
 
+
+cv2.namedWindow("img")  # name of CV2 window
+cv2.setMouseCallback("img", mouse_points)  # set callback func
 
 while True:
     fps.update()
     suc, frame = cam.read()
-    
-    
+    #click object on half resd image
+    #find coords of obj in
+    #do contouring based on full res img
+
+
+    resize_scale =50
     resize_ratio = (
                 width * resize_scale // 100,
                 height * resize_scale // 100,
             )
+    
+    x,y = b[0], b[1]
     frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
-    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    #frame = cv2.demosaicing(frame,cv2.COLOR_BayerBG2BGR)
-    print(frame.shape)
+    cv2.circle(frame,(x,y),10, (255,255,0),-1)
+
+
+    
     cv2.putText(
             frame,
             str(int(fps.get_fps())),
@@ -77,7 +93,10 @@ while True:
             (0, 255, 0),
             1,
         )
-    cv2.imshow("im",frame)
+
+    
+    
+    cv2.imshow("img",frame)
   
 
     fps.get_fps()

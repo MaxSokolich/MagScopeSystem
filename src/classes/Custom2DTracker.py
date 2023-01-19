@@ -63,7 +63,7 @@ class Tracker:
         self.prev_frame_time = 0  # prev frame time, used for self.fps calcs
         self.new_frame_time = 0  # time of newest frame, used for self.fps calcs
         # self.fps_list = []  # Store the self.fps at the current frame
-        self.pix_2metric = (950 / 1464)*10/camera_params["Obj"]  # pix/micron ratio
+        self.pix_2metric = 3.45/camera_params["Obj"]  # pix/micron ratio #NEEDS FIXING
         self.width = 0  # width of cv2 window
         self.height = 0  # height of cv2 window
 
@@ -95,16 +95,17 @@ class Tracker:
             # click on bot and create an instance of a mcirorobt
             # CoilOn = False
             bot_loc = [x, y]
+        
 
             x_1 = int(x - self.control_params["bounding_length"] / 2)
             y_1 = int(y - self.control_params["bounding_length"] / 2)
             w = self.control_params["bounding_length"]
             h = self.control_params["bounding_length"]
 
-            initial_pos = [(x_1 + (x_1 + w)) / 2, (y_1 + (y_1 + h)) / 2]
+
 
             robot = Robot()  # create robot instance
-            robot.add_position(initial_pos)  # add position of the robot
+            robot.add_position(bot_loc)  # add position of the robot
             robot.add_crop([x_1, y_1, w, h])
             robot.add_blur(
                 self.cp.calculate_blur(self.curr_frame[y_1 : y_1 + h, x_1 : x_1 + w])
@@ -704,9 +705,6 @@ class Tracker:
         cv2.namedWindow("im")  # name of CV2 window
         cv2.setMouseCallback("im", self.mouse_points, params)  # set callback func
 
-        # elapsed_time = 0    # track the time passed when tracking
-        # 950 um = 1464 self.height in pixels
-
         # %%
         rec_start_time = None
         result = None
@@ -720,7 +718,6 @@ class Tracker:
             success, frame = cam.read()
        
             self.curr_frame = frame
-
             if not success or frame is None:
                 print("Game Over")
                 break
@@ -790,6 +787,7 @@ class Tracker:
                 result.release()
                 result = None
 
+            
             # display frame to CV2 window
             cv2.imshow("im", frame)
 
