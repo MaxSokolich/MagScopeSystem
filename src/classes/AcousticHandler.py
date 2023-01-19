@@ -2,29 +2,30 @@
 
 # import GPIO module
 import RPi.GPIO as GPIO
+from HallEffect import HallEffect
 import time
 
 
 class AcousticHandler:
 	def __init__(self):
 		# setup GPIO
-		GPIO.setmode(GPIO.BOARD)
-		GPIO.setwarnings(False)
+	
+		#GPIO.setwarnings(False)
 
 		# Define GPIO pins
-		self.W_CLK = 21
-		self.FQ_UD = 22
-		self.DATA = 23
-		self.RESET = 24
+		self.W_CLK = 11
+		self.FQ_UD = 13
+		self.DATA = 18
+		self.RESET = 14
 
 		# setup IO bits
-		GPIO.setup(self.W_CLK, GPIO.OUT)
+		GPIO.setup(11, GPIO.OUT)
 		GPIO.setup(self.FQ_UD, GPIO.OUT)
 		GPIO.setup(self.DATA, GPIO.OUT)
 		GPIO.setup(self.RESET, GPIO.OUT)
 
 		# initialize everything to zero
-		GPIO.output(self.W_CLK, False)
+		GPIO.output(11, False)
 		GPIO.output(self.FQ_UD, False)
 		GPIO.output(self.DATA, False)
 		GPIO.output(self.RESET, False)
@@ -65,12 +66,16 @@ class AcousticHandler:
 	def stop(self):
 		self.pulseHigh(self.RESET)
 
+	def close(self):
+		GPIO.cleanup()
+
 
 if __name__ == "__main__":
 	AcousticMod = AcousticHandler()
 	print("starting waveform...")
-	freqinput = 1000000
+	freqinput = 10000
 	AcousticMod.start(freqinput)
-	time.sleep(20)
+	time.sleep(2)
 	AcousticMod.stop()
 	print("stopped waveform")
+	AcousticMod.close()

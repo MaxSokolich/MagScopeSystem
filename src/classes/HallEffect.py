@@ -31,8 +31,8 @@ class HallEffect:
             list of min max bounds
         """
         #call this in readField maybe
-        neg_max = float("inf")
-        pos_max = -float("inf")
+        neg_max = 10000#float("inf")
+        pos_max = -10000#float("inf")
         return [neg_max, pos_max]
    
     def readFIELD(self, channel,bound):
@@ -53,8 +53,8 @@ class HallEffect:
         mapped_field = int(m(VAL))
         return mapped_field
         
-
 '''
+
 if __name__ == "__main__":
     Sense = HallEffect()
     posY = Sense.createBounds() #create bounds for positive Y EM sensor
@@ -62,9 +62,9 @@ if __name__ == "__main__":
     negY = Sense.createBounds() #create bounds for negative Y EM sensor
     negX = Sense.createBounds() #create bounds for negative X EM sensor
     
-    while True:
-        XFIELD = Sense.readFIELD(Sense.chanPosX, posX)
-        print(XFIELD)
-        print(posX)
     
+    XFIELD = Sense.readFIELD(Sense.chanPosX, posX)
+    print(XFIELD)
+    print(posX)
 '''
+

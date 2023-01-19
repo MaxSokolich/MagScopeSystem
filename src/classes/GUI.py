@@ -5,15 +5,24 @@ Module containing the GUI class
 
 @authors: Max Sokolich, Brennan Gallamoza, Luke Halko, Trea Holley,
           Alexis Mainiero, Cameron Thacker, Zoe Valladares
+pix = 1936 x 1464
+maxframerate = 130
+exptime = 10us - 30s
+iamge buffer = 240 MB
 """
 
 from typing import Union
 from tkinter import *
 from tkinter import Tk
 from tkinter import filedialog
+
+from src.classes.HallEffect import HallEffect
+from src.classes.AcousticHandler import AcousticHandler
 from src.classes.Custom2DTracker import Tracker
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.Brightness import Brightness
+
+
 
 # from pyspin import PySpin
 # import EasyPySpin
@@ -29,19 +38,30 @@ CONTROL_PARAMS = {
     "memory": 50,
 }
 
-# pix = 1936 x 1464
-# maxframerate = 130
-# exptime = 10us - 30s
-# iamge buffer = 240 MB
-CAMERA_PARAMS = {"resize_scale": 50, "framerate": 20, "exposure": 5000, "Obj": 10}
+CAMERA_PARAMS = {
+    "resize_scale": 50, 
+    "framerate": 20, 
+    "exposure": 5000, 
+    "Obj": 10}
 
 STATUS_PARAMS = {
     "rolling_status": False,
     "orient_status": False,
     "record_status": False,
     "joystick_status":False,
+    "track data":False
 }
 
+ACOUSTIC_PARAMS = {
+    "acoustic_freq": 10000
+}
+
+MAGNETIC_FIELD_PARAMS = {
+    "PositiveY": 0,
+    "PositiveX": 0,
+    "NegativeY": 0,
+    "NegativeX": 0,
+}
 
 class GUI:
     """
@@ -65,10 +85,23 @@ class GUI:
             self.main_window.winfo_reqheight(),
         )
 
+        #initilize hall effect class
+        #self.Sense = HallEffect()
+        
+        #self.posY = self.Sense.createBounds() #create bounds for positive Y EM sensor
+        #self.posX = self.Sense.createBounds() #create bounds for positive X EM sensor
+        #self.negY = self.Sense.createBounds() #create bounds for negative Y EM sensor
+        #self.negX = self.Sense.createBounds() #create bounds for negative X EM sensor
+
+        #define instance of acoustic module
+        self.AcousticModule = AcousticHandler()
+
         # Tkinter widget attributes
         self.text_box = Text(master, width=22, height=1)
         self.scroll_bar = Scrollbar(
-            master, command=self.text_box.yview, orient="vertical"
+            master, 
+            command=self.text_box.yview, 
+            orient="vertical"
         )
         self.text_box.configure(yscrollcommand=self.scroll_bar.set)
 
@@ -77,20 +110,44 @@ class GUI:
         self.external_file = None
 
         coil_roll_button = Button(
-            master, text="Rotate On", command=self.coil_roll, height=1, width=20
+            master, 
+            text="Rotate On", 
+            command=self.coil_roll, 
+            height=1, 
+            width=20,
+            bg = 'green2',
+            fg= 'black'
         )
 
         coil_orient_button = Button(
-            master, text="Orient On", command=self.coil_orient, height=1, width=20
+            master, 
+            text="Orient On", 
+            command=self.coil_orient, 
+            height=1, 
+            width=20,
+            bg = 'green4',
+            fg= 'white'
         )
 
         coil_joystick_button = Button(
-            master, text="Joystick On", command=self.coil_joystick, height=1, width=20
+            master, 
+            text="Joystick On", 
+            command=self.coil_joystick, 
+            height=1, 
+            width=20,
+            bg = 'magenta',
+            fg= 'white'
         )
 
         savepickle = IntVar(master=master, name="savepickle_var")
+        
         savepickle_box = Checkbutton(
-            master, name = "savepickle",text="Save Pickle File", variable=savepickle, onvalue=1, offvalue=0
+            master, 
+            name = "savepickle",
+            text="Save Pickle File", 
+            variable=savepickle, 
+            onvalue=1, 
+            offvalue=0
         )
 
         savepickle_box.var = savepickle
@@ -101,6 +158,8 @@ class GUI:
             command=self.edit_closed_loop_params,
             height=1,
             width=20,
+            bg = 'green',
+            fg= 'black'
         )
 
         cam_params_button = Button(
@@ -109,43 +168,83 @@ class GUI:
             command=self.edit_camera_params,
             height=1,
             width=20,
+            bg = 'yellow',
+            fg= 'black'
         )
 
-        Label(master, text="Video Name").grid(row=2, column=3)
-        vid_name = Button(
+        acoustic_params_button = Button(
             master,
-            name="vid_name",
-            text="Choose Video",
-            command=self.upload_vid,
+            text="Edit Acoustic Params",
+            command=self.edit_acoustic_params,
             height=1,
-            width=10,
+            width=20,
+            bg = 'cyan',
+            fg= 'black'
         )
 
-        Label(master, text="Output Name").grid(row=3, column=3)
+        
+       
+        
         output_name = Entry(master, name="output_name")
         output_name.insert(10, "")
 
         record_button = Button(
-            master, text="Record", command=self.record, height=1, width=10
+            master, 
+            text="Record", 
+            command=self.record, 
+            height=1, 
+            width=10,
+            bg = 'red',
+            fg= 'black'
         )
 
         stop_record_button = Button(
-            master, text="Stop Record", command=self.stop_record, height=1, width=10
+            master, 
+            text="Stop Record", 
+            command=self.stop_record, 
+            height=1, 
+            width=10,
+            bg = 'white',
+            fg= 'black'
         )
 
-        live_button = Button(master, text="Live", command=self.live, height=1, width=20)
+        live_button = Button(master, 
+            text="Live", 
+            command=self.live, 
+            height=1, 
+            width=20,
+            bg = 'yellow',
+            fg= 'black'
+            )
+        
         track_button = Button(
-            master, text="Track", command=self.track, height=1, width=20
+            master, 
+            text="Track", 
+            command=self.track, 
+            height=5, 
+            width=20,
+            bg = 'blue',
+            fg= 'white'
         )
 
         status_button = Button(
-            master, text="Stop", command=self.status, height=1, width=10
+            master, 
+            text="Stop:\nZero All Signals", 
+            command=self.status, 
+            height=5, 
+            width=20,
+            bg = 'red',
+            fg= 'white'
         )
 
-        show_b_button = Button(
-            master, text="Show BFields (mT)", command=self.show_b, height=1, width=20
-        )
-        close_button = Button(master, text="Exit", width=5, height=1, command=self.exit)
+       
+        close_button = Button(master, 
+            text="Exit", 
+            width=10, 
+            height=5, 
+            command=self.exit, 
+            bg = 'black',
+            fg= 'white')
 
         cuda_var = IntVar(master=master, name="cuda_var")
 
@@ -159,19 +258,6 @@ class GUI:
         )
 
         cuda_button.var = cuda_var
-
-        live_var = IntVar(master=master, name="live_var")
-
-        livecam_button = Checkbutton(
-            master,
-            name="live_checkbox",
-            text="Use Live Cam for Tracking?",
-            variable=live_var,
-            onvalue=1,
-            offvalue=0,
-        )
-
-        livecam_button.var = live_var
         
         trackall_var = IntVar(master=master, name="trackall_var")
 
@@ -185,26 +271,112 @@ class GUI:
         )
 
         trackall_button.var = trackall_var
+        
+        #video option frame
+        self.video_option_frame = Bfield_frame = Frame(master = master)
+        self.video_option_frame.grid(row=3,column=2,rowspan = 2)
+        
+        #live button
+        live_button = Button(
+            self.video_option_frame, 
+            text="Live", 
+            command=self.live, 
+            height=1, 
+            width=20,
+            bg = 'yellow',
+            fg= 'black'
+            )
+        live_button.grid(row=0, column=0)
+
+
+        #choose video from file browser
+        vid_name = Button(
+            self.video_option_frame,
+            name="vid_name",
+            text="Choose Video",
+            command=self.upload_vid,
+            height=1,
+            width=10,
+            bg = 'white',
+            fg= 'black'
+        )
+        vid_name.grid(row=1, column=0)
+
+        #live camera option
+        live_var = IntVar(master=master, name="live_var")
+
+        livecam_button = Checkbutton(
+            self.video_option_frame,
+            name="live_checkbox",
+            text="Use Live Cam for \nTracking?",
+            variable=live_var,
+            onvalue=1,
+            offvalue=0,
+        )
+
+        livecam_button.var = live_var
+        livecam_button.grid(row=2, column=0)
+
         # WINDOW 1: GUI MAINFRAME
+        Label(master, text="Output Name").grid(row=3, column=3)
+        
         closed_loop_params_button.grid(row=0, column=0)
         cam_params_button.grid(row=1, column=0)
-        show_b_button.grid(row=2, column=0)
-        live_button.grid(row=1, column=2)
-        coil_roll_button.grid(row=1, column=1)
-        coil_orient_button.grid(row=0, column=1)
-        coil_joystick_button.grid(row=3, column=1)
-        record_button.grid(row=2, column=1)
-        stop_record_button.grid(row=2, column=2)
-        vid_name.grid(row=2, column=4)
+        acoustic_params_button.grid(row=2, column=0)
+
+        status_button.grid(row=0, column=1,rowspan =3)
+        
+        coil_roll_button.grid(row=0, column=2)
+        coil_orient_button.grid(row=1, column=2)
+        coil_joystick_button.grid(row=0, column=3,rowspan =2)
+        
+        
+        record_button.grid(row=4, column=3)
+        stop_record_button.grid(row=4, column=4)
         savepickle_box.grid(row=0, column=4)
-        track_button.grid(row=1, column=3)
-        status_button.grid(row=1, column=4)
-        close_button.grid(row=3, column=5)
-        livecam_button.grid(row=2, column=5)
+        track_button.grid(row=3, column=1,rowspan=3)
+       
+        close_button.grid(row=4, column=5)
         self.text_box.grid(row=0, column=5, rowspan=2, sticky="nwse")
         output_name.grid(row=3, column=4)
-        cuda_button.grid(row=3, column=0)
-        trackall_button.grid(row=0,column= 3)
+        cuda_button.grid(row=1, column=4)
+        trackall_button.grid(row=2,column= 4)
+
+        
+
+
+
+
+        #Bfield display
+        Bfield_frame = Frame(master = master)
+        Bfield_frame.grid(row=3,column=0,rowspan = 3)
+
+        Yfield_label = Label(master=Bfield_frame, text="Y", width=10)
+        Yfield_label.grid(row=0, column=0)
+        self.Yfield_Entry = Entry(master=Bfield_frame, width=5)
+        self.Yfield_Entry.grid(row=0, column=1)
+        
+        Xfield_label = Label(master=Bfield_frame, text="X", width=10)
+        Xfield_label.grid(row=1, column=0)
+        self.Xfield_Entry = Entry(master=Bfield_frame, width=5)
+        self.Xfield_Entry.grid(row=1, column=1)
+
+        nYfield_label = Label(master=Bfield_frame, text="-Y", width=10)
+        nYfield_label.grid(row=2, column=0)
+        self.nYfield_Entry = Entry(master=Bfield_frame, width=5)
+        self.nYfield_Entry.grid(row=2, column=1)
+
+        nXfield_label = Label(master=Bfield_frame, text="-X", width=10)
+        nXfield_label.grid(row=3, column=0)
+        self.nXfield_Entry = Entry(master=Bfield_frame, width=5)
+        self.nXfield_Entry.grid(row=3, column=1)
+
+
+ 
+
+      
+    
+
 
     def upload_vid(self):
         """
@@ -519,6 +691,91 @@ class GUI:
         exposure_slider.pack()
         obj_slider.pack()
 
+    
+    
+    def edit_acoustic_params(self):
+        """
+        Creates a new window to control the AD9850 Signal generator module. 
+        genereates sinusoidal or square waveforms from 0-40 MHz
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        window5 = Toplevel(self.main_window)
+        window5.title("Acoustic Module")
+
+        
+        
+        def apply_freq():
+            self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
+            print(" -- waveform ON --")
+        
+        def stop_freq():
+            self.AcousticModule.stop()
+            print(" -- waveform OFF --")
+        
+        def update_loop_slider_values(event):
+            """
+            Constantly updates acoustic params when the sliders are used.
+            Params:
+                event
+            Returns:
+                None
+            """
+            ACOUSTIC_PARAMS["acoustic_freq"] = int(acoustic_slider.get())
+            apply_freq()
+            self.main_window.update()
+
+        #create apply widget
+        apply_button = Button(
+            window5, 
+            text="Apply", 
+            command=apply_freq, 
+            height=1, width=10,
+            bg = 'blue',
+            fg= 'white'
+        )
+        apply_button.pack()
+        
+        #create stop widget
+        stop_button = Button(
+            window5, 
+            text="Stop", 
+            command=stop_freq, 
+            height=1, width=10,
+            bg = 'red',
+            fg= 'white'
+        )
+        
+        stop_button.pack()
+
+        #create freq widget
+        acoustic_frequency = DoubleVar()
+        acoustic_slider = Scale(
+            master=window5,
+            label="Acoustic Frequency",
+            from_=10000,
+            to=2000000,
+            resolution=1000,
+            variable=acoustic_frequency,
+            width=50,
+            length=1000,
+            orient=HORIZONTAL,
+            command=update_loop_slider_values,
+        )
+       
+        acoustic_slider.set(ACOUSTIC_PARAMS["acoustic_freq"])        
+        acoustic_slider.pack()
+        
+        
+    
+
+
+
+
     def record(self):
         """
         Records and downloads mp4 file of tracking and live feed.
@@ -575,7 +832,7 @@ class GUI:
         )
         if (
             use_live_button
-            or self.get_widget(self.main_window, "live_checkbox").var.get()
+            or self.get_widget(self.video_option_frame, "live_checkbox").var.get()
         ):
             video_name = None
         else:
@@ -590,13 +847,15 @@ class GUI:
         tracker.single_bot_thread(
             video_name, self.arduino, self.main_window, enable_tracking, output_name
         )
-
+        
         if self.get_widget(self.main_window, "savepickle").var.get():
-    
+            STATUS_PARAMS["track data"] = True
             tracker.convert2pickle(output_name)
 
+      
 
-   
+
+
 
 
     def status(self):
@@ -618,52 +877,6 @@ class GUI:
         self.text_box.insert(END, "Zeroed\n")
         self.text_box.see("end")
 
-    def show_b(self):
-        """
-        Creates a new window for XYZ and -X-Y-Z terminal inputs.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        global Yfield_Entry, Xfield_Entry, Zfield_Entry, nYfield_Entry, nXfield_Entry, nZfield_Entry
-        window5 = Toplevel(self.main_window)
-        window5.title("Bfields")
-
-        Xfield_label = Label(master=window5, text="X", width=10)
-        Xfield_label.grid(row=0, column=0)
-        Xfield_Entry = Entry(master=window5, width=5)
-        Xfield_Entry.grid(row=0, column=1)
-
-        Yfield_label = Label(master=window5, text="Y", width=10)
-        Yfield_label.grid(row=1, column=0)
-        Yfield_Entry = Entry(master=window5, width=5)
-        Yfield_Entry.grid(row=1, column=1)
-
-        Zfield_label = Label(master=window5, text="Z", width=10)
-        Zfield_label.grid(row=2, column=0)
-        Zfield_Entry = Entry(master=window5, width=5)
-        Zfield_Entry.grid(row=2, column=1)
-
-        nXfield_label = Label(master=window5, text="-X", width=10)
-        nXfield_label.grid(row=3, column=0)
-        nXfield_Entry = Entry(master=window5, width=5)
-        nXfield_Entry.grid(row=3, column=1)
-
-        nYfield_label = Label(master=window5, text="-Y", width=10)
-        nYfield_label.grid(row=4, column=0)
-        nYfield_Entry = Entry(master=window5, width=5)
-        nYfield_Entry.grid(row=4, column=1)
-
-        nZfield_label = Label(master=window5, text="-Z", width=10)
-        nZfield_label.grid(row=5, column=0)
-        nZfield_Entry = Entry(master=window5, width=5)
-        nZfield_Entry.grid(row=5, column=1)
-
-        self.main_window.update()
-
     def exit(self):
         """
         Quits the main window (self.main_window) and quits the ardunio connection
@@ -675,6 +888,7 @@ class GUI:
         Returns:
             None
         """
+        self.AcousticModule.close()
         self.main_window.quit()
         self.main_window.destroy()
         self.arduino.close()
@@ -694,9 +908,10 @@ class GUI:
         except KeyError:
             raise KeyError(f"Cannot find widget named {widget_name}")
 
-    def main(self) -> None:
+    def read_field(self):
         """
-        Starts the tkinter GUI by opening up the main window
+        calls instance of Sensor class and reads the magnetic field value 
+        for each of the 4 axis coils
 
         Args:
             None
@@ -704,4 +919,44 @@ class GUI:
         Returns:
             None
         """
+        #delete previous entry
+        self.Yfield_Entry.delete(0,END)
+        self.Xfield_Entry.delete(0,END)
+        self.nYfield_Entry.delete(0,END)
+        self.nXfield_Entry.delete(0,END)
+
+        #read field value
+        pYFIELD = self.Sense.readFIELD(self.Sense.chanPosY, self.posY)
+        pXFIELD = self.Sense.readFIELD(self.Sense.chanPosX, self.posX)
+        nYFIELD = self.Sense.readFIELD(self.Sense.chanNegY, self.negY)
+        nXFIELD = self.Sense.readFIELD(self.Sense.chanNegX, self.negX)
+
+        #assign to global dictionary????
+      
+        #display new entry
+        self.Yfield_Entry.insert(0,pYFIELD)
+        self.Xfield_Entry.insert(0,pXFIELD)
+        self.nYfield_Entry.insert(0,nYFIELD)
+        self.nXfield_Entry.insert(0,nXFIELD)
+
+        #could just be in if statement here like if rolling status is on
+        #self.main_window.after(10,self.read_field)
+
+
+
+    def main(self) -> None:
+        """
+        Starts the tkinter GUI by opening up the main window
+        continously displays magnetic field values if checked
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
+        #self.read_field()
+        
+
         self.main_window.mainloop()

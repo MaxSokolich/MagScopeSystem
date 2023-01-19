@@ -1,36 +1,28 @@
 Bugs:
-6) add color back to gui buttons
-7) allow live adjustment of fps [SEMI COMPLETED]
-9) fix scale bar and objective selecting
-10) scale text and hud based on resize scale
-11) remove redundant bot_loc initial_pos variabes
-14) maybe make it so you can input an image of the microrobot for baseline bluring. Basically a zeroing aspect. 
-15) test 3D tracking, add Z position
-16) implment AcousticClass into gui
-17) impliment hall effect class into gui
-18)fix color camera
-
-
-Components:
-- add DDS module
-- add hall effect sensors
-- add motorized stage
+1)figure out way to read hall effect non blocking
+2) allow live adjustment of fps [SEMI COMPLETED]
+3) fix scale bar and objective selecting
+4) scale text and hud based on resize scale
+5) test 3D tracking, add Z position
+6) maybe figure out how to impliment joystick outside of custom2Dtracker file
+7) somethings now wrong with the pin configureation for hall effect and acoustic
+8) serial may not be working either
 
 
 
-BU:
-
-path 1
-- MPC
-- RRT path planning
-- bring the learning part into the picture 
-
-path 2
-- pattern formation in cells
-- single robot cell manipulation
 
 
-path 3
-- multi agent
-- generate different robots and characterize them
-- determine reachability and adjust to determine optimal robot combination
+
+
+Notes:
+- lots of continous aspects to this system. i.e functions that need to be external
+enclosed in a while loop to work properlly. This results in a large amount of 
+complexity:
+        0) read commands from keyboard and mouse for GUI
+        1) read frames from FLIR camera for tracking
+        2) read commands from USB joystick for controlling
+        3) read hall effect sensor magnetic field values for sensing
+
+        4) output arduino signal array via UART/Serial
+        5) output acoustic signal via RPi.GPIO
+        6) TBD: output stepper motor signal via I2C
