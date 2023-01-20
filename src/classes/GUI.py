@@ -15,9 +15,8 @@ from typing import Union
 from tkinter import *
 from tkinter import Tk
 from tkinter import filedialog
-
-from src.classes.HallEffect import HallEffect
 from src.classes.AcousticHandler import AcousticHandler
+from src.classes.HallEffect import HallEffect
 from src.classes.Custom2DTracker import Tracker
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.Brightness import Brightness
@@ -212,7 +211,7 @@ class GUI:
             text="Live", 
             command=self.live, 
             height=1, 
-            width=20,
+            width=10,
             bg = 'yellow',
             fg= 'black'
             )
@@ -282,7 +281,7 @@ class GUI:
             text="Live", 
             command=self.live, 
             height=1, 
-            width=20,
+            width=10,
             bg = 'yellow',
             fg= 'black'
             )
