@@ -1,3 +1,14 @@
+"""
+Note: Both HallEffect.py and AcousticHandler.py must be have the same pinmode 
+configuration. i.e. GPIO.BOARD, BCM, TEGRA_SOC, or CVM. 
+
+What I found is compatible with adafruit is BOARD. User must change line 8 
+in python3.8/site-packages/adafruit_blinka/microcontroller/tegra/t194/pin.py
+to:
+
+Jetson.GPIO.setmode(GPIO.BOARD)
+"""
+
 import board
 import busio
 import numpy as np
@@ -5,6 +16,7 @@ import matplotlib.pyplot as plt
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 from scipy.interpolate import interp1d
+
 
 class HallEffect:
     """
@@ -54,8 +66,8 @@ class HallEffect:
         return mapped_field
         
 
-'''
-if __name__ == "__main__":
+
+'''if __name__ == "__main__":
     Sense = HallEffect()
     posY = Sense.createBounds() #create bounds for positive Y EM sensor
     posX = Sense.createBounds() #create bounds for positive X EM sensor
@@ -65,6 +77,6 @@ if __name__ == "__main__":
     while True:
         XFIELD = Sense.readFIELD(Sense.chanPosX, posX)
         print(XFIELD)
-        print(posX)
-    
-'''
+        print(posX)'''
+
+

@@ -519,7 +519,7 @@ class Tracker:
                 arduino.send(typ, angle, rolling_frequency)
 
             #SAVE TRACKS
-            if self.num_bots > 0:
+            if self.num_bots > 0 and self.status_params['add track'] == True:
                 robotx = self.robot_list[-1].position_list[-1][0]
                 roboty = self.robot_list[-1].position_list[-1][1]
                 targetx = None

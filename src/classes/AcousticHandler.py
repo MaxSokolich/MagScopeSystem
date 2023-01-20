@@ -1,5 +1,7 @@
-#acoustic class to generate waveforms
-
+'''
+acoustic class to generate waveforms
+See HallEffect.py for compatibilty with adafruit modules
+'''
 # import GPIO module
 import RPi.GPIO as GPIO
 import time
@@ -8,14 +10,15 @@ import time
 class AcousticHandler:
 	def __init__(self):
 		# setup GPIO
+
+		#GPIO.setmode(GPIO.TEGRA_SOC)
 		GPIO.setmode(GPIO.BOARD)
 		GPIO.setwarnings(False)
 
-		# Define GPIO pins
-		self.W_CLK = 21
-		self.FQ_UD = 22
-		self.DATA = 23
-		self.RESET = 24
+		self.W_CLK = 37
+		self.FQ_UD = 7
+		self.DATA = 13
+		self.RESET = 22
 
 		# setup IO bits
 		GPIO.setup(self.W_CLK, GPIO.OUT)
@@ -27,14 +30,14 @@ class AcousticHandler:
 		GPIO.output(self.W_CLK, False)
 		GPIO.output(self.FQ_UD, False)
 		GPIO.output(self.DATA, False)
-		GPIO.output(self.RESET, False)
+		GPIO.output(self.RESET, True)
 
 	# Function to send a pulse to GPIO pin
 	def pulseHigh(self,pin):
 		GPIO.output(pin, True)
 		GPIO.output(pin, True)
 		GPIO.output(pin, False)
-		return
+		
 
 	# Function to send a byte to AD9850 module
 	def tfr_byte(self,data):
@@ -42,7 +45,7 @@ class AcousticHandler:
 			GPIO.output(self.DATA, data & 0x01)
 			self.pulseHigh(self.W_CLK)
 			data=data>>1
-		return
+		
 
 	# Function to send frequency (assumes 125MHz xtal) to AD9850 module
 	def sendFrequency(self,frequency):
@@ -52,7 +55,7 @@ class AcousticHandler:
 			freq=freq>>8
 		self.tfr_byte(0x00)
 		self.pulseHigh(self.FQ_UD)
-		return
+		
 
 	# start the DDS module
 	def start(self,frequency):
@@ -65,12 +68,22 @@ class AcousticHandler:
 	def stop(self):
 		self.pulseHigh(self.RESET)
 
+	def close(self):
+		GPIO.cleanup()
 
-if __name__ == "__main__":
+
+
+
+'''if __name__ == "__main__":
 	AcousticMod = AcousticHandler()
 	print("starting waveform...")
-	freqinput = 1000000
+	freqinput = 10000
 	AcousticMod.start(freqinput)
-	time.sleep(20)
+	time.sleep(1)
 	AcousticMod.stop()
 	print("stopped waveform")
+	AcousticMod.close()
+
+'''
+
+
