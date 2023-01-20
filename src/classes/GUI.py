@@ -960,4 +960,5 @@ class GUI:
         Returns:
             None
         """
+        #self.read_field()
         self.main_window.mainloop()

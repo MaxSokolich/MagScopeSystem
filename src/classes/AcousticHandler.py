@@ -15,10 +15,10 @@ class AcousticHandler:
 		GPIO.setmode(GPIO.BOARD)
 		GPIO.setwarnings(False)
 
-		self.W_CLK = 37
-		self.FQ_UD = 7
-		self.DATA = 13
-		self.RESET = 22
+		self.W_CLK = 21
+		self.FQ_UD = 22
+		self.DATA = 23
+		self.RESET = 24
 
 		# setup IO bits
 		GPIO.setup(self.W_CLK, GPIO.OUT)
@@ -74,7 +74,7 @@ class AcousticHandler:
 
 
 
-'''if __name__ == "__main__":
+if __name__ == "__main__":
 	AcousticMod = AcousticHandler()
 	print("starting waveform...")
 	freqinput = 10000
@@ -84,6 +84,6 @@ class AcousticHandler:
 	print("stopped waveform")
 	AcousticMod.close()
 
-'''
+
 
 
