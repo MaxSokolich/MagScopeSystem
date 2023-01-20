@@ -7,6 +7,7 @@ Bugs:
 6) maybe figure out how to impliment joystick outside of custom2Dtracker file
 7) somethings now wrong with the pin configureation for hall effect and acoustic
 8) serial may not be working either
+9) add amplifier curcuit
 
 
 

@@ -85,12 +85,12 @@ class GUI:
         )
 
         #initilize hall effect class
-        #self.Sense = HallEffect()
+        self.Sense = HallEffect()
         
-        #self.posY = self.Sense.createBounds() #create bounds for positive Y EM sensor
-        #self.posX = self.Sense.createBounds() #create bounds for positive X EM sensor
-        #self.negY = self.Sense.createBounds() #create bounds for negative Y EM sensor
-        #self.negX = self.Sense.createBounds() #create bounds for negative X EM sensor
+        self.posY = self.Sense.createBounds() #create bounds for positive Y EM sensor
+        self.posX = self.Sense.createBounds() #create bounds for positive X EM sensor
+        self.negY = self.Sense.createBounds() #create bounds for negative Y EM sensor
+        self.negX = self.Sense.createBounds() #create bounds for negative X EM sensor
 
         #define instance of acoustic module
         self.AcousticModule = AcousticHandler()
@@ -369,6 +369,9 @@ class GUI:
         nXfield_label.grid(row=3, column=0)
         self.nXfield_Entry = Entry(master=Bfield_frame, width=5)
         self.nXfield_Entry.grid(row=3, column=1)
+
+        #add button to read incoming field values
+
 
 
  
@@ -930,8 +933,11 @@ class GUI:
         nYFIELD = self.Sense.readFIELD(self.Sense.chanNegY, self.negY)
         nXFIELD = self.Sense.readFIELD(self.Sense.chanNegX, self.negX)
 
-        #assign to global dictionary????
-      
+        MAGNETIC_FIELD_PARAMS["PositiveY"] = pYFIELD
+        MAGNETIC_FIELD_PARAMS["PositiveX"] = pXFIELD
+        MAGNETIC_FIELD_PARAMS["NegativeY"] = nYFIELD
+        MAGNETIC_FIELD_PARAMS["NegativeX"] = nXFIELD
+
         #display new entry
         self.Yfield_Entry.insert(0,pYFIELD)
         self.Xfield_Entry.insert(0,pXFIELD)
@@ -939,7 +945,7 @@ class GUI:
         self.nXfield_Entry.insert(0,nXFIELD)
 
         #could just be in if statement here like if rolling status is on
-        #self.main_window.after(10,self.read_field)
+        self.main_window.after(10,self.read_field)
 
 
 
@@ -954,8 +960,4 @@ class GUI:
         Returns:
             None
         """
-
-        #self.read_field()
-        
-
         self.main_window.mainloop()
