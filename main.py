@@ -10,6 +10,10 @@ import asyncio
 from src.classes.GUI import GUI
 from src.classes.ArduinoHandler import ArduinoHandler
 
+#arduino signal: [typ, input1, input2, input3]
+#typ =1 : spherical ---> Roll
+#typ =2 : cartesian --> Orient
+
 PORT = "/dev/ttyACM0"
 
 if __name__ == "__main__":

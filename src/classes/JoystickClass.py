@@ -1,188 +1,268 @@
-
-# Released by rdb under the Unlicense (unlicense.org)
-# Based on information from:
-# https://www.kernel.org/doc/Documentation/input/joystick-api.txt
-import numpy as np
-import os, struct, array
-from fcntl import ioctl
-import time
+""" Xbox 360 controller support for Python
 
 
-import time
-import numpy as np
+This class module supports reading a connected Xbox controller under Python 2 and 3.
 
+You'll need to first install xboxdrv:
 
+    sudo apt-get install xboxdrv
 
-# We'll store the states here.
-axis_states = {}
-button_states = {}
+See http://pingus.seul.org/~grumbel/xboxdrv/ for details on xboxdrv
 
-# These constants were borrowed from linux/input.h
-axis_names = {
-    0x00 : 'x',
-    0x01 : 'y',
-    0x02 : 'z',
-    0x03 : 'rx',
-    0x04 : 'ry',
-    0x05 : 'rz',
-    0x06 : 'throttle',
-    0x07 : 'rudder',
-    0x08 : 'wheel',
-    0x09 : 'gas',
-    0x0a : 'brake',
-    0x10 : 'hat0x',
-    0x11 : 'hat0y',
-    0x12 : 'hat1x',
-    0x13 : 'hat1y',
-    0x14 : 'hat2x',
-    0x15 : 'hat2y',
-    0x16 : 'hat3x',
-    0x17 : 'hat3y',
-    0x18 : 'pressure',
-    0x19 : 'distance',
-    0x1a : 'tilt_x',
-    0x1b : 'tilt_y',
-    0x1c : 'tool_width',
-    0x20 : 'volume',
-    0x28 : 'misc',
-}
+Example usage:
 
-button_names = {
-    0x120 : 'trigger',
-    0x121 : 'thumb',
-    0x122 : 'thumb2',
-    0x123 : 'top',
-    0x124 : 'top2',
-    0x125 : 'pinkie',
-    0x126 : 'base',
-    0x127 : 'base2',
-    0x128 : 'base3',
-    0x129 : 'base4',
-    0x12a : 'base5',
-    0x12b : 'base6',
-    0x12f : 'dead',
-    0x130 : 'a',
-    0x131 : 'b',
-    0x132 : 'c',
-    0x133 : 'x',
-    0x134 : 'y',
-    0x135 : 'z',
-    0x136 : 'tl',
-    0x137 : 'tr',
-    0x138 : 'tl2',
-    0x139 : 'tr2',
-    0x13a : 'select',
-    0x13b : 'start',
-    0x13c : 'mode',
-    0x13d : 'thumbl',
-    0x13e : 'thumbr',
-
-    0x220 : 'dpad_up',
-    0x221 : 'dpad_down',
-    0x222 : 'dpad_left',
-    0x223 : 'dpad_right',
-
-    # XBox 360 controller uses these codes.
-    0x2c0 : 'dpad_left',
-    0x2c1 : 'dpad_right',
-    0x2c2 : 'dpad_up',
-    0x2c3 : 'dpad_down',
-}
-
-axis_map = []
-button_map = []
-try:
-    # Open the joystick device.
-    fn = '/dev/input/js0'
-    jsdev = open(fn, 'rb')
-    os.set_blocking(jsdev.fileno(), False)  ###IMPORTANT TO AVOID BLOCKING
-    print(' -- Joystick Connected %s... --' % fn)
-
-
-    # Get the device name.
-    #buf = bytearray(63)
-    buf = array.array('B', [0] * 64)
-    ioctl(jsdev, 0x80006a13 + (0x10000 * len(buf)), buf) # JSIOCGNAME(len)
-    js_name = buf.tobytes().rstrip(b'\x00').decode('utf-8')
-    #print('Device name: %s' % js_name)
-
-    # Get number of axes and buttons.
-    buf = array.array('B', [0])
-    ioctl(jsdev, 0x80016a11, buf) # JSIOCGAXES
-    num_axes = buf[0]
-
-    buf = array.array('B', [0])
-    ioctl(jsdev, 0x80016a12, buf) # JSIOCGBUTTONS
-    num_buttons = buf[0]
-
-    # Get the axis map.
-    buf = array.array('B', [0] * 0x40)
-    ioctl(jsdev, 0x80406a32, buf) # JSIOCGAXMAP
-
-    for axis in buf[:num_axes]:
-        axis_name = axis_names.get(axis, 'unknown(0x%02x)' % axis)
-        axis_map.append(axis_name)
-        axis_states[axis_name] = 0.0
-
-    # Get the button map.
-    buf = array.array('H', [0] * 200)
-    ioctl(jsdev, 0x80406a34, buf) # JSIOCGBTNMAP
-
-    for btn in buf[:num_buttons]:
-        btn_name = button_names.get(btn, 'unknown(0x%03x)' % btn)
-        button_map.append(btn_name)
-        button_states[btn_name] = 0
-
-    #print('%d axes found: %s' % (num_axes, ', '.join(axis_map)))
-    #print('%d buttons found: %s' % (num_buttons, ', '.join(button_map)))
-
-    # Main event loop
-    X,Y = 0,0
-    LSTICK = [X,Y]
-    RSTICK = [X,Y]
-    BUTTON = [X,Y]
-
-    def READ_JS():
-        """
-        reads joystick data
-
-        Args:
-            None
-
-        Returns:
-            call LSTICK, RSTICK, and BUTTON to get info
-        """
-        evbuf = jsdev.read(8)
-        if evbuf is not None:
-            tim, value, type, number = struct.unpack('IhBB', evbuf)
-
-
-            if type & 0x01:
-                button = button_map[number]
-                if button:
-                    button_states[button] = value
-                    if value:
-                        BUTTON[0] = button
-                        BUTTON[1] = value
-                    else:
-                        BUTTON[0] = button
-                        BUTTON[1] = value
-
-            if type & 0x02:
-                axis = axis_map[number]
-                
-                fvalue = value / 32767.0
-                axis_states[axis] = fvalue
-                
-                if axis == 'x':
-                    LSTICK[0] = fvalue
-                if axis == 'y':
-                    LSTICK[1] = fvalue
-                if axis == 'rx':
-                    RSTICK[0] = fvalue
-                if axis == 'ry':
-                    RSTICK[1] = fvalue
-                
-except Exception:
-    print(" -- No Joystick Connected --")
+    import xbox
+    joy = xbox.Joystick()         #Initialize joystick
     
+    if joy.A():                   #Test state of the A button (1=pressed, 0=not pressed)
+        print 'A button pressed'
+    x_axis   = joy.leftX()        #X-axis of the left stick (values -1.0 to 1.0)
+    (x,y)    = joy.leftStick()    #Returns tuple containing left X and Y axes (values -1.0 to 1.0)
+    trigger  = joy.rightTrigger() #Right trigger position (values 0 to 1.0)
+    
+    joy.close()                   #Cleanup before exit
+
+All controller buttons are supported.  See code for all functions.
+"""
+
+import subprocess
+import select
+import time
+
+class Joystick:
+
+    """Initializes the joystick/wireless receiver, launching 'xboxdrv' as a subprocess
+    and checking that the wired joystick or wireless receiver is attached.
+    The refreshRate determines the maximnum rate at which events are polled from xboxdrv.
+    Calling any of the Joystick methods will cause a refresh to occur, if refreshTime has elapsed.
+    Routinely call a Joystick method, at least once per second, to avoid overfilling the event buffer.
+ 
+    Usage:
+        joy = xbox.Joystick()
+    """
+    def __init__(self,refreshRate = 30):
+        self.proc = subprocess.Popen(['xboxdrv','--no-uinput','--detach-kernel-driver'], stdout=subprocess.PIPE, bufsize=0)
+        self.pipe = self.proc.stdout
+        #
+        self.connectStatus = False  #will be set to True once controller is detected and stays on
+        self.reading = '0' * 140    #initialize stick readings to all zeros
+        #
+        self.refreshTime = 0    #absolute time when next refresh (read results from xboxdrv stdout pipe) is to occur
+        self.refreshDelay = 1.0 / refreshRate   #joystick refresh is to be performed 30 times per sec by default
+        #
+        # Read responses from 'xboxdrv' for upto 2 seconds, looking for controller/receiver to respond
+        found = False
+        waitTime = time.time() + 2
+        while waitTime > time.time() and not found:
+            readable, writeable, exception = select.select([self.pipe],[],[],0)
+            if readable:
+                response = self.pipe.readline()
+                # Hard fail if we see this, so force an error
+                if response[0:7] == b'No Xbox':
+                    raise IOError('No Xbox controller/receiver found')
+                # Success if we see the following
+                if response[0:12].lower() == b'press ctrl-c':
+                    found = True
+                # If we see 140 char line, we are seeing valid input
+                if len(response) == 140:
+                    found = True
+                    self.connectStatus = True
+                    self.reading = response
+        # if the controller wasn't found, then halt
+        if not found:
+            self.close()
+            raise IOError('Unable to detect Xbox controller/receiver - Run python as sudo')
+
+    """Used by all Joystick methods to read the most recent events from xboxdrv.
+    The refreshRate determines the maximum frequency with which events are checked.
+    If a valid event response is found, then the controller is flagged as 'connected'.
+    """
+    def refresh(self):
+        # Refresh the joystick readings based on regular defined freq
+        if self.refreshTime < time.time():
+            self.refreshTime = time.time() + self.refreshDelay  #set next refresh time
+            # If there is text available to read from xboxdrv, then read it.
+            readable, writeable, exception = select.select([self.pipe],[],[],0)
+            if readable:
+                # Read every line that is availabe.  We only need to decode the last one.
+                while readable:
+                    response = self.pipe.readline()
+                    # A zero length response means controller has been unplugged.
+                    if len(response) == 0:
+                        raise IOError('Xbox controller disconnected from USB')
+                    readable, writeable, exception = select.select([self.pipe],[],[],0)
+                # Valid controller response will be 140 chars.  
+                if len(response) == 140:
+                    self.connectStatus = True
+                    self.reading = response
+                else:  #Any other response means we have lost wireless or controller battery
+                    self.connectStatus = False
+
+    """Return a status of True, when the controller is actively connected.
+    Either loss of wireless signal or controller powering off will break connection.  The
+    controller inputs will stop updating, so the last readings will remain in effect.  It is
+    good practice to only act upon inputs if the controller is connected.  For instance, for
+    a robot, stop all motors if "not connected()".
+    
+    An inital controller input, stick movement or button press, may be required before the connection
+    status goes True.  If a connection is lost, the connection will resume automatically when the
+    fault is corrected.
+    """
+    def connected(self):
+        self.refresh()
+        return self.connectStatus
+
+    # Left stick X axis value scaled between -1.0 (left) and 1.0 (right) with deadzone tolerance correction
+    def leftX(self,deadzone=4000):
+        self.refresh()
+        raw = int(self.reading[3:9])
+        return self.axisScale(raw,deadzone)
+
+    # Left stick Y axis value scaled between -1.0 (down) and 1.0 (up)
+    def leftY(self,deadzone=4000):
+        self.refresh()
+        raw = int(self.reading[13:19])
+        return self.axisScale(raw,deadzone)
+
+    # Right stick X axis value scaled between -1.0 (left) and 1.0 (right)
+    def rightX(self,deadzone=4000):
+        self.refresh()
+        raw = int(self.reading[24:30])
+        return self.axisScale(raw,deadzone)
+
+    # Right stick Y axis value scaled between -1.0 (down) and 1.0 (up)
+    def rightY(self,deadzone=4000):
+        self.refresh()
+        raw = int(self.reading[34:40])
+        return self.axisScale(raw,deadzone)
+
+    # Scale raw (-32768 to +32767) axis with deadzone correcion
+    # Deadzone is +/- range of values to consider to be center stick (ie. 0.0)
+    def axisScale(self,raw,deadzone):
+        if abs(raw) < deadzone:
+            return 0.0
+        else:
+            if raw < 0:
+                return (raw + deadzone) / (32768.0 - deadzone)
+            else:
+                return (raw - deadzone) / (32767.0 - deadzone)
+
+    # Dpad Up status - returns 1 (pressed) or 0 (not pressed)
+    def dpadUp(self):
+        self.refresh()
+        return int(self.reading[45:46])
+        
+    # Dpad Down status - returns 1 (pressed) or 0 (not pressed)
+    def dpadDown(self):
+        self.refresh()
+        return int(self.reading[50:51])
+        
+    # Dpad Left status - returns 1 (pressed) or 0 (not pressed)
+    def dpadLeft(self):
+        self.refresh()
+        return int(self.reading[55:56])
+        
+    # Dpad Right status - returns 1 (pressed) or 0 (not pressed)
+    def dpadRight(self):
+        self.refresh()
+        return int(self.reading[60:61])
+        
+    # Back button status - returns 1 (pressed) or 0 (not pressed)
+    def Back(self):
+        self.refresh()
+        return int(self.reading[68:69])
+
+    # Guide button status - returns 1 (pressed) or 0 (not pressed)
+    def Guide(self):
+        self.refresh()
+        return int(self.reading[76:77])
+
+    # Start button status - returns 1 (pressed) or 0 (not pressed)
+    def Start(self):
+        self.refresh()
+        return int(self.reading[84:85])
+
+    # Left Thumbstick button status - returns 1 (pressed) or 0 (not pressed)
+    def leftThumbstick(self):
+        self.refresh()
+        return int(self.reading[90:91])
+
+    # Right Thumbstick button status - returns 1 (pressed) or 0 (not pressed)
+    def rightThumbstick(self):
+        self.refresh()
+        return int(self.reading[95:96])
+
+    # A button status - returns 1 (pressed) or 0 (not pressed)
+    def A(self):
+        self.refresh()
+        return int(self.reading[100:101])
+        
+    # B button status - returns 1 (pressed) or 0 (not pressed)
+    def B(self):
+        self.refresh()
+        return int(self.reading[104:105])
+
+    # X button status - returns 1 (pressed) or 0 (not pressed)
+    def X(self):
+        self.refresh()
+        return int(self.reading[108:109])
+
+    # Y button status - returns 1 (pressed) or 0 (not pressed)
+    def Y(self):
+        self.refresh()
+        return int(self.reading[112:113])
+
+    # Left Bumper button status - returns 1 (pressed) or 0 (not pressed)
+    def leftBumper(self):
+        self.refresh()
+        return int(self.reading[118:119])
+
+    # Right Bumper button status - returns 1 (pressed) or 0 (not pressed)
+    def rightBumper(self):
+        self.refresh()
+        return int(self.reading[123:124])
+
+    # Left Trigger value scaled between 0.0 to 1.0
+    def leftTrigger(self):
+        self.refresh()
+        return int(self.reading[129:132]) / 255.0
+        
+    # Right trigger value scaled between 0.0 to 1.0
+    def rightTrigger(self):
+        self.refresh()
+        return int(self.reading[136:139]) / 255.0
+
+    # Returns tuple containing X and Y axis values for Left stick scaled between -1.0 to 1.0
+    # Usage:
+    #     x,y = joy.leftStick()
+    def leftStick(self,deadzone=4000):
+        self.refresh()
+        return (self.leftX(deadzone),self.leftY(deadzone))
+
+    # Returns tuple containing X and Y axis values for Right stick scaled between -1.0 to 1.0
+    # Usage:
+    #     x,y = joy.rightStick() 
+    def rightStick(self,deadzone=4000):
+        self.refresh()
+        return (self.rightX(deadzone),self.rightY(deadzone))
+
+    # Cleanup by ending the xboxdrv subprocess
+    def close(self):
+        self.pipe.close()
+        self.proc.kill()
+        self.proc.wait()
+
+
+
+'''if __name__ == "__main__":
+    joy = Joystick()         #Initialize joystick
+    while not joy.B():
+        if joy.A():                   #Test state of the A button (1=pressed, 0=not pressed)
+            print('A button pressed')
+        x_axis   = joy.leftX()        #X-axis of the left stick (values -1.0 to 1.0)
+        (x,y)    = joy.leftStick()    #Returns tuple containing left X and Y axes (values -1.0 to 1.0)
+        trigger  = joy.rightTrigger() #Right trigger position (values 0 to 1.0)
+        print(x_axis)
+        time.sleep(.05)
+    joy.close()               
+    '''

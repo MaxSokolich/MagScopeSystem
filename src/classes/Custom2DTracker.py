@@ -21,7 +21,6 @@ from src.classes.ContourProcessor import ContourProcessor
 from src.classes.Velocity import Velocity
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.FPSCounter import FPSCounter
-from src.classes.JoystickClass import *
 
 import EasyPySpin
 import warnings
@@ -143,7 +142,7 @@ class Tracker:
             self.num_bots = 0
             self.node = 0
             if params["arduino"].conn is not None:
-                params["arduino"].send(4, 0, 0)
+                params["arduino"].send(4, 0, 0, 0)
 
     def track_robot_position(
         self,
@@ -350,7 +349,7 @@ class Tracker:
                 print("arrived")
                 unique_control_param = None
                 if arduino.conn is not None:
-                    arduino.send(4, 0, 0)
+                    arduino.send(4, 0, 0, 0)
             else:
                 # non-linear closed loop
                 # display trajectory
@@ -400,8 +399,11 @@ class Tracker:
                     typ = 1
                     my_alpha = self.alpha - np.pi / 2
                     if arduino.conn is not None:
+                        input1 = my_alpha
+                        input2 = self.control_params["rolling_frequency"]
+                        input3 = 90 #gamma
                         arduino.send(
-                            typ, my_alpha, self.control_params["rolling_frequency"]
+                            typ,input1,input2,input3
                         )
                     unique_control_param = "Roll"
 
@@ -449,14 +451,18 @@ class Tracker:
 
                             Bx = B_vec[0] / np.sqrt(B_vec[0] ** 2 + B_vec[1] ** 2)
                             By = B_vec[1] / np.sqrt(B_vec[0] ** 2 + B_vec[1] ** 2)
-
+                            Bz = 0
                             # OUTPUT
 
                             self.alpha = np.arctan2(By, Bx)
                             typ = 2
-                            amplitude = 1
                             if arduino.conn is not None:
-                                arduino.send(typ, self.alpha, amplitude)
+                                input1 = Bx
+                                input2 = By
+                                input3 = Bz
+                                arduino.send(
+                                    typ,input1,input2,input3
+                                )
                     unique_control_param = "Orient"
 
                     try:
@@ -473,7 +479,7 @@ class Tracker:
                 else:
                     unique_control_param = None
                     if arduino.conn is not None:
-                        arduino.send(4, 0, 0)
+                        arduino.send(4, 0, 0, 0)
 
             self.robot_list[-1].add_track(
                 self.frame_num,
@@ -485,59 +491,6 @@ class Tracker:
                 time.time(),
                 unique_control_param,
             )
-    
-    def control_joystick(self, arduino: ArduinoHandler):
-        """
-        if joystick_status is true read joystick values and output proper control inputs to arduino.
-        also save microrobot params for each input
-
-        Args:
-            arduino handler 
-        Return:
-            None
-        """
-        if self.status_params["joystick_status"]:
-            
-            #READ JOYSTICK
-            READ_JS()  #part of joystick class
-            
-            x = LSTICK[0]
-            y = LSTICK[1]
-            mag = np.sqrt(x**2+y**2)
-            if mag > .01:
-                angle = np.arctan2(y, x) - np.pi/2#*180/np.pi
-                #angle = (angle+ 360) % 360
-                rolling_frequency = int(mag*20)
-                typ = 1
-            else:
-                angle = 0
-                rolling_frequency = 0
-                typ = 4
-  
-            #OUTPUT ARDUINO
-            if arduino.conn is not None:
-                arduino.send(typ, angle, rolling_frequency)
-
-            #SAVE TRACKS
-            if self.num_bots > 0 and self.status_params['add track'] == True:
-                robotx = self.robot_list[-1].position_list[-1][0]
-                roboty = self.robot_list[-1].position_list[-1][1]
-                targetx = None
-                targety = None
-                error = None
-                unique_control_param = "Roll"
-
-                self.robot_list[-1].add_track(
-                    self.frame_num,
-                    error,
-                    [robotx, roboty],
-                    [targetx, targety],
-                    angle,
-                    rolling_frequency,
-                    time.time(),
-                    unique_control_param,
-                )
-
 
     def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int):
         """
@@ -732,10 +685,6 @@ class Tracker:
                 self.height * resize_scale // 100,
             )
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
-            
-            # READ JOYSTICK IF STATUS IS TRUE
-            self.control_joystick(arduino)
-
 
             if enable_tracking:
                 self.frame_num += 1  # increment frame
@@ -804,7 +753,7 @@ class Tracker:
         
         cam.release()
         cv2.destroyAllWindows()
-        arduino.send(4, 0, 0)
+        arduino.send(4, 0, 0, 0)
 
 
         ''' 
