@@ -10,7 +10,9 @@ maxframerate = 130
 exptime = 10us - 30s
 iamge buffer = 240 MB
 """
-
+from multiprocessing import Process
+import time as time
+import numpy as np
 from typing import Union
 from tkinter import *
 from tkinter import Tk
@@ -20,6 +22,7 @@ from src.classes.HallEffect import HallEffect
 from src.classes.Custom2DTracker import Tracker
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.Brightness import Brightness
+from src.classes.JoystickClass import Joystick
 
 
 
@@ -48,7 +51,6 @@ STATUS_PARAMS = {
     "orient_status": False,
     "record_status": False,
     "joystick_status":False,
-    "track data":False
 }
 
 ACOUSTIC_PARAMS = {
@@ -131,7 +133,7 @@ class GUI:
         coil_joystick_button = Button(
             master, 
             text="Joystick On", 
-            command=self.coil_joystick, 
+            command=self.joy_thread, 
             height=1, 
             width=20,
             bg = 'magenta',
@@ -415,16 +417,8 @@ class GUI:
         """
         STATUS_PARAMS["orient_status"] = True
 
-    def coil_joystick(self):
-        """
-        Flips the state of joystick_Status to True when "joystick On" is clicked
 
-        Args:
-            None
-        Returns:
-            None
-        """
-        STATUS_PARAMS["joystick_status"] = True
+
 
     def edit_closed_loop_params(self):
         """
@@ -851,7 +845,6 @@ class GUI:
         )
         
         if self.get_widget(self.main_window, "savepickle").var.get():
-            STATUS_PARAMS["track data"] = True
             tracker.convert2pickle(output_name)
 
       
@@ -948,6 +941,56 @@ class GUI:
         self.main_window.after(10,self.read_field)
 
 
+
+    def handle_joystick(self, arduino: ArduinoHandler):
+
+        self.text_box.insert(END, "XBOX Connected\n")
+        self.text_box.see("end")
+        joy = Joystick() # Instantiate the controller
+     
+        def A():       #A Button Function
+            pass
+        def B():       #B Button Function
+            pass
+        def LeftS():   #Left Joystick Function
+            pass
+        def RightS():  #Right Joystick Function
+            RX,RY = joy.rightX(), joy.rightY()
+            mag = np.sqrt(RX**2+RY**2)
+            if mag > .01:
+                angle = np.arctan2(RY,RX)
+                freq = int(mag*20)
+                typ=1
+            else:
+                angle = 0
+                freq= 0
+                typ=4
+            if arduino.conn is not None:
+                arduino.send(typ,angle,freq,90)
+
+
+        def RightT():
+            pass
+        def LeftT():
+            pass
+
+        while not joy.Back():
+            A()
+            B()
+            LeftS()
+            RightS()
+            RightT()
+            LeftT()
+            time.sleep(.01)
+            self.main_window.update()
+        joy.close()
+        arduino.send(4,0,0,0)
+        
+        
+    def joy_thread(self):
+        Process(target = self.handle_joystick(self.arduino)).start()
+        #Process(target = self.track()).start()
+      
 
     def main(self) -> None:
         """

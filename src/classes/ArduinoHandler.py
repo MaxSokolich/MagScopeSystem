@@ -45,7 +45,7 @@ class ArduinoHandler:
                 f"Connection already initialized at port {self.port}, new port {port} ignored"
             )
 
-    def send(self, typ: float, alpha: float, freq: float) -> None:
+    def send(self, typ: float, input1: float, input2: float, input3: float) -> None:
         """
         Applies a pipeline of preprocessing to a cropped frame, then gets the contours from the
         cropped, preprocesed image.
@@ -61,10 +61,10 @@ class ArduinoHandler:
         if self.conn is None:
             print("Connection not initialized, message not sent")
         else:
-            data = [float(typ), float(alpha), float(freq)]
+            data = [float(typ), float(input1), float(input2), float(input3)]
             message = self.conn.tx_obj(data)
             self.conn.send(message)
-            print("Data sent:", [float(typ), float(alpha), float(freq)])
+            print("Data sent:", [float(typ), float(input1), float(input2), float(input3) ])
 
     def close(self) -> None:
         """

@@ -5,7 +5,7 @@
 
 #include "SerialTransfer.h"
 SerialTransfer myTransfer;
-float action[3]; //an array to store incoming data from python
+float action[4]; //an array to store incoming data from python
 
 #define PI 3.1415926535897932384626433832795
 
@@ -239,7 +239,7 @@ void loop()
        alpha = action[1];
        rolling_frequency = action[2]; 
        omega = 2*PI*rolling_frequency;
-       gamma = 90;
+       gamma = action[3];
        tim = micros() % 7812500;
        t = tim / 7812500;
        Bx = cos(gamma)*cos(alpha)*cos(omega*t) + sin(alpha)*sin(omega*t);
@@ -256,11 +256,9 @@ void loop()
     }
     else if (action[0] == 2){  //ORIENT
     
-      alpha = action[1];
-      amplitude = action[2];
-      Bx = amplitude*cos(alpha);
-      By = amplitude*sin(alpha);
-      Bz = 0;
+      Bx = action[1];
+      By = action[2];
+      Bz = action[3];
       set1(By);
       set2(Bx);
       set3(-By);
