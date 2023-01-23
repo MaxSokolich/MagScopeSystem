@@ -943,52 +943,97 @@ class GUI:
 
 
     def handle_joystick(self, arduino: ArduinoHandler):
-
         self.text_box.insert(END, "XBOX Connected\n")
         self.text_box.see("end")
-        joy = Joystick() # Instantiate the controller
-     
-        def A():       #A Button Function
-            pass
-        def B():       #B Button Function
-            pass
-        def LeftS():   #Left Joystick Function
-            pass
-        def RightS():  #Right Joystick Function
-            RX,RY = joy.rightX(), joy.rightY()
-            mag = np.sqrt(RX**2+RY**2)
-            if mag > .01:
-                angle = np.arctan2(RY,RX)
-                freq = int(mag*20)
-                typ=1
-            else:
-                angle = 0
-                freq= 0
-                typ=4
-            if arduino.conn is not None:
-                arduino.send(typ,angle,freq,90)
+        A_State = True
 
-
-        def RightT():
-            pass
-        def LeftT():
-            pass
+        # Instantiate the controller
+        joy = Joystick() 
+    
+        #initialize actions
+        typ = 4
+        input1 = 0
+        input2 = 0
+        input3 = 0
 
         while not joy.Back():
-            A()
-            B()
-            LeftS()
-            RightS()
-            RightT()
-            LeftT()
+            #A Button Function --> Acoustic Module On
+            if joy.A() == True:
+                self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
+                self.text_box.insert(END, "A Button\n")
+                self.text_box.see("end")
+                    
+            #B Button Function  --> Acoustic Module Off
+            if joy.B():
+                self.AcousticModule.stop()
+                self.text_box.insert(END, "B Button\n")
+                self.text_box.see("end")
+
+            #Left Joystick Function --> Orient
+            if not joy.leftX() == 0 or not joy.leftY() == 0:
+                Bxl = round(joy.leftX(),2)
+                Byl = round(joy.leftY(),2)
+                typ = 2
+                input1 = Bxl
+                input2 = Byl
+                self.text_box.insert(END, "Left Joy\n")
+                self.text_box.see("end")
+
+            #Right Joystick Function --> Roll
+            if not joy.rightX() == 0 or not joy.rightY() == 0:
+                Bxr = round(joy.rightX(),2)
+                Byr = round(joy.rightY(),2)
+                    
+                angle = np.arctan2(Bxr,Byr)
+                freq = CONTROL_PARAMS["rolling_frequency"]
+                gamma = CONTROL_PARAMS["gamma"]
+                typ = 1
+                input1 = angle
+                input2 = freq
+                input3 = gamma
+                self.text_box.insert(END, "Right Joy\n")
+                self.text_box.see("end")
+            
+            #Right Trigger Function --> Positive Z
+            if joy.rightTrigger() > 0:
+                typ = 2
+                input3 = joy.rightTrigger()
+                self.text_box.insert(END, "Right Trig\n")
+                self.text_box.see("end")
+
+            #Left Trigger Function --> Negative Z
+            if joy.leftTrigger() > 0:
+                typ = 2
+                input3 = -joy.leftTrigger()
+                self.text_box.insert(END, "Left Trig\n")
+                self.text_box.see("end")
+        
+            '''
+                typ = 4
+                input1 = 0
+                input2 = 0
+                input3 = 0
+                self.text_box.insert(END, "Zeroed\n")
+                self.text_box.see("end")
+'''
+            #send command
+            if arduino.conn is not None:
+                arduino.send(typ,input1,input2,input3)
+            
+            #add delay and update window
             time.sleep(.01)
             self.main_window.update()
+
+        self.text_box.insert(END, "XBOX Disconnected\n")
+        self.text_box.see("end")
         joy.close()
         arduino.send(4,0,0,0)
+        self.AcousticModule.stop()
         
         
     def joy_thread(self):
-        Process(target = self.handle_joystick(self.arduino)).start()
+        #Process(target = self.handle_joystick(self.arduino)).start()
+        self.handle_joystick(self.arduino)
         #Process(target = self.track()).start()
       
 

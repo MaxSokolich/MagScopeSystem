@@ -904,23 +904,11 @@ class Tracker:
         Returns:
             None
         """
-
         pickles = []
         print(" --- writing robots ---")
         for bot in tqdm(self.robot_list):
             if len(bot.area_list) > 1:
                 pickles.append(bot.as_dict())
-
-        #print(" --- writing frames ---")
-        #cap = cv2.VideoCapture(filename + ".mp4")
-        #length = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        #raw = []
-
-        #for i in tqdm(range(length)):
-        #    _, frame = cap.read()
-        #    raw.append(frame)
-
-    
 
         print(" -- writing pickle --")
         with open(filename + ".pickle", "wb") as handle:
