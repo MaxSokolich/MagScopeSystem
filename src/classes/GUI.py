@@ -88,7 +88,6 @@ class GUI:
 
         #initilize hall effect class
         self.Sense = HallEffect()
-        
         self.posY = self.Sense.createBounds() #create bounds for positive Y EM sensor
         self.posX = self.Sense.createBounds() #create bounds for positive X EM sensor
         self.negY = self.Sense.createBounds() #create bounds for negative Y EM sensor
@@ -914,31 +913,13 @@ class GUI:
         Returns:
             None
         """
-        #delete previous entry
-        self.Yfield_Entry.delete(0,END)
-        self.Xfield_Entry.delete(0,END)
-        self.nYfield_Entry.delete(0,END)
-        self.nXfield_Entry.delete(0,END)
-
         #read field value
-        pYFIELD = self.Sense.readFIELD(self.Sense.chanPosY, self.posY)
-        pXFIELD = self.Sense.readFIELD(self.Sense.chanPosX, self.posX)
-        nYFIELD = self.Sense.readFIELD(self.Sense.chanNegY, self.negY)
-        nXFIELD = self.Sense.readFIELD(self.Sense.chanNegX, self.negX)
-
-        MAGNETIC_FIELD_PARAMS["PositiveY"] = pYFIELD
-        MAGNETIC_FIELD_PARAMS["PositiveX"] = pXFIELD
-        MAGNETIC_FIELD_PARAMS["NegativeY"] = nYFIELD
-        MAGNETIC_FIELD_PARAMS["NegativeX"] = nXFIELD
-
-        #display new entry
-        self.Yfield_Entry.insert(0,pYFIELD)
-        self.Xfield_Entry.insert(0,pXFIELD)
-        self.nYfield_Entry.insert(0,nYFIELD)
-        self.nXfield_Entry.insert(0,nXFIELD)
-
-        #could just be in if statement here like if rolling status is on
-        self.main_window.after(10,self.read_field)
+        MAGNETIC_FIELD_PARAMS["PositiveY"] = self.Sense.readFIELD(self.Sense.chanPosY, self.posY)
+        MAGNETIC_FIELD_PARAMS["PositiveX"] = self.Sense.readFIELD(self.Sense.chanPosX, self.posX)
+        MAGNETIC_FIELD_PARAMS["NegativeY"] = self.Sense.readFIELD(self.Sense.chanNegY, self.negY)
+        MAGNETIC_FIELD_PARAMS["NegativeX"] = self.Sense.readFIELD(self.Sense.chanNegX, self.negX)
+        #print(MAGNETIC_FIELD_PARAMS["PositiveY"])
+  
 
 
 
@@ -1026,9 +1007,8 @@ class GUI:
                 arduino.send(typ,input1,input2,input3)
             
             #add delay and update window
-            time.sleep(.01)
             self.main_window.update()
-
+            
         self.text_box.insert(END, "XBOX Disconnected\n")
         self.text_box.see("end")
         joy.close()
@@ -1037,6 +1017,7 @@ class GUI:
         
         
     def joy_thread(self):
+        #Process(target = self.read_field()).start()
         #Process(target = self.handle_joystick(self.arduino)).start()
         self.handle_joystick(self.arduino)
         #Process(target = self.track()).start()
@@ -1053,5 +1034,4 @@ class GUI:
         Returns:
             None
         """
-        #self.read_field()
         self.main_window.mainloop()

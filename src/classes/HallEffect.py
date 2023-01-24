@@ -67,7 +67,7 @@ class HallEffect:
         
 
 
-'''if __name__ == "__main__":
+if __name__ == "__main__":
     Sense = HallEffect()
     posY = Sense.createBounds() #create bounds for positive Y EM sensor
     posX = Sense.createBounds() #create bounds for positive X EM sensor
@@ -77,6 +77,6 @@ class HallEffect:
     while True:
         XFIELD = Sense.readFIELD(Sense.chanPosX, posX)
         print(XFIELD)
-        print(posX)'''
+        print(posX)
 
 

@@ -4,8 +4,9 @@ Bugs:
 3) fix scale bar and objective selecting
 4) scale text and hud based on resize scale
 5) test 3D tracking, add Z position
-6) maybe figure out how to impliment joystick outside of custom2Dtracker file, refactor joystick.py into class
 9) add amplifier curcuit
+10) add simiulatneous joystick clicks
+11) maybe get ps5 controller working
 
 
 
