@@ -926,25 +926,6 @@ class GUI:
         except KeyError:
             raise KeyError(f"Cannot find widget named {widget_name}")
 
-    def read_field(self):
-        """
-        calls instance of Sensor class and reads the magnetic field value 
-        for each of the 4 axis coils
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        #read field value
-        MAGNETIC_FIELD_PARAMS["PositiveY"] = self.Sense.readFIELD(self.Sense.chanPosY, self.posY)
-        MAGNETIC_FIELD_PARAMS["PositiveX"] = self.Sense.readFIELD(self.Sense.chanPosX, self.posX)
-        MAGNETIC_FIELD_PARAMS["NegativeY"] = self.Sense.readFIELD(self.Sense.chanNegY, self.negY)
-        MAGNETIC_FIELD_PARAMS["NegativeX"] = self.Sense.readFIELD(self.Sense.chanNegX, self.negX)
-        #print(MAGNETIC_FIELD_PARAMS["PositiveY"])
-  
-
 
 
     def handle_joystick(self, arduino: ArduinoHandler):

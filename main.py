@@ -4,7 +4,7 @@ Main script for performing microbot tracking
 @authors: Max Sokolich, Brennan Gallamoza, Luke Halko, Trea Holley,
           Alexis Mainiero, Cameron Thacker, Zoe Valladares
 """
-
+import time
 from tkinter import Tk
 import asyncio
 from src.classes.GUI import GUI
@@ -38,11 +38,16 @@ if __name__ == "__main__":
     gui = GUI(window, arduino,q)
 
     #start halleffect process
-    p1 = Process(target = sensor.showFIELD, args = (q,))
-    p1.start()
+    sensor_process = Process(target = sensor.showFIELD, args = (q,))
+    sensor_process.start()
    
     #start gui mainwindow
-    asyncio.run(gui.main())
-    p1.join()
+    gui.main()
+    time.sleep(1)
+    
+    #shutdown sensor process
+    sensor.shutdown()
+
+
  
     

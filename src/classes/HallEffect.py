@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 from scipy.interpolate import interp1d
-
+from multiprocessing import Event
 
 class HallEffect:
     """
@@ -26,13 +26,17 @@ class HallEffect:
     """
 
     def __init__(self):
+        #set up sensor I2C
         self.i2c = busio.I2C(board.SCL, board.SDA)
         self.ads = ADS.ADS1115(self.i2c)
-
+        
         self.chanPosY = AnalogIn(self.ads, ADS.P0)
         self.chanPosX = AnalogIn(self.ads, ADS.P1)  #big external EM
         self.chanNegY = AnalogIn(self.ads, ADS.P2)  # one of the 4 coil config Em
         self.chanNegX = AnalogIn(self.ads, ADS.P3)
+
+        #set up exit condition
+        self.exit = Event()
 
     def createBounds(self):
         """
@@ -77,7 +81,7 @@ class HallEffect:
         posX = self.createBounds() #create bounds for positive X EM sensor
         negY = self.createBounds() #create bounds for negative Y EM sensor
         negX = self.createBounds() #create bounds for negative X EM sensor
-        while True:
+        while not self.exit.is_set():
             
             #print("\nsensor1:", self.readFIELD(self.chanPosY, posY))
             #print("sensor2: ",self.readFIELD(self.chanPosX, posX))
@@ -90,8 +94,10 @@ class HallEffect:
             s4 = self.readFIELD(self.chanNegX, negX)
 
             q.put([s1,s2,s3,s4])
+        print(" -- Sensor Process Terminated -- ")
 
-        
+    def shutdown(self):
+        self.exit.set()
 
 """
 if __name__ == "__main__":
