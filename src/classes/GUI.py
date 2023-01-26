@@ -342,11 +342,7 @@ class GUI:
         cuda_button.grid(row=1, column=4)
         trackall_button.grid(row=2,column= 4)
 
-        
-
-
-
-
+    
         #Bfield display
         Bfield_frame = Frame(master = master)
         Bfield_frame.grid(row=3,column=0,rowspan = 3)
@@ -372,13 +368,6 @@ class GUI:
         self.nXfield_Entry.grid(row=3, column=1)
 
         #add button to read incoming field values
-
-
-
- 
-
-      
-    
 
 
     def upload_vid(self):
@@ -926,6 +915,8 @@ class GUI:
     def handle_joystick(self, arduino: ArduinoHandler):
         self.text_box.insert(END, "XBOX Connected\n")
         self.text_box.see("end")
+        
+        #state buttons for acoustic button logic
         button_state = 0
         last_state = 0
         counter = 0
