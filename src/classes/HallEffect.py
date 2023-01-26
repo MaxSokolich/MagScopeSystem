@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 from scipy.interpolate import interp1d
-from multiprocessing import Event
+from multiprocessing import Process, Queue, Event
 
 class HallEffect:
     """
@@ -35,7 +35,7 @@ class HallEffect:
         self.chanNegY = AnalogIn(self.ads, ADS.P2)  # one of the 4 coil config Em
         self.chanNegX = AnalogIn(self.ads, ADS.P3)
 
-        #set up exit condition
+        #set up queue and exit condition
         self.exit = Event()
 
     def createBounds(self):
@@ -95,6 +95,10 @@ class HallEffect:
 
             q.put([s1,s2,s3,s4])
         print(" -- Sensor Process Terminated -- ")
+
+    def start(self,q):
+        sensor_process = Process(target = self.showFIELD, args = (q,))
+        sensor_process.start()
 
     def shutdown(self):
         self.exit.set()

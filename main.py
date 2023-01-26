@@ -27,27 +27,12 @@ if __name__ == "__main__":
     arduino = ArduinoHandler()
     arduino.connect(PORT)
 
-    #hall effect
-    sensor = HallEffect()
-
-    #initiate Queue to store hall effect sensor variables
-    q = Queue()
-    q.cancel_join_thread()
-
     #initiate gui window
-    gui = GUI(window, arduino,q)
-
-    #start halleffect process
-    sensor_process = Process(target = sensor.showFIELD, args = (q,))
-    sensor_process.start()
+    gui = GUI(window, arduino)
    
     #start gui mainwindow
     gui.main()
-    time.sleep(1)
-    
-    #shutdown sensor process
-    sensor.shutdown()
-
+ 
 
  
     

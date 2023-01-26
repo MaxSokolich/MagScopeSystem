@@ -76,7 +76,7 @@ class GUI:
         arduino: ArduinoHandler object containing arduino connection information
     """
 
-    def __init__(self, master: Tk, arduino: ArduinoHandler, q):
+    def __init__(self, master: Tk, arduino: ArduinoHandler):
         # Tkinter window attributes
         self.main_window = master
         self.screen_width = self.main_window.winfo_screenwidth()
@@ -87,12 +87,12 @@ class GUI:
             self.main_window.winfo_reqheight(),
         )
 
-        #initilize hall effect class
-        self.Sense = HallEffect()
-        self.posY = self.Sense.createBounds() #create bounds for positive Y EM sensor
-        self.posX = self.Sense.createBounds() #create bounds for positive X EM sensor
-        self.negY = self.Sense.createBounds() #create bounds for negative Y EM sensor
-        self.negX = self.Sense.createBounds() #create bounds for negative X EM sensor
+        #update sensor
+        self.sensor = None
+        self.q = multiprocessing.Queue()
+        self.q.cancel_join_thread()
+        self.main_window.after(100, self.CheckQueuePoll, self.q)
+
 
         #define instance of acoustic module
         self.AcousticModule = AcousticHandler()
@@ -137,6 +137,16 @@ class GUI:
             height=1, 
             width=20,
             bg = 'magenta',
+            fg= 'white'
+        )
+
+        sensor_button = Button(
+            master, 
+            text="Sensor On", 
+            command=self.sensor_proc, 
+            height=1, 
+            width=20,
+            bg = 'black',
             fg= 'white'
         )
 
@@ -329,7 +339,8 @@ class GUI:
         
         coil_roll_button.grid(row=0, column=2)
         coil_orient_button.grid(row=1, column=2)
-        coil_joystick_button.grid(row=0, column=3,rowspan =2)
+        coil_joystick_button.grid(row=0, column=3,rowspan =1)
+        sensor_button.grid(row=1, column=3,rowspan =1)
         
         
         record_button.grid(row=4, column=3)
@@ -368,8 +379,7 @@ class GUI:
         self.nXfield_Entry = Entry(master=Bfield_frame, width=5)
         self.nXfield_Entry.grid(row=3, column=1)
 
-        #update sensor
-        self.main_window.after(100, self.CheckQueuePoll, q)
+        
 
     
     def CheckQueuePoll(self,c_queue):
@@ -886,6 +896,9 @@ class GUI:
         Returns:
             None
         """
+        #shutdown hall sensor readings
+        self.sensor.shutdown()
+
         STATUS_PARAMS["rolling_status"] = False
         STATUS_PARAMS["orient_status"] = False
         STATUS_PARAMS["joystick_status"] = False
@@ -1030,7 +1043,13 @@ class GUI:
         #Process(target = self.handle_joystick(self.arduino)).start()
         self.handle_joystick(self.arduino)
         #Process(target = self.track()).start()
-      
+        
+
+    def sensor_proc(self):
+        self.sensor = HallEffect()
+        self.sensor.start(self.q)
+    
+   
 
     def main(self) -> None:
         """
