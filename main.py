@@ -31,7 +31,7 @@ if __name__ == "__main__":
     gui = GUI(window, arduino)
    
     #start gui mainwindow
-    gui.main()
+    asyncio.run(gui.main())
  
 
  

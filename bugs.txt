@@ -1,5 +1,4 @@
 Bugs:
-1) maybe add function to toggle magentic field readings.
 2) allow live adjustment of fps [SEMI COMPLETED]
 3) fix scale bar and objective selecting
 4) scale text and hud based on resize scale

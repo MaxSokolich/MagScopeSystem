@@ -133,7 +133,7 @@ class GUI:
         coil_joystick_button = Button(
             master, 
             text="Joystick On", 
-            command=self.joy_thread, 
+            command=self.joy_proc, 
             height=1, 
             width=20,
             bg = 'magenta',
@@ -380,39 +380,6 @@ class GUI:
         self.nXfield_Entry.grid(row=3, column=1)
 
         
-
-    
-    def CheckQueuePoll(self,c_queue):
-        """
-        checks the hall effect sensor queue for incoming sensors values
-
-        Args:
-            c_queue: queue object
-        Returns:
-            None
-        """
-        try:
-            value_array = c_queue.get(0) # [s1,s2,s3,s4]
-            
-            #update Yfield
-            self.Yfield_Entry.delete(0,END)
-            self.Yfield_Entry.insert(0,"{}".format(value_array[0])) 
-
-            #update Xfield
-            self.Xfield_Entry.delete(0,END)
-            self.Xfield_Entry.insert(0,"{}".format(value_array[1])) 
-
-            #update nYfield
-            self.nYfield_Entry.delete(0,END)
-            self.nYfield_Entry.insert(0,"{}".format(value_array[2]))
-
-            #update nXfield
-            self.nXfield_Entry.delete(0,END)
-            self.nXfield_Entry.insert(0,"{}".format(value_array[3]))
-        except Empty:
-            pass
-        finally:
-            self.main_window.after(100,self.CheckQueuePoll, c_queue)
 
 
     def upload_vid(self):
@@ -1038,16 +1005,54 @@ class GUI:
         self.AcousticModule.stop()
         
         
-    def joy_thread(self):
-        #Process(target = self.read_field()).start()
-        #Process(target = self.handle_joystick(self.arduino)).start()
+    def joy_proc(self):
+        #going to want to impliment a similar subprocess as sensor proc
         self.handle_joystick(self.arduino)
-        #Process(target = self.track()).start()
         
 
     def sensor_proc(self):
+        """
+        creates an instance of HallEffect class and starts a subprocess to read values
+
+        Args:
+            None
+        Returns:
+            None
+        """
         self.sensor = HallEffect()
         self.sensor.start(self.q)
+    
+    def CheckQueuePoll(self,c_queue):
+        """
+        checks the hall effect sensor queue for incoming sensors values
+
+        Args:
+            c_queue: queue object
+        Returns:
+            None
+        """
+        try:
+            value_array = c_queue.get(0) # [s1,s2,s3,s4]
+            
+            #update Yfield
+            self.Yfield_Entry.delete(0,END)
+            self.Yfield_Entry.insert(0,"{}".format(value_array[0])) 
+
+            #update Xfield
+            self.Xfield_Entry.delete(0,END)
+            self.Xfield_Entry.insert(0,"{}".format(value_array[1])) 
+
+            #update nYfield
+            self.nYfield_Entry.delete(0,END)
+            self.nYfield_Entry.insert(0,"{}".format(value_array[2]))
+
+            #update nXfield
+            self.nXfield_Entry.delete(0,END)
+            self.nXfield_Entry.insert(0,"{}".format(value_array[3]))
+        except Empty:
+            pass
+        finally:
+            self.main_window.after(100,self.CheckQueuePoll, c_queue)
     
    
 
