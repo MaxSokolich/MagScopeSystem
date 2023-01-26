@@ -5,7 +5,8 @@ import numpy as np
 from pySerialTransfer import pySerialTransfer as txfer
 import os, struct, array
 from fcntl import ioctl
-from JoystickClass import *#READ_JS, LSTICK,RSTICK,BUTTON
+from JoystickClass import Joystick
+import HallEffect
 
 class count_fps:
     t0 = 0
@@ -22,6 +23,7 @@ class count_fps:
         return self.fps
 
 #JOYSTICK
+joy = Joystick()
 print("-- Connected to Joystick --")
 
 #ARDUINO
@@ -31,12 +33,18 @@ print("-- Connected to Arduino --")
 
 #CAMERA
 fps = count_fps()       
-cam = EasyPySpin.VideoCapture(0)
+cam = cv2.VideoCapture("/home/max/Documents/MagScopeSystem/videos/mickyroll1.mp4")
 print("-- Connected to Camera --")
 cam.set(cv2.CAP_PROP_FPS,30)
 print(cam.get(cv2.CAP_PROP_FPS))
 r =.5
 
+#SENSOR
+sensor = HallEffect.Sensor()
+posY = sensor.createBounds() #create bounds for positive Y EM sensor
+posX = sensor.createBounds() #create bounds for positive X EM sensor
+negY = sensor.createBounds() #create bounds for negative Y EM sensor
+negX = sensor.createBounds() #create bounds for negative X EM sensor
     
 def Send(arduino,typ,alpha,freq):
     message = arduino.tx_obj([float(typ),float(alpha),float(freq)]) #float(0) => Rolling
@@ -56,30 +64,21 @@ while True:
     #read joystick
     #evbuf = jsdev.read(8)
     #if evbuf is not None:
-    LSTICK,RSTICK,BUTTON = READ_JS()
+    
     #print(BUTTON, LSTICK, RSTICK)
+    print(joy.leftX())
      
-     
+    print("sensor1: ",sensor.readFIELD(sensor.chanPosY, posY))
+    print("sensor2: ",sensor.readFIELD(sensor.chanPosX, posX))
+    print("sensor3: ",sensor.readFIELD(sensor.chanNegY, negY))
+    print("sensor4: ",sensor.readFIELD(sensor.chanNegX, negX))
 
-    x = LSTICK[0]
-    y = LSTICK[1]
-    mag = np.sqrt(x**2+y**2)
-    print(mag)
-    if mag > .01:
-        angle = np.arctan2(y, x) - np.pi/2#*180/np.pi
-        #angle = (angle+ 360) % 360
-        rolling_frequency = int(mag*20)
-        typ = 1
-    else:
-        angle = 0
-        rolling_frequency = 0
-        typ = 4
                          
    
     
 
     #send actions to arduino
-    Send(arduino,typ,angle,rolling_frequency)
+    #Send(arduino,typ,angle,rolling_frequency)
     
 
     cv2.putText(frame,str(int(fps.get_fps())),(int(40),int(70)), cv2.FONT_HERSHEY_COMPLEX,.5,(0,255,0),1)
@@ -89,6 +88,7 @@ while True:
     fps.get_fps()
     if cv2.waitKey(10) & 0xFF == ord('q'):# or BUTTON == ["b",1]:
         Send(arduino,4,0,0)
+        joy.close()
         break
     
 

@@ -10,7 +10,8 @@ maxframerate = 130
 exptime = 10us - 30s
 iamge buffer = 240 MB
 """
-from multiprocessing import Process
+from queue import Empty
+import multiprocessing
 import time as time
 import numpy as np
 from typing import Union
@@ -75,7 +76,7 @@ class GUI:
         arduino: ArduinoHandler object containing arduino connection information
     """
 
-    def __init__(self, master: Tk, arduino: ArduinoHandler):
+    def __init__(self, master: Tk, arduino: ArduinoHandler, q):
         # Tkinter window attributes
         self.main_window = master
         self.screen_width = self.main_window.winfo_screenwidth()
@@ -367,7 +368,41 @@ class GUI:
         self.nXfield_Entry = Entry(master=Bfield_frame, width=5)
         self.nXfield_Entry.grid(row=3, column=1)
 
-        #add button to read incoming field values
+        #update sensor
+        self.main_window.after(100, self.CheckQueuePoll, q)
+
+    
+    def CheckQueuePoll(self,c_queue):
+        """
+        checks the hall effect sensor queue for incoming sensors values
+
+        Args:
+            c_queue: queue object
+        Returns:
+            None
+        """
+        try:
+            value_array = c_queue.get(0) # [s1,s2,s3,s4]
+            
+            #update Yfield
+            self.Yfield_Entry.delete(0,END)
+            self.Yfield_Entry.insert(0,"{}".format(value_array[0])) 
+
+            #update Xfield
+            self.Xfield_Entry.delete(0,END)
+            self.Xfield_Entry.insert(0,"{}".format(value_array[1])) 
+
+            #update nYfield
+            self.nYfield_Entry.delete(0,END)
+            self.nYfield_Entry.insert(0,"{}".format(value_array[2]))
+
+            #update nXfield
+            self.nXfield_Entry.delete(0,END)
+            self.nXfield_Entry.insert(0,"{}".format(value_array[3]))
+        except Empty:
+            pass
+        finally:
+            self.main_window.after(100,self.CheckQueuePoll, c_queue)
 
 
     def upload_vid(self):
@@ -931,6 +966,8 @@ class GUI:
         input3 = 0
         
         while not joy.Back():
+            #try to read hall sense
+
             #A Button Function --> Acoustic Module Toggle
             button_state = joy.A()
             if button_state != last_state:
@@ -994,8 +1031,8 @@ class GUI:
                 self.text_box.see("end")
 
             #send command
-            if arduino.conn is not None:
-                arduino.send(typ,input1,input2,input3)
+            #if arduino.conn is not None:
+            #    arduino.send(typ,input1,input2,input3)
             
             #add delay and update window
             self.main_window.update()

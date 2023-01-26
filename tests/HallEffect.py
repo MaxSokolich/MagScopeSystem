@@ -18,7 +18,7 @@ from adafruit_ads1x15.analog_in import AnalogIn
 from scipy.interpolate import interp1d
 
 
-class HallEffect:
+class Sensor:
     """
     Class for managing the Hall Effect sensors via i2c
     Args:
@@ -55,7 +55,7 @@ class HallEffect:
             bound: class object that stores the min and max bounds generated from sensor
         Returns:
             mapped_field: scaled field value -100 to 100
-        """             
+        """
         VAL = channel.value
         if VAL < bound[0]:
             bound[0] = VAL
@@ -64,38 +64,19 @@ class HallEffect:
         m = interp1d([bound[0],bound[1]],[-100,100])
         mapped_field = int(m(VAL))
         return mapped_field
-    
-    def showFIELD(self,q):
-        """
-        continously updates queue with sensor value from mulitprocssing.Process
-        Args:
-            q: Queue 
-        Returns:
-            None
-        """             
-        posY = self.createBounds() #create bounds for positive Y EM sensor
-        posX = self.createBounds() #create bounds for positive X EM sensor
-        negY = self.createBounds() #create bounds for negative Y EM sensor
-        negX = self.createBounds() #create bounds for negative X EM sensor
-        while True:
-            
-            #print("\nsensor1:", self.readFIELD(self.chanPosY, posY))
-            #print("sensor2: ",self.readFIELD(self.chanPosX, posX))
-            #print("sensor3: ",self.readFIELD(self.chanNegY, negY))
-            #print("sensor4: ",self.readFIELD(self.chanNegX, negX))
-
-            s1 = self.readFIELD(self.chanPosY, posY)
-            s2 = self.readFIELD(self.chanPosX, posX)
-            s3 = self.readFIELD(self.chanNegY, negY)
-            s4 = self.readFIELD(self.chanNegX, negX)
-
-            q.put([s1,s2,s3,s4])
-
         
 
-"""
+
 if __name__ == "__main__":
-    Sense = HallEffect()
-    Sense.showFIELD(None)
-"""
+    Sense = Sensor()
+    posY = Sense.createBounds() #create bounds for positive Y EM sensor
+    posX = Sense.createBounds() #create bounds for positive X EM sensor
+    negY = Sense.createBounds() #create bounds for negative Y EM sensor
+    negX = Sense.createBounds() #create bounds for negative X EM sensor
+    
+    while True:
+        XFIELD = Sense.readFIELD(Sense.chanPosX, posX)
+        print(XFIELD)
+        print(posX)
+
 
