@@ -713,6 +713,10 @@ class GUI:
             self.AcousticModule.stop()
             print(" -- waveform OFF --")
         
+        def test_freq():
+            self.AcousticModule.start(int(10000))
+            print(" -- waveform TEST --")
+        
         def update_loop_slider_values(event):
             """
             Constantly updates acoustic params when the sliders are used.
@@ -745,15 +749,27 @@ class GUI:
             bg = 'red',
             fg= 'white'
         )
-        
         stop_button.pack()
+
+        #create test widget
+        test_button = Button(
+            window5, 
+            text="Test 10kHz", 
+            command=test_freq, 
+            height=5, width=10,
+            bg = 'green',
+            fg= 'white'
+        )
+
+        test_button.pack()
+
 
         #create freq widget
         acoustic_frequency = DoubleVar()
         acoustic_slider = Scale(
             master=window5,
             label="Acoustic Frequency",
-            from_=10000,
+            from_=1000000,
             to=2000000,
             resolution=1000,
             variable=acoustic_frequency,
