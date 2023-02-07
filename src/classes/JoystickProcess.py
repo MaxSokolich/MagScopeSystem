@@ -46,7 +46,7 @@ class JoystickProcess():
                 Bxr = round(self.joy.rightX(),2)
                 Byr = round(self.joy.rightY(),2)
                     
-                angle = np.arctan2(Bxr,Byr)
+                angle = np.arctan2(Byr,Bxr)
                 self.typ = 1
                 self.input1 = angle
                

@@ -401,7 +401,7 @@ class Tracker:
                     if arduino.conn is not None:
                         input1 = my_alpha
                         input2 = self.control_params["rolling_frequency"]
-                        input3 = 90 #gamma
+                        input3 = self.control_params["gamma"]
                         arduino.send(
                             typ,input1,input2,input3
                         )
@@ -478,8 +478,8 @@ class Tracker:
                         pass
                 else:
                     unique_control_param = None
-                    #if arduino.conn is not None:
-                    #    arduino.send(4, 0, 0, 0)
+                    if arduino.conn is not None:
+                        arduino.send(4, 0, 0, 0)
 
             self.robot_list[-1].add_track(
                 self.frame_num,
@@ -890,6 +890,7 @@ class Tracker:
         Returns:
             None
         """
+        self.plot()
         pickles = []
         print(" --- writing robots ---")
         for bot in tqdm(self.robot_list):
