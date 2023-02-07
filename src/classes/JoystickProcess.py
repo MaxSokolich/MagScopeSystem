@@ -22,29 +22,18 @@ class JoystickProcess():
         self.input2 = 0
         self.input3 = 0
 
+        self.acoustic_status = 0
+
         #exit event
         self.exit = Event()        
 
     def handle_joystick(self, joystick_q):
         while not self.exit.is_set():
-
-            #A Button Function --> Acoustic Module Toggle
-            self.button_state = self.joy.A()
-            if self.button_state != self.last_state:
-                if self.button_state == True:
-                    self.counter +=1
-            self.last_state = self.button_state
-            if self.counter %2 != 0 and self.switch_state !=0:
-                self.switch_state = 0
-                #self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
-                print("acoustic: on")
-            elif self.counter %2 == 0 and self.switch_state !=1:
-                self.switch_state = 1
-                #self.AcousticModule.stop()
-                print("acoustic: off")
+            # A Button --> Acoustic Module Toggle
+            self.acoustic_status = self.joy.A()
 
             #Left Joystick Function --> Orient
-            elif not self.joy.leftX() == 0 or not self.joy.leftY() == 0:
+            if not self.joy.leftX() == 0 or not self.joy.leftY() == 0:
                 Bxl = round(self.joy.leftX(),2)
                 Byl = round(self.joy.leftY(),2)
                 self.typ = 2
@@ -58,12 +47,9 @@ class JoystickProcess():
                 Byr = round(self.joy.rightY(),2)
                     
                 angle = np.arctan2(Bxr,Byr)
-                freq = 20#CONTROL_PARAMS["rolling_frequency"]
-                gamma = 90#CONTROL_PARAMS["gamma"]
                 self.typ = 1
                 self.input1 = angle
-                self.input2 = freq
-                self.input3 = gamma
+               
             
             #Right Trigger Function --> Positive Z
             elif self.joy.rightTrigger() > 0:
@@ -82,11 +68,10 @@ class JoystickProcess():
                 self.input2 = 0
                 self.input3 = 0
             
-            #update qeueu
-            actions = [self.typ,self.input1, self.input2, self.input3]
-            #print(actions)
-            joystick_q.put([self.typ,self.input1, self.input2, self.input3])
-            time.sleep(10/1000)
+            #update queue
+            actions = [self.typ,self.input1, self.input2, self.input3, self.acoustic_status]
+            joystick_q.put(actions)
+            time.sleep(10/1000)  #need some sort of delay to not flood queue
         
         self.joy.close()
         print(" -- Joystick Process Terminated -- ")

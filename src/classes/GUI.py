@@ -43,7 +43,7 @@ CONTROL_PARAMS = {
 
 CAMERA_PARAMS = {
     "resize_scale": 50, 
-    "framerate": 20, 
+    "framerate": 30, 
     "exposure": 5000, 
     "Obj": 10}
 
@@ -100,6 +100,11 @@ class GUI:
 
         #define instance of acoustic module
         self.AcousticModule = AcousticHandler()
+        #acoustic conditioning/logic
+        self.button_state = 0
+        self.last_state = 0
+        self.counter = 0
+        self.switch_state = 0
 
         # Tkinter widget attributes
         self.text_box = Text(master, width=22, height=1)
@@ -963,10 +968,37 @@ class GUI:
         """
         try:
             joy_array = j_queue.get(0) # [typ,input1,input2,input3]
-            #self.text_box.delete(0, END)
-            #self.text_box.insert(0, "{}".format(joy_array))
-            print(joy_array)
+            typ = joy_array[0]
             
+
+            gamma = CONTROL_PARAMS["gamma"]
+            freq = CONTROL_PARAMS["rolling_frequency"]
+            #adjust actions for rolling command since cannot access gamma and freq in process
+            if typ == 1:
+                self.arduino.send(typ, joy_array[1], freq, gamma)
+            else:
+                self.arduino.send(typ, joy_array[1], joy_array[2], joy_array[3])
+
+            
+            
+            #A Button Function --> Acoustic Module Toggle
+            self.button_state = joy_array[4]
+            if self.button_state != self.last_state:
+                if self.button_state == True:
+                    self.counter +=1
+            self.last_state = self.button_state
+            if self.counter %2 != 0 and self.switch_state !=0:
+                self.switch_state = 0
+                self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
+                self.text_box.insert(END, "on\n")
+                self.text_box.see("end")
+                #print("acoustic: on")
+            elif self.counter %2 == 0 and self.switch_state !=1:
+                self.switch_state = 1
+                self.AcousticModule.stop()
+                self.text_box.insert(END, "off\n")
+                self.text_box.see("end")
+
         except Empty:
             pass
         finally:
