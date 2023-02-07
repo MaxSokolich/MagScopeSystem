@@ -71,7 +71,7 @@ class JoystickProcess():
             #update queue
             actions = [self.typ,self.input1, self.input2, self.input3, self.acoustic_status]
             joystick_q.put(actions)
-            time.sleep(10/1000)  #need some sort of delay to not flood queue
+            time.sleep(50/1000)  #need some sort of delay to not flood queue
         
         self.joy.close()
         print(" -- Joystick Process Terminated -- ")

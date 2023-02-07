@@ -90,7 +90,7 @@ class GUI:
         self.sensor = None
         self.sense_q = multiprocessing.Queue()
         self.sense_q.cancel_join_thread()
-        self.main_window.after(30, self.CheckSensorPoll, self.sense_q)
+        self.main_window.after(10, self.CheckSensorPoll, self.sense_q)
 
         #update joystick process/queue
         self.joystick = None
@@ -956,6 +956,42 @@ class GUI:
         """
         self.joystick = JoystickProcess()
         self.joystick.start(self.joystick_q)
+
+        try:
+            joy_array = self.joystick_q.get(0) # [typ,input1,input2,input3]
+            typ = joy_array[0]
+            
+
+            gamma = CONTROL_PARAMS["gamma"]
+            freq = CONTROL_PARAMS["rolling_frequency"]
+            #adjust actions for rolling command since cannot access gamma and freq in process
+            if typ == 1:
+                self.arduino.send(typ, joy_array[1], freq, gamma)
+            else:
+                self.arduino.send(typ, joy_array[1], joy_array[2], joy_array[3])
+
+            
+            
+            #A Button Function --> Acoustic Module Toggle
+            self.button_state = joy_array[4]
+            if self.button_state != self.last_state:
+                if self.button_state == True:
+                    self.counter +=1
+            self.last_state = self.button_state
+            if self.counter %2 != 0 and self.switch_state !=0:
+                self.switch_state = 0
+                self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
+                self.text_box.insert(END, "on\n")
+                self.text_box.see("end")
+                #print("acoustic: on")
+            elif self.counter %2 == 0 and self.switch_state !=1:
+                self.switch_state = 1
+                self.AcousticModule.stop()
+                self.text_box.insert(END, "off\n")
+                self.text_box.see("end")
+
+        except Empty:
+            pass
     
     def CheckJoystickPoll(self,j_queue):
         """
@@ -979,8 +1015,6 @@ class GUI:
             else:
                 self.arduino.send(typ, joy_array[1], joy_array[2], joy_array[3])
 
-            
-            
             #A Button Function --> Acoustic Module Toggle
             self.button_state = joy_array[4]
             if self.button_state != self.last_state:
@@ -1049,7 +1083,7 @@ class GUI:
         except Empty:
             pass
         finally:
-            self.main_window.after(30,self.CheckSensorPoll, s_queue)
+            self.main_window.after(10,self.CheckSensorPoll, s_queue)
     
    
 
