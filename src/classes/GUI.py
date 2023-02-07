@@ -23,7 +23,7 @@ from src.classes.HallEffect import HallEffect
 from src.classes.Custom2DTracker import Tracker
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.Brightness import Brightness
-from src.classes.JoystickClass import Joystick
+from src.classes.JoystickProcess import JoystickProcess
 
 
 
@@ -51,7 +51,6 @@ STATUS_PARAMS = {
     "rolling_status": False,
     "orient_status": False,
     "record_status": False,
-    "joystick_status":False,
 }
 
 ACOUSTIC_PARAMS = {
@@ -87,12 +86,17 @@ class GUI:
             self.main_window.winfo_reqheight(),
         )
 
-        #update sensor
+        #update sensor process/queue
         self.sensor = None
-        self.q = multiprocessing.Queue()
-        self.q.cancel_join_thread()
-        self.main_window.after(100, self.CheckQueuePoll, self.q)
+        self.sense_q = multiprocessing.Queue()
+        self.sense_q.cancel_join_thread()
+        self.main_window.after(30, self.CheckSensorPoll, self.sense_q)
 
+        #update joystick process/queue
+        self.joystick = None
+        self.joystick_q =  multiprocessing.Queue()
+        self.joystick_q.cancel_join_thread()
+        self.main_window.after(10, self.CheckJoystickPoll, self.joystick_q)
 
         #define instance of acoustic module
         self.AcousticModule = AcousticHandler()
@@ -756,7 +760,7 @@ class GUI:
             window5, 
             text="Test 10kHz", 
             command=test_freq, 
-            height=5, width=10,
+            height=1, width=10,
             bg = 'green',
             fg= 'white'
         )
@@ -879,18 +883,25 @@ class GUI:
         Returns:
             None
         """
-        #shutdown hall sensor readings
-        self.sensor.shutdown()
+       
 
         STATUS_PARAMS["rolling_status"] = False
         STATUS_PARAMS["orient_status"] = False
-        STATUS_PARAMS["joystick_status"] = False
         print(" -- Orient OFF -- ")
         print(" -- Roll OFF -- ")
-        print(" -- Joystick OFF -- ")
+        
         self.text_box.insert(END, "Zeroed\n")
         self.text_box.see("end")
+        
+        #shutdown hall sensor readings
+        if self.sensor is not None:
+            self.sensor.shutdown()
+        
+        if self.joystick is not None:
+            self.joystick.shutdown()
+            
 
+        
     def exit(self):
         """
         Quits the main window (self.main_window) and quits the ardunio connection
@@ -924,107 +935,45 @@ class GUI:
 
 
 
-    def handle_joystick(self, arduino: ArduinoHandler):
-        self.text_box.insert(END, "XBOX Connected\n")
-        self.text_box.see("end")
-        
-        #state buttons for acoustic button logic
-        button_state = 0
-        last_state = 0
-        counter = 0
-        switch_state = 0
-        # Instantiate the controller
-        joy = Joystick() 
-    
-        #initialize actions
-        typ = 4
-        input1 = 0
-        input2 = 0
-        input3 = 0
-        
-        while not joy.Back():
-            #try to read hall sense
-
-            #A Button Function --> Acoustic Module Toggle
-            button_state = joy.A()
-            if button_state != last_state:
-                if button_state == True:
-                    counter +=1
-            last_state = button_state
-            if counter %2 != 0 and switch_state !=0:
-                switch_state = 0
-                self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
-                print("acoustic: on")
-            elif counter %2 == 0 and switch_state !=1:
-                switch_state = 1
-                self.AcousticModule.stop()
-                print("acoustic: off")
-
-            #Left Joystick Function --> Orient
-            elif not joy.leftX() == 0 or not joy.leftY() == 0:
-                Bxl = round(joy.leftX(),2)
-                Byl = round(joy.leftY(),2)
-                typ = 2
-                input1 = Bxl
-                input2 = Byl
-                self.text_box.insert(END, "Left Joy\n")
-                self.text_box.see("end")
-
-            #Right Joystick Function --> Roll
-            elif not joy.rightX() == 0 or not joy.rightY() == 0:
-                Bxr = round(joy.rightX(),2)
-                Byr = round(joy.rightY(),2)
-                    
-                angle = np.arctan2(Bxr,Byr)
-                freq = CONTROL_PARAMS["rolling_frequency"]
-                gamma = CONTROL_PARAMS["gamma"]
-                typ = 1
-                input1 = angle
-                input2 = freq
-                input3 = gamma
-                self.text_box.insert(END, "Right Joy\n")
-                self.text_box.see("end")
-            
-            #Right Trigger Function --> Positive Z
-            elif joy.rightTrigger() > 0:
-                typ = 2
-                input3 = joy.rightTrigger()
-                self.text_box.insert(END, "Right Trig\n")
-                self.text_box.see("end")
-
-            #Left Trigger Function --> Negative Z
-            elif joy.leftTrigger() > 0:
-                typ = 2
-                input3 = -joy.leftTrigger()
-                self.text_box.insert(END, "Left Trig\n")
-                self.text_box.see("end")
-        
-            else:
-                typ = 4
-                input1 = 0
-                input2 = 0
-                input3 = 0
-                self.text_box.insert(END, "Zeroed\n")
-                self.text_box.see("end")
-
-            #send command
-            #if arduino.conn is not None:
-            #    arduino.send(typ,input1,input2,input3)
-            
-            #add delay and update window
-            self.main_window.update()
-            
-        self.text_box.insert(END, "XBOX Disconnected\n")
-        self.text_box.see("end")
-        joy.close()
-        arduino.send(4,0,0,0)
-        self.AcousticModule.stop()
         
         
+
+
+
     def joy_proc(self):
-        #going to want to impliment a similar subprocess as sensor proc
-        self.handle_joystick(self.arduino)
-        
+        """
+        creates an instance of JoystickProcess class and starts a subprocess to read values
+
+        Args:
+            None
+        Returns:
+            None
+        """
+        self.joystick = JoystickProcess()
+        self.joystick.start(self.joystick_q)
+    
+    def CheckJoystickPoll(self,j_queue):
+        """
+        checks the joystick queue for incoming command values
+
+        Args:
+            c_queue: queue object
+        Returns:
+            None
+        """
+        try:
+            joy_array = j_queue.get(0) # [typ,input1,input2,input3]
+            #self.text_box.delete(0, END)
+            #self.text_box.insert(0, "{}".format(joy_array))
+            print(joy_array)
+            
+        except Empty:
+            pass
+        finally:
+            self.main_window.after(10,self.CheckJoystickPoll, j_queue)
+  
+
+
 
     def sensor_proc(self):
         """
@@ -1036,9 +985,9 @@ class GUI:
             None
         """
         self.sensor = HallEffect()
-        self.sensor.start(self.q)
+        self.sensor.start(self.sense_q)
     
-    def CheckQueuePoll(self,c_queue):
+    def CheckSensorPoll(self,s_queue):
         """
         checks the hall effect sensor queue for incoming sensors values
 
@@ -1048,7 +997,7 @@ class GUI:
             None
         """
         try:
-            value_array = c_queue.get(0) # [s1,s2,s3,s4]
+            value_array = s_queue.get(0) # [s1,s2,s3,s4]
             
             #update Yfield
             self.Yfield_Entry.delete(0,END)
@@ -1068,7 +1017,7 @@ class GUI:
         except Empty:
             pass
         finally:
-            self.main_window.after(100,self.CheckQueuePoll, c_queue)
+            self.main_window.after(30,self.CheckSensorPoll, s_queue)
     
    
 
