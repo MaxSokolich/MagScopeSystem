@@ -478,8 +478,8 @@ class Tracker:
                         pass
                 else:
                     unique_control_param = None
-                    if arduino.conn is not None:
-                        arduino.send(4, 0, 0, 0)
+                    #if arduino.conn is not None:
+                    #    arduino.send(4, 0, 0, 0)
 
             self.robot_list[-1].add_track(
                 self.frame_num,
@@ -754,20 +754,6 @@ class Tracker:
         cam.release()
         cv2.destroyAllWindows()
         arduino.send(4, 0, 0, 0)
-
-
-        ''' 
-        plt.figure()
-        for i in self.robot_list:
-            plt.plot(i.blur_list[20:])
-            plt.title("blur")
-
-        plt.figure()
-        for i in self.robot_list:
-            plt.plot(i.area_list[20:])
-            plt.title("area")
-        plt.show()
-        '''
 
     def create_robotlist(self,filepath: Union[str, None]):
         #

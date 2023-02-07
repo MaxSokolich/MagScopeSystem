@@ -1024,13 +1024,13 @@ class GUI:
             if self.counter %2 != 0 and self.switch_state !=0:
                 self.switch_state = 0
                 self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
-                self.text_box.insert(END, "on\n")
+                self.text_box.insert(END, "acoustic on\n")
                 self.text_box.see("end")
                 #print("acoustic: on")
             elif self.counter %2 == 0 and self.switch_state !=1:
                 self.switch_state = 1
                 self.AcousticModule.stop()
-                self.text_box.insert(END, "off\n")
+                self.text_box.insert(END, "acoustic off\n")
                 self.text_box.see("end")
 
         except Empty:
