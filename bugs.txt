@@ -4,8 +4,8 @@ Bugs:
 4) scale text and hud based on resize scale
 5) test 3D tracking, add Z position
 9) add amplifier curcuit
-10) add simiulatneous joystick clicks
 11) maybe get ps5 controller working
+12) color cam still not working
 
 
 
