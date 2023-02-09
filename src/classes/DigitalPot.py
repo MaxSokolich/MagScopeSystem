@@ -5,7 +5,7 @@ Module containing the DigitalPot class
 """
 import RPi.GPIO as GPIO
 import time 
-
+GPIO.setmode(GPIO.BOARD)
 
 class DigitalPot:
     def __init__(self):
@@ -15,8 +15,7 @@ class DigitalPot:
         Args:
             None
         '''
-        GPIO.setmode(GPIO.BOARD)
-
+        
         self.CS = 11 #11
         self.UD = 13  #13
         self.INC = 15  #15
@@ -28,54 +27,84 @@ class DigitalPot:
         GPIO.output(self.CS, GPIO.HIGH)
         GPIO.output(self.INC, GPIO.HIGH)
         GPIO.output(self.UD, GPIO.LOW)
+
+        #keep track of total amplitude
+        self.count = 0 
     
     def activate(self):
         GPIO.output(self.CS, GPIO.LOW)
         time.sleep(0.000001)
-        print("chip activated")
 
     def set(self,flag):
+        """
+        sets the direction of increment: 
+        1: inrease
+        2: decrease
+        """
         if flag == 1:
             GPIO.output(self.UD, GPIO.HIGH)
         elif flag == 0:
             GPIO.output(self.UD, GPIO.LOW)
         time.sleep(0.000005)
-        print("wiper set to ", flag)
 
     def move(self,flag,step):
+        """
+        outputs the correct signals to either increase or decrease the module
+        """
         self.set(flag)
         for i in range(step):
             GPIO.output(self.INC, GPIO.LOW)
             time.sleep(0.0001)
             GPIO.output(self.INC, GPIO.HIGH)
-            time.sleep(0.0001)
-        print("step end")
+            time.sleep(0.000002)
+
+    def apply(self, amplitude):
+        """
+        directly sets the resitance value 0-30
+        """
+        if amplitude >= self.count:
+            actual_amp = amplitude - self.count
+            self.move(1,actual_amp)
+            self.count = amplitude
+        elif amplitude < self.count:
+            actual_amp = self.count - amplitude
+            self.move(0, actual_amp)
+            self.count = amplitude
     
     def reset(self):
+        """
+        Resets DP to zero 
+        """
         self.move(1, 99)
         self.move(0,99)
-        print("reset")
 
     def exit(self):
+        """
+        deactivates the DP
+        """
         GPIO.output(self.INC, GPIO.HIGH)
         GPIO.output(self.CS, GPIO.HIGH)
-        print("exited")
+        GPIO.cleanup()
+        
 
-            
+"""
+max step = 30
+we want a reading from 0 V to voltage maximum
+~0 Volts is max on resistance
 
+map(low_resistance, high resistance, high voltage, low voltage)
+"""
 
-'''if __name__ == "__main__":
+if __name__ == "__main__":
+
     P = DigitalPot()
     P.activate()
-    for i in range(9):
-        P.move(1,i)
-        print(i)
+    for i in range(30):
+        P.apply(i)
         time.sleep(.5)
-    for j in reversed(range(9)):
-        print(j)
-        P.move(0,i)
+    for i in reversed(range(30)):
+        P.apply(i)
         time.sleep(.5)
 
- 
     P.reset()
-    P.exit()'''
+    P.exit()

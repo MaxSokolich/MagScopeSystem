@@ -3,8 +3,10 @@ acoustic class to generate waveforms
 See HallEffect.py for compatibilty with adafruit modules
 '''
 # import GPIO module
+
 import RPi.GPIO as GPIO
 import time
+from src.classes.DigitalPot import DigitalPot
 
 
 class AcousticHandler:
@@ -16,9 +18,13 @@ class AcousticHandler:
             None
         '''
 
-		#GPIO.setmode(GPIO.TEGRA_SOC)
-		GPIO.setmode(GPIO.BOARD)
-		GPIO.setwarnings(False)
+		#Initilize Digital Potentiameter to adjust wave amplitude
+		self.DP = DigitalPot()
+		self.DP.activate()
+
+		
+		#GPIO.setmode(GPIO.BOARD)
+		#GPIO.setwarnings(False)
 
 		self.W_CLK = 21
 		self.FQ_UD = 22
@@ -51,7 +57,6 @@ class AcousticHandler:
 			self.pulseHigh(self.W_CLK)
 			data=data>>1
 		
-
 	# Function to send frequency (assumes 125MHz xtal) to AD9850 module
 	def sendFrequency(self,frequency):
 		freq=int(frequency*4294967296/125000000)
@@ -63,31 +68,36 @@ class AcousticHandler:
 		
 
 	# start the DDS module
-	def start(self,frequency):
+	def start(self,frequency, amplitude):
 			self.pulseHigh(self.RESET)
 			self.pulseHigh(self.W_CLK)
 			self.pulseHigh(self.FQ_UD)
 			self.sendFrequency(frequency)
+			
+			#set amplitude by adjusting digital pot
+			self.DP.apply(amplitude) #0-30
 											
 	# stop the DDS module
 	def stop(self):
 		self.pulseHigh(self.RESET)
+		self.DP.reset()
 
 	def close(self):
-		GPIO.cleanup()
+		#GPIO.cleanup()
+		self.DP.exit()
 
 
 
 
-'''if __name__ == "__main__":
+"""if __name__ == "__main__":
 	AcousticMod = AcousticHandler()
 	print("starting waveform...")
 	freqinput = 10000
-	AcousticMod.start(freqinput)
+	AcousticMod.start(freqinput,10)
 	time.sleep(1)
 	AcousticMod.stop()
 	print("stopped waveform")
-	AcousticMod.close()'''
+	AcousticMod.close()"""
 
 
 

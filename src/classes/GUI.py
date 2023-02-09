@@ -54,7 +54,8 @@ STATUS_PARAMS = {
 }
 
 ACOUSTIC_PARAMS = {
-    "acoustic_freq": 10000
+    "acoustic_freq": 10000,
+    "acoustic_amplitude": 0
 }
 
 MAGNETIC_FIELD_PARAMS = {
@@ -715,7 +716,7 @@ class GUI:
         
         
         def apply_freq():
-            self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
+            self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"],ACOUSTIC_PARAMS["acoustic_amplitude"])
             print(" -- waveform ON --")
         
         def stop_freq():
@@ -723,7 +724,7 @@ class GUI:
             print(" -- waveform OFF --")
         
         def test_freq():
-            self.AcousticModule.start(int(10000))
+            self.AcousticModule.start(int(10000),ACOUSTIC_PARAMS["acoustic_amplitude"])
             print(" -- waveform TEST --")
         
         def update_loop_slider_values(event):
@@ -735,6 +736,7 @@ class GUI:
                 None
             """
             ACOUSTIC_PARAMS["acoustic_freq"] = int(acoustic_slider.get())
+            ACOUSTIC_PARAMS["acoustic_amplitude"] = int(amplitude_slider.get())
             apply_freq()
             self.main_window.update()
 
@@ -791,6 +793,23 @@ class GUI:
         acoustic_slider.set(ACOUSTIC_PARAMS["acoustic_freq"])        
         acoustic_slider.pack()
         
+        #create amplitude widget
+        acoustic_amplitude = DoubleVar()
+        amplitude_slider = Scale(
+            master=window5,
+            label="Acoustic Amplitude",
+            from_=0,
+            to=30,
+            resolution=1,
+            variable=acoustic_amplitude,
+            width=50,
+            length=1000,
+            orient=HORIZONTAL,
+            command=update_loop_slider_values,
+        )
+       
+        amplitude_slider.set(ACOUSTIC_PARAMS["acoustic_amplitude"])        
+        amplitude_slider.pack()
         
     
 
@@ -957,41 +976,6 @@ class GUI:
         self.joystick = JoystickProcess()
         self.joystick.start(self.joystick_q)
 
-        try:
-            joy_array = self.joystick_q.get(0) # [typ,input1,input2,input3]
-            typ = joy_array[0]
-            
-
-            gamma = CONTROL_PARAMS["gamma"]
-            freq = CONTROL_PARAMS["rolling_frequency"]
-            #adjust actions for rolling command since cannot access gamma and freq in process
-            if typ == 1:
-                self.arduino.send(typ, joy_array[1], freq, gamma)
-            else:
-                self.arduino.send(typ, joy_array[1], joy_array[2], joy_array[3])
-
-            
-            
-            #A Button Function --> Acoustic Module Toggle
-            self.button_state = joy_array[4]
-            if self.button_state != self.last_state:
-                if self.button_state == True:
-                    self.counter +=1
-            self.last_state = self.button_state
-            if self.counter %2 != 0 and self.switch_state !=0:
-                self.switch_state = 0
-                self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
-                self.text_box.insert(END, "on\n")
-                self.text_box.see("end")
-                #print("acoustic: on")
-            elif self.counter %2 == 0 and self.switch_state !=1:
-                self.switch_state = 1
-                self.AcousticModule.stop()
-                self.text_box.insert(END, "off\n")
-                self.text_box.see("end")
-
-        except Empty:
-            pass
     
     def CheckJoystickPoll(self,j_queue):
         """
@@ -1023,7 +1007,7 @@ class GUI:
             self.last_state = self.button_state
             if self.counter %2 != 0 and self.switch_state !=0:
                 self.switch_state = 0
-                self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
+                self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"],ACOUSTIC_PARAMS["acoustic_amplitude"])
                 self.text_box.insert(END, "acoustic on\n")
                 self.text_box.see("end")
                 #print("acoustic: on")
