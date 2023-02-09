@@ -401,7 +401,7 @@ class Tracker:
                     if arduino.conn is not None:
                         input1 = my_alpha
                         input2 = self.control_params["rolling_frequency"]
-                        input3 = 90 #gamma
+                        input3 = self.control_params["gamma"]
                         arduino.send(
                             typ,input1,input2,input3
                         )
@@ -755,20 +755,6 @@ class Tracker:
         cv2.destroyAllWindows()
         arduino.send(4, 0, 0, 0)
 
-
-        ''' 
-        plt.figure()
-        for i in self.robot_list:
-            plt.plot(i.blur_list[20:])
-            plt.title("blur")
-
-        plt.figure()
-        for i in self.robot_list:
-            plt.plot(i.area_list[20:])
-            plt.title("area")
-        plt.show()
-        '''
-
     def create_robotlist(self,filepath: Union[str, None]):
         #
         """
@@ -904,6 +890,7 @@ class Tracker:
         Returns:
             None
         """
+        self.plot()
         pickles = []
         print(" --- writing robots ---")
         for bot in tqdm(self.robot_list):

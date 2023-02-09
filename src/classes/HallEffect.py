@@ -25,6 +25,7 @@ class HallEffect:
         None
     """
 
+
     def __init__(self):
         #set up sensor I2C
         self.i2c = busio.I2C(board.SCL, board.SDA)
@@ -69,7 +70,7 @@ class HallEffect:
         mapped_field = int(m(VAL))
         return mapped_field
     
-    def showFIELD(self,q):
+    def showFIELD(self,sense_q):
         """
         continously updates queue with sensor value from mulitprocssing.Process
         Args:
@@ -93,11 +94,11 @@ class HallEffect:
             s3 = self.readFIELD(self.chanNegY, negY)
             s4 = self.readFIELD(self.chanNegX, negX)
 
-            q.put([s1,s2,s3,s4])
+            sense_q.put([s1,s2,s3,s4])
         print(" -- Sensor Process Terminated -- ")
 
-    def start(self,q):
-        sensor_process = Process(target = self.showFIELD, args = (q,))
+    def start(self,sense_q):
+        sensor_process = Process(target = self.showFIELD, args = (sense_q,))
         sensor_process.start()
 
     def shutdown(self):
