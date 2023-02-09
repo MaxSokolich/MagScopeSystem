@@ -9,7 +9,12 @@ import time
 
 class AcousticHandler:
 	def __init__(self):
-		# setup GPIO
+		'''
+        Acosutic Handler Class that enables use of the AD9850 0-40 MHz DDS signal generator module
+
+        Args:
+            None
+        '''
 
 		#GPIO.setmode(GPIO.TEGRA_SOC)
 		GPIO.setmode(GPIO.BOARD)
@@ -74,7 +79,7 @@ class AcousticHandler:
 
 
 
-if __name__ == "__main__":
+'''if __name__ == "__main__":
 	AcousticMod = AcousticHandler()
 	print("starting waveform...")
 	freqinput = 10000
@@ -82,7 +87,7 @@ if __name__ == "__main__":
 	time.sleep(1)
 	AcousticMod.stop()
 	print("stopped waveform")
-	AcousticMod.close()
+	AcousticMod.close()'''
 
 
 
