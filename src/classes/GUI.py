@@ -990,13 +990,17 @@ class GUI:
             joy_array = j_queue.get(0) # [typ,input1,input2,input3]
             typ = joy_array[0]
             
-
-            gamma = CONTROL_PARAMS["gamma"]
-            freq = CONTROL_PARAMS["rolling_frequency"]
-            #adjust actions for rolling command since cannot access gamma and freq in process
+            
+            #Send arduino signal
             if typ == 1:
+                gamma = CONTROL_PARAMS["gamma"]
+                freq = CONTROL_PARAMS["rolling_frequency"]
                 self.arduino.send(typ, joy_array[1], freq, gamma)
-            else:
+            elif typ == 5:  #toggle gamma
+                freq = CONTROL_PARAMS["rolling_frequency"]
+                self.arduino.send(typ, joy_array[1], freq, joy_array[3])
+
+            else: # apply orientation or zeroing
                 self.arduino.send(typ, joy_array[1], joy_array[2], joy_array[3])
 
             #A Button Function --> Acoustic Module Toggle
@@ -1021,8 +1025,6 @@ class GUI:
             pass
         finally:
             self.main_window.after(10,self.CheckJoystickPoll, j_queue)
-  
-
 
 
     def sensor_proc(self):
