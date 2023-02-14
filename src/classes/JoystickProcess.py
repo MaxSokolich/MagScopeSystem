@@ -32,6 +32,12 @@ class JoystickProcess():
             # A Button --> Acoustic Module Toggle
             self.acoustic_status = self.joy.A()
 
+            #Y Button --> Magnetic Spinning
+            if self.joy.Y():  #turn on spinning
+                self.typ = 5  
+                self.input3 = 90
+                
+
             #Left Joystick Function --> Orient
             if not self.joy.leftX() == 0 or not self.joy.leftY() == 0:
                 Bxl = round(self.joy.leftX(),2)
