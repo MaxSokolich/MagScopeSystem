@@ -959,10 +959,7 @@ class GUI:
 
 
 
-        
-        
-
-
+    
 
     def joy_proc(self):
         """
@@ -983,6 +980,10 @@ class GUI:
 
         Args:
             c_queue: queue object
+            joy_array: [typ, input1, input2, input3]
+            input1(typ1 | typ2) = angle|  Bx
+            input2(typ1 | typ2) = freq | By
+            input3(typ1 | typ2) = gamma | Bz
         Returns:
             None
         """
@@ -993,16 +994,14 @@ class GUI:
             
             #Send arduino signal
             if typ == 1:
-                gamma = CONTROL_PARAMS["gamma"]
-                freq = CONTROL_PARAMS["rolling_frequency"]
-                self.arduino.send(typ, joy_array[1], freq, gamma)
-            elif typ == 5:  #toggle gamma
-                freq = CONTROL_PARAMS["rolling_frequency"]
-                self.arduino.send(typ, joy_array[1], freq, joy_array[3])
-
-            else: # apply orientation or zeroing
-                self.arduino.send(typ, joy_array[1], joy_array[2], joy_array[3])
-
+                #gamma toggle logic.
+                if joy_array[3] == 0:
+                    self.arduino.send(typ, joy_array[1], CONTROL_PARAMS["rolling_frequency"], joy_array[3]) #use gamma = 0
+                else: 
+                    self.arduino.send(typ, joy_array[1], CONTROL_PARAMS["rolling_frequency"], CONTROL_PARAMS["gamma"])
+            else:
+                self.arduino.send(typ, joy_array[1], joy_array[2], joy_array[3]) 
+                
             #A Button Function --> Acoustic Module Toggle
             self.button_state = joy_array[4]
             if self.button_state != self.last_state:
