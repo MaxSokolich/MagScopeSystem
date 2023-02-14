@@ -100,9 +100,11 @@ if __name__ == "__main__":
     P = DigitalPot()
     P.activate()
     for i in range(30):
+        print(i)
         P.apply(i)
         time.sleep(.5)
     for i in reversed(range(30)):
+        print(i)
         P.apply(i)
         time.sleep(.5)
 

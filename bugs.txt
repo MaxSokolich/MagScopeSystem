@@ -3,7 +3,6 @@ Bugs:
 3) fix scale bar and objective selecting
 4) scale text and hud based on resize scale
 5) test 3D tracking, add Z position
-9) add amplifier curcuit/digital pot
 11) maybe get ps5 controller working
 12) fix joystick not being recognized
 13) fix digitial potentiameter mapping

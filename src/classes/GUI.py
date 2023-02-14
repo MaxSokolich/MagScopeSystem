@@ -780,8 +780,8 @@ class GUI:
         acoustic_slider = Scale(
             master=window5,
             label="Acoustic Frequency",
-            from_=1000000,
-            to=2000000,
+            from_=8000,
+            to=12000,
             resolution=1000,
             variable=acoustic_frequency,
             width=50,

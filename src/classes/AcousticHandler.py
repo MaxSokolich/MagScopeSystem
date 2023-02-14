@@ -85,6 +85,7 @@ class AcousticHandler:
 	def close(self):
 		#GPIO.cleanup()
 		self.DP.exit()
+		
 
 
 
