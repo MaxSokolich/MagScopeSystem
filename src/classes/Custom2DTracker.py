@@ -62,9 +62,11 @@ class Tracker:
         self.prev_frame_time = 0  # prev frame time, used for self.fps calcs
         self.new_frame_time = 0  # time of newest frame, used for self.fps calcs
         # self.fps_list = []  # Store the self.fps at the current frame
-        self.pix_2metric = 3.45/camera_params["Obj"]  # pix/micron ratio #NEEDS FIXING
+        #self.pix_2metric = 0.0009667* camera_params["Obj"]  # pix/micron ratio #NEEDS FIXING
         self.width = 0  # width of cv2 window
         self.height = 0  # height of cv2 window
+
+        self.pix_2metric = 1#(106.2 / self.width / 100) * camera_params["Obj"]
 
         self.control_params = control_params
         self.camera_params = camera_params
@@ -190,24 +192,28 @@ class Tracker:
         x_2_new = 2 * max_width
         y_2_new = 2 * max_height
         new_crop = [int(x_1_new), int(y_1_new), int(x_2_new), int(y_2_new)]
-
+        
+        resize_scale = self.camera_params["resize_scale"]
+        height = self.height * resize_scale //100
+        print(height)
+        self.pix_2metric = (106.2 / height / 100) * self.camera_params["Obj"]
         # calculate velocity based on last position and self.fps
         if len(bot.position_list) > 5:
             velx = (
-                (current_pos[0] + x_1 - bot.position_list[-1][0])
-                * fps.get_fps()
+                (current_pos[0] + x_1 - bot.position_list[-5][0])
+                * fps.get_fps()*5
                 * (self.pix_2metric)
             )
             vely = (
-                (current_pos[1] + y_1 - bot.position_list[-1][1])
-                * fps.get_fps()
+                (current_pos[1] + y_1 - bot.position_list[-5][1])
+                * fps.get_fps()*5
                 * (self.pix_2metric)
             )
             velz = 0
             
             if len(bot.blur_list) > 0:
                 velz = (bot.blur_list[-4] - blur)    #This needs to be scaled or something
-            vel = Velocity(velx, vely, velz)
+            vel = Velocity(velx, vely, 0)
             bot.add_velocity(vel)
           
         # update robots params
