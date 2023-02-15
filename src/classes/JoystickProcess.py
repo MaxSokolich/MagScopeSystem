@@ -26,7 +26,7 @@ class JoystickProcess():
         self.input3 = 0
 
         self.acoustic_status = 0
-        self.amplitude = 1
+        self.amplitude = 0.9
         #exit event
         self.exit = Event()        
 

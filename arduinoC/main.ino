@@ -267,9 +267,9 @@ void loop()
        gamma = action[3];
        tim = micros() % 7812500;
        t = tim / 7812500;
-       Bx = cos(gamma)*cos(alpha)*cos(omega*t) + sin(alpha)*sin(omega*t);
-       By = -cos(gamma)*sin(alpha)*cos(omega*t) + cos(alpha)*sin(omega*t); 
-       Bz = sin(gamma)*cos(omega*t);
+       Bx = ( cos(gamma)*cos(alpha)*cos(omega*t) + sin(alpha)*sin(omega*t));
+       By = ( -cos(gamma)*sin(alpha)*cos(omega*t) + cos(alpha)*sin(omega*t)); 
+       Bz = ( sin(gamma)*cos(omega*t));
 
        set1(By);
        set2(Bx);
