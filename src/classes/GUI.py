@@ -655,7 +655,7 @@ class GUI:
             master=window4,
             label="Frame Rate",
             from_=1,
-            to=130,
+            to=24,
             resolution=1,
             variable=frame_rate,
             width=20,
