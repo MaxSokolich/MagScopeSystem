@@ -18,7 +18,7 @@ from typing import Union
 from tkinter import *
 from tkinter import Tk
 from tkinter import filedialog
-from src.classes.AcousticHandler import AcousticHandler
+from src.classes.AcousticClass import AcousticClass
 from src.classes.HallEffect import HallEffect
 from src.classes.Custom2DTracker import Tracker
 from src.classes.ArduinoHandler import ArduinoHandler
@@ -54,7 +54,7 @@ STATUS_PARAMS = {
 }
 
 ACOUSTIC_PARAMS = {
-    "acoustic_freq": 10000,
+    "acoustic_freq": 0,
     "acoustic_amplitude": 0
 }
 
@@ -100,7 +100,8 @@ class GUI:
         self.main_window.after(10, self.CheckJoystickPoll, self.joystick_q)
 
         #define instance of acoustic module
-        self.AcousticModule = AcousticHandler()
+        self.AcousticModule = AcousticClass()
+        self.AcousticModule.dp_activate()
         #acoustic conditioning/logic
         self.button_state = 0
         self.last_state = 0
@@ -780,8 +781,8 @@ class GUI:
         acoustic_slider = Scale(
             master=window5,
             label="Acoustic Frequency",
-            from_=8000,
-            to=12000,
+            from_=1000000,
+            to=2000000,
             resolution=1000,
             variable=acoustic_frequency,
             width=50,
@@ -799,8 +800,8 @@ class GUI:
             master=window5,
             label="Acoustic Amplitude",
             from_=0,
-            to=30,
-            resolution=1,
+            to=5,
+            resolution=.1,
             variable=acoustic_amplitude,
             width=50,
             length=1000,
@@ -811,6 +812,10 @@ class GUI:
         amplitude_slider.set(ACOUSTIC_PARAMS["acoustic_amplitude"])        
         amplitude_slider.pack()
         
+        def EXIT():
+            self.AcousticModule.close()
+            window5.destroy()
+        window5.protocol("WM_DELETE_WINDOW",EXIT)
     
 
 
@@ -937,7 +942,7 @@ class GUI:
         Returns:
             None
         """
-        self.AcousticModule.close()
+        self.AcousticModule.exit()
         self.main_window.quit()
         self.main_window.destroy()
         self.arduino.close()

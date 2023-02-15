@@ -6,7 +6,7 @@ See HallEffect.py for compatibilty with adafruit modules
 
 import RPi.GPIO as GPIO
 import time
-from src.classes.DigitalPot import DigitalPot
+#from src.classes.DigitalPot import DigitalPot
 
 
 class AcousticHandler:
@@ -19,11 +19,11 @@ class AcousticHandler:
         '''
 
 		#Initilize Digital Potentiameter to adjust wave amplitude
-		self.DP = DigitalPot()
-		self.DP.activate()
+		#self.DP = DigitalPot()
+		#self.DP.activate()
 
 		
-		#GPIO.setmode(GPIO.BOARD)
+		GPIO.setmode(GPIO.BOARD)
 		#GPIO.setwarnings(False)
 
 		self.W_CLK = 21
@@ -75,22 +75,22 @@ class AcousticHandler:
 			self.sendFrequency(frequency)
 			
 			#set amplitude by adjusting digital pot
-			self.DP.apply(amplitude) #0-30
+			#self.DP.apply(amplitude) #0-30
 											
 	# stop the DDS module
 	def stop(self):
 		self.pulseHigh(self.RESET)
-		self.DP.reset()
+		#self.DP.reset()
 
 	def close(self):
-		#GPIO.cleanup()
-		self.DP.exit()
+		GPIO.cleanup()
+		#self.DP.exit()
 		
 
 
 
 
-"""if __name__ == "__main__":
+if __name__ == "__main__":
 	AcousticMod = AcousticHandler()
 	print("starting waveform...")
 	freqinput = 10000
@@ -98,7 +98,7 @@ class AcousticHandler:
 	time.sleep(1)
 	AcousticMod.stop()
 	print("stopped waveform")
-	AcousticMod.close()"""
+	AcousticMod.close()
 
 
 

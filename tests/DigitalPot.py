@@ -102,11 +102,11 @@ if __name__ == "__main__":
     for i in range(30):
         print(i)
         P.apply(i)
-        time.sleep(.5)
+        time.sleep(.1)
     for i in reversed(range(30)):
         print(i)
         P.apply(i)
-        time.sleep(.5)
+        time.sleep(.1)
 
     P.reset()
     P.exit()

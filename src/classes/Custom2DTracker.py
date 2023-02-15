@@ -745,6 +745,7 @@ class Tracker:
                 delay = 1
             else:
                 delay = int((1/self.camera_params["framerate"])*1000)
+            
             # Exit
             main_window.update()
             if cv2.waitKey(delay) & 0xFF == ord("q"):
