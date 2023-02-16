@@ -195,7 +195,7 @@ class Tracker:
         
         
         # calculate velocity based on last position and self.fps
-        print(pix_2metric)
+        #print(pix_2metric)
         if len(bot.position_list) > 5:
             velx = (
                 (current_pos[0] + x_1 - bot.position_list[-5][0])
@@ -525,9 +525,6 @@ class Tracker:
         )
 
         # scale bar
-        print(int(1000 * (pix_2metric)))
-        print(frame.shape)
-        print(pix_2metric)
         cv2.line(
             frame, (75, 80), (75 + int(100 * (pix_2metric)),80), (0, 0, 255), 3
         )
@@ -552,7 +549,7 @@ class Tracker:
 
             # display dragon tails
             pts = np.array(self.robot_list[bot_id].position_list, np.int32)
-            cv2.polylines(frame, [pts], False, bot_color, 1)
+            cv2.polylines(frame, [pts], False, bot_color, 4)
 
             # if there are more than 10 velocities recorded in the robot, get
             # and display the average velocity
