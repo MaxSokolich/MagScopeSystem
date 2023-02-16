@@ -1,94 +1,45 @@
-def handle_joystick(self, arduino: ArduinoHandler):
-        #state buttons for acoustic button logic
-        button_state = 0
-        last_state = 0
-        counter = 0
-        switch_state = 0
+from matplotlib_scalebar.scalebar import ScaleBar
+import cv2
+import EasyPySpin
+import matplotlib.pyplot as plt
+scalebar = ScaleBar(0.08, "um", length_fraction = 0.25)
 
-        # Instantiate the controller
-        joy = Joystick() 
-        self.text_box.insert(END, "XBOX Connected\n")
-        self.text_box.see("end")
+
+s = plt.add__artist(scalebar)
+print(type(s))
+cam = EasyPySpin.VideoCapture(0)
+
+
+cv2.imshow(scalebar)
+
+
+while True:
+ 
+    suc, frame = cam.read()
     
-        #initialize actions
-        typ = 4
-        input1 = 0
-        input2 = 0
-        input3 = 0
-        
-        while not joy.Back():
+    r = .5
+    size = (int(frame.shape[1]*r), int(frame.shape[0]*r))
+    frame = cv2.resize(frame,size,interpolation = cv2.INTER_AREA)
+    print(frame.shape)
+    height = int(frame.shape[0])
+    print(height)
+    pix_2metric = (106.2 / height / 100) * 10
+    print(pix_2metric)
+    
+    
+   
+    
 
-            #A Button Function --> Acoustic Module Toggle
-            button_state = joy.A()
-            if button_state != last_state:
-                if button_state == True:
-                    counter +=1
-            last_state = button_state
-            if counter %2 != 0 and switch_state !=0:
-                switch_state = 0
-                self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"])
-                print("acoustic: on")
-            elif counter %2 == 0 and switch_state !=1:
-                switch_state = 1
-                self.AcousticModule.stop()
-                print("acoustic: off")
+    #send actions to arduino
+    #Send(arduino,typ,angle,rolling_frequency)
+    
+    cv2.add
+    
+    cv2.imshow("im",frame)
+  
 
-            #Left Joystick Function --> Orient
-            elif not joy.leftX() == 0 or not joy.leftY() == 0:
-                Bxl = round(joy.leftX(),2)
-                Byl = round(joy.leftY(),2)
-                typ = 2
-                input1 = Bxl
-                input2 = Byl
-                self.text_box.insert(END, "Left Joy\n")
-                self.text_box.see("end")
 
-            #Right Joystick Function --> Roll
-            elif not joy.rightX() == 0 or not joy.rightY() == 0:
-                Bxr = round(joy.rightX(),2)
-                Byr = round(joy.rightY(),2)
-                    
-                angle = np.arctan2(Bxr,Byr)
-                freq = CONTROL_PARAMS["rolling_frequency"]
-                gamma = CONTROL_PARAMS["gamma"]
-                typ = 1
-                input1 = angle
-                input2 = freq
-                input3 = gamma
-                self.text_box.insert(END, "Right Joy\n")
-                self.text_box.see("end")
-            
-            #Right Trigger Function --> Positive Z
-            elif joy.rightTrigger() > 0:
-                typ = 2
-                input3 = joy.rightTrigger()
-                self.text_box.insert(END, "Right Trig\n")
-                self.text_box.see("end")
-
-            #Left Trigger Function --> Negative Z
-            elif joy.leftTrigger() > 0:
-                typ = 2
-                input3 = -joy.leftTrigger()
-                self.text_box.insert(END, "Left Trig\n")
-                self.text_box.see("end")
-        
-            else:
-                typ = 4
-                input1 = 0
-                input2 = 0
-                input3 = 0
-                self.text_box.insert(END, "Zeroed\n")
-                self.text_box.see("end")
-
-            #send command
-            if arduino.conn is not None:
-                arduino.send(typ,input1,input2,input3)
-            
-            #add delay and update window
-            self.main_window.update()
-            
-        self.text_box.insert(END, "XBOX Disconnected\n")
-        self.text_box.see("end")
-        joy.close()
-        arduino.send(4,0,0,0)
-        self.AcousticModule.stop()
+    if cv2.waitKey(10) & 0xFF == ord('q'):# or BUTTON == ["b",1]:
+        break
+cam.release()
+cv2.destroyAllWindows()

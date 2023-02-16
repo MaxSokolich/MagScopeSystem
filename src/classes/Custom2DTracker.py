@@ -62,11 +62,9 @@ class Tracker:
         self.prev_frame_time = 0  # prev frame time, used for self.fps calcs
         self.new_frame_time = 0  # time of newest frame, used for self.fps calcs
         # self.fps_list = []  # Store the self.fps at the current frame
-        #self.pix_2metric = 0.0009667* camera_params["Obj"]  # pix/micron ratio #NEEDS FIXING
+
         self.width = 0  # width of cv2 window
         self.height = 0  # height of cv2 window
-
-        self.pix_2metric = 1#(106.2 / self.width / 100) * camera_params["Obj"]
 
         self.control_params = control_params
         self.camera_params = camera_params
@@ -156,6 +154,7 @@ class Tracker:
         blur: float,
         max_dim: Tuple[int, int],
         fps: FPSCounter,
+        pix_2metric: float
     ):
         """
         Calculate and display circular marker for a bot's position. Uses the bot's positional data,
@@ -175,6 +174,7 @@ class Tracker:
             new_pos:    tuple containing the starting X and Y position of bot
             current_pos:    current position of bot in the form of [x, y]
             max_dim:  tuple with maximum width and height of all contours
+            pix_2metric:  (pix/um )conversion factor from pixels to um: depends on rsize scale and objective
 
         Returns:
             None
@@ -193,21 +193,19 @@ class Tracker:
         y_2_new = 2 * max_height
         new_crop = [int(x_1_new), int(y_1_new), int(x_2_new), int(y_2_new)]
         
-        resize_scale = self.camera_params["resize_scale"]
-        height = self.height * resize_scale //100
-        print(height)
-        self.pix_2metric = (106.2 / height / 100) * self.camera_params["Obj"]
+        
         # calculate velocity based on last position and self.fps
+        print(pix_2metric)
         if len(bot.position_list) > 5:
             velx = (
                 (current_pos[0] + x_1 - bot.position_list[-5][0])
                 * fps.get_fps()*5
-                * (self.pix_2metric)
+                / (pix_2metric)
             )
             vely = (
                 (current_pos[1] + y_1 - bot.position_list[-5][1])
                 * fps.get_fps()*5
-                * (self.pix_2metric)
+                / (pix_2metric)
             )
             velz = 0
             
@@ -230,7 +228,7 @@ class Tracker:
             -1,
         )
 
-    def detect_robot(self, frame: np.ndarray, fps: FPSCounter):
+    def detect_robot(self, frame: np.ndarray, fps: FPSCounter, pix_2metric: float):
         """
         For each robot defined through clicking, crop a frame around it based on initial
         left mouse click position, then:
@@ -266,7 +264,7 @@ class Tracker:
                 # remove small elements by calcualting arrea
                 area = cv2.contourArea(contour)
 
-                if area > area_threshold:  # and area < 3000:# and area < 2000: #pixels
+                if area > area_threshold:  # and area < 3000:# and area < 2000: #um
                     area_list.append(area)
 
 
@@ -296,7 +294,7 @@ class Tracker:
             # TRACK AND UPDATE ROBOT
             # %%
             if area_list:
-                avg_area = sum(area_list) / len(area_list)  # record average area
+                avg_area = (sum(area_list) / len(area_list))  * (1/pix_2metric**2) # record average area of all detected contours
                 self.track_robot_position(
                     avg_area,
                     bot,
@@ -306,6 +304,7 @@ class Tracker:
                     blur,
                     (max_width, max_height),
                     fps,
+                    pix_2metric
                 )
             # else:
             #     pass
@@ -498,7 +497,7 @@ class Tracker:
                 unique_control_param,
             )
 
-    def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int):
+    def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int, pix_2metric: float):
         """
         Compute and display average FPS up to this frame
 
@@ -506,6 +505,7 @@ class Tracker:
             fps: FPSCounter object for updating current fps information
             frame: np array representation of the current video frame read in
             resize_scale:   scaling factor for resizing a GUI element
+            pix2_metric = 0.0964 pixels / 1um @ 1x
         Returns:
             None
         """
@@ -525,8 +525,11 @@ class Tracker:
         )
 
         # scale bar
+        print(int(1000 * (pix_2metric)))
+        print(frame.shape)
+        print(pix_2metric)
         cv2.line(
-            frame, (75, 80), (int(100 * (1 / self.pix_2metric)), 80), (0, 0, 255), 3
+            frame, (75, 80), (75 + int(100 * (pix_2metric)),80), (0, 0, 255), 3
         )
 
     def display_hud(self, frame: np.ndarray):
@@ -570,9 +573,14 @@ class Tracker:
                 #Vz value calculated from blur
                 vz = [v.z for v in bot.velocity_list[-10:]]
                 vz_avg = sum(vz)/len(vz)
+
+                #average diamter of bot (calcuating from area of circle)
+                dia = np.sqrt(4*bot.avg_area/np.pi)
+                
+                
                 cv2.putText(
                     frame,
-                    f"{bot_id+1} - vmag: {int(vmag_avg)} blur: {round(blur, 2)}",
+                    f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um",
                     (0, 150 + bot_id * 20),
                     cv2.FONT_HERSHEY_COMPLEX,
                     0.5,
@@ -692,12 +700,17 @@ class Tracker:
             )
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
 
+            #calculate pixel to metric for varying res
+            #106.2 um = 1024 pixels  @ 50%  resize and 100 x
+            pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"]  
+            
+
             if enable_tracking:
                 self.frame_num += 1  # increment frame
 
                 if self.num_bots > 0:
                     # DETECT ROBOTS AND UPDATE TRAJECTORY
-                    self.detect_robot(frame, fps_counter)
+                    self.detect_robot(frame, fps_counter,pix_2metric)
 
                     # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
                     self.control_trajectory(frame, start, arduino)
@@ -706,7 +719,7 @@ class Tracker:
                     self.display_hud(frame)
 
                 # Compute and record self.fps
-                self.get_fps(fps_counter, frame, resize_scale)
+                self.get_fps(fps_counter, frame, resize_scale, pix_2metric)
             else:
                 self.display_livestream_info(frame, fps_counter, resize_scale)
             
