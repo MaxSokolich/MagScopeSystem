@@ -43,8 +43,8 @@ CONTROL_PARAMS = {
 
 CAMERA_PARAMS = {
     "resize_scale": 50, 
-    "framerate": 24, 
-    "exposure": 5000, 
+    "framerate": 23, 
+    "exposure": 10000, 
     "Obj": 10}
 
 STATUS_PARAMS = {
@@ -679,7 +679,7 @@ class GUI:
             master=window4,
             label="Obj x",
             from_=10,
-            to=50,
+            to=100,
             resolution=10,
             variable=obj,
             width=20,

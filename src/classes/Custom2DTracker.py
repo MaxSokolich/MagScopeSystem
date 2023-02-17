@@ -62,11 +62,9 @@ class Tracker:
         self.prev_frame_time = 0  # prev frame time, used for self.fps calcs
         self.new_frame_time = 0  # time of newest frame, used for self.fps calcs
         # self.fps_list = []  # Store the self.fps at the current frame
-        #self.pix_2metric = 0.0009667* camera_params["Obj"]  # pix/micron ratio #NEEDS FIXING
+
         self.width = 0  # width of cv2 window
         self.height = 0  # height of cv2 window
-
-        self.pix_2metric = 1#(106.2 / self.width / 100) * camera_params["Obj"]
 
         self.control_params = control_params
         self.camera_params = camera_params
@@ -114,7 +112,7 @@ class Tracker:
             self.robot_list.append(robot)
 
             # add starting point of trajectory
-            self.node = 0
+            self.node = 1
             self.robot_list[-1].add_trajectory(bot_loc)
             self.num_bots += 1
 
@@ -156,6 +154,7 @@ class Tracker:
         blur: float,
         max_dim: Tuple[int, int],
         fps: FPSCounter,
+        pix_2metric: float
     ):
         """
         Calculate and display circular marker for a bot's position. Uses the bot's positional data,
@@ -175,6 +174,7 @@ class Tracker:
             new_pos:    tuple containing the starting X and Y position of bot
             current_pos:    current position of bot in the form of [x, y]
             max_dim:  tuple with maximum width and height of all contours
+            pix_2metric:  (pix/um )conversion factor from pixels to um: depends on rsize scale and objective
 
         Returns:
             None
@@ -193,21 +193,19 @@ class Tracker:
         y_2_new = 2 * max_height
         new_crop = [int(x_1_new), int(y_1_new), int(x_2_new), int(y_2_new)]
         
-        resize_scale = self.camera_params["resize_scale"]
-        height = self.height * resize_scale //100
-        print(height)
-        self.pix_2metric = (106.2 / height / 100) * self.camera_params["Obj"]
+        
         # calculate velocity based on last position and self.fps
+        #print(pix_2metric)
         if len(bot.position_list) > 5:
             velx = (
                 (current_pos[0] + x_1 - bot.position_list[-5][0])
                 * fps.get_fps()*5
-                * (self.pix_2metric)
+                / (pix_2metric)
             )
             vely = (
                 (current_pos[1] + y_1 - bot.position_list[-5][1])
                 * fps.get_fps()*5
-                * (self.pix_2metric)
+                / (pix_2metric)
             )
             velz = 0
             
@@ -230,7 +228,7 @@ class Tracker:
             -1,
         )
 
-    def detect_robot(self, frame: np.ndarray, fps: FPSCounter):
+    def detect_robot(self, frame: np.ndarray, fps: FPSCounter, pix_2metric: float):
         """
         For each robot defined through clicking, crop a frame around it based on initial
         left mouse click position, then:
@@ -266,7 +264,7 @@ class Tracker:
                 # remove small elements by calcualting arrea
                 area = cv2.contourArea(contour)
 
-                if area > area_threshold:  # and area < 3000:# and area < 2000: #pixels
+                if area > area_threshold:  # and area < 3000:# and area < 2000: #um
                     area_list.append(area)
 
 
@@ -296,7 +294,7 @@ class Tracker:
             # TRACK AND UPDATE ROBOT
             # %%
             if area_list:
-                avg_area = sum(area_list) / len(area_list)  # record average area
+                avg_area = (sum(area_list) / len(area_list))  * (1/pix_2metric**2) # record average area of all detected contours
                 self.track_robot_position(
                     avg_area,
                     bot,
@@ -306,6 +304,7 @@ class Tracker:
                     blur,
                     (max_width, max_height),
                     fps,
+                    pix_2metric
                 )
             # else:
             #     pass
@@ -339,43 +338,39 @@ class Tracker:
             None
         """
         if len(self.robot_list[-1].trajectory) > 1:
+            #Draw trajectory
+            pts = np.array(self.robot_list[-1].trajectory, np.int32)
+            cv2.polylines(frame, [pts], False, (1, 1, 255), 3)
+
+            #logic for arrival condition
             if self.node == len(self.robot_list[-1].trajectory):
-                self.alpha = 1000  # can be any number not 0 - 2pi. indicates stop outpting current
-                # define first node in traj array
-                # define first node in traj array
-                targetx = self.robot_list[-1].trajectory[-1][0]
-                targety = self.robot_list[-1].trajectory[-1][1]
-
-                # calcualte bots position
-                # choose the last bot that was pressed for now
-                robotx = self.robot_list[-1].position_list[-1][0]
-                roboty = self.robot_list[-1].position_list[-1][1]
-
-                error = np.sqrt((targetx - robotx) ** 2 + (targety - roboty) ** 2)
                 print("arrived")
                 unique_control_param = None
                 if arduino.conn is not None:
                     arduino.send(4, 0, 0, 0)
+                
+            #closed loop algorithm 
             else:
-                # non-linear closed loop
-                # display trajectory
-                # initialize a B_vec for orientation algorithm, not really used,
-                # just needs to be defined for algorithm to work
-                B_vec = np.array([1, 0])
-
-                pts = np.array(self.robot_list[-1].trajectory, np.int32)
-                cv2.polylines(frame, [pts], False, (1, 1, 255), 1)
-
-                # define first node in traj array
+                #define target coordinate
                 targetx = self.robot_list[-1].trajectory[self.node][0]
                 targety = self.robot_list[-1].trajectory[self.node][1]
 
-                # calcualte bots position
-                # choose the last bot that was pressed for now
+                #define robots current position
                 robotx = self.robot_list[-1].position_list[-1][0]
                 roboty = self.robot_list[-1].position_list[-1][1]
+                
+                #calculate error between node and robot
+                direction_vec = [targetx - robotx, targety - roboty]
+                error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
+                self.alpha = np.arctan2(direction_vec[1], direction_vec[0])
 
-                # calcualte error
+                B_vec = np.array([1, 0])
+
+                #draw trajectory
+                pts = np.array(self.robot_list[-1].trajectory, np.int32)
+                cv2.polylines(frame, [pts], False, (1, 1, 255), 3)
+
+                #draw error arrow
                 cv2.arrowedLine(
                     frame,
                     (int(robotx), int(roboty)),
@@ -383,27 +378,16 @@ class Tracker:
                     [0, 0, 0],
                     3,
                 )
-                error = np.sqrt((targetx - robotx) ** 2 + (targety - roboty) ** 2)
-
                 if error < 20:
-                    targetx = self.robot_list[-1].trajectory[self.node][0]
-                    targety = self.robot_list[-1].trajectory[self.node][1]
-                    direction_vec = [targetx - robotx, targety - roboty]
-                    self.alpha = np.arctan2(direction_vec[1], direction_vec[0])
-
                     self.node += 1
 
-                else:
-                    direction_vec = [targetx - robotx, targety - roboty]
-                    self.alpha = np.arctan2(direction_vec[1], direction_vec[0])
-
-                # now update params and output to coils if True
+                ##ROLLING
                 if (
                     self.status_params["rolling_status"]
                     and not self.status_params["orient_status"]
                 ):
                     typ = 1
-                    my_alpha = self.alpha - np.pi / 2
+                    my_alpha = self.alpha + np.pi/2
                     if arduino.conn is not None:
                         input1 = my_alpha
                         input2 = self.control_params["rolling_frequency"]
@@ -412,7 +396,7 @@ class Tracker:
                             typ,input1,input2,input3
                         )
                     unique_control_param = "Roll"
-
+                ##ORIENTING
                 elif (
                     self.status_params["orient_status"]
                     and not self.status_params["rolling_status"]
@@ -487,18 +471,18 @@ class Tracker:
                     if arduino.conn is not None:
                         arduino.send(4, 0, 0, 0)
 
-            self.robot_list[-1].add_track(
-                self.frame_num,
-                error,
-                [robotx, roboty],
-                [targetx, targety],
-                self.alpha,
-                self.control_params["rolling_frequency"],
-                time.time(),
-                unique_control_param,
-            )
+                self.robot_list[-1].add_track(
+                    self.frame_num,
+                    error,
+                    [robotx, roboty],
+                    [targetx, targety],
+                    self.alpha,
+                    self.control_params["rolling_frequency"],
+                    time.time(),
+                    unique_control_param,
+                )
 
-    def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int):
+    def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int, pix_2metric: float):
         """
         Compute and display average FPS up to this frame
 
@@ -506,6 +490,7 @@ class Tracker:
             fps: FPSCounter object for updating current fps information
             frame: np array representation of the current video frame read in
             resize_scale:   scaling factor for resizing a GUI element
+            pix2_metric = 0.0964 pixels / 1um @ 1x
         Returns:
             None
         """
@@ -526,7 +511,7 @@ class Tracker:
 
         # scale bar
         cv2.line(
-            frame, (75, 80), (int(100 * (1 / self.pix_2metric)), 80), (0, 0, 255), 3
+            frame, (75, 80), (75 + int(100 * (pix_2metric)),80), (0, 0, 255), 3
         )
 
     def display_hud(self, frame: np.ndarray):
@@ -549,7 +534,7 @@ class Tracker:
 
             # display dragon tails
             pts = np.array(self.robot_list[bot_id].position_list, np.int32)
-            cv2.polylines(frame, [pts], False, bot_color, 1)
+            cv2.polylines(frame, [pts], False, bot_color, 3)
 
             # if there are more than 10 velocities recorded in the robot, get
             # and display the average velocity
@@ -570,9 +555,14 @@ class Tracker:
                 #Vz value calculated from blur
                 vz = [v.z for v in bot.velocity_list[-10:]]
                 vz_avg = sum(vz)/len(vz)
+
+                #average diamter of bot (calcuating from area of circle)
+                dia = np.sqrt(4*bot.avg_area/np.pi)
+                
+                
                 cv2.putText(
                     frame,
-                    f"{bot_id+1} - vmag: {int(vmag_avg)} blur: {round(blur, 2)}",
+                    f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um",
                     (0, 150 + bot_id * 20),
                     cv2.FONT_HERSHEY_COMPLEX,
                     0.5,
@@ -692,12 +682,17 @@ class Tracker:
             )
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
 
+            #calculate pixel to metric for varying res
+            #106.2 um = 1024 pixels  @ 50%  resize and 100 x
+            pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"]  
+            
+
             if enable_tracking:
                 self.frame_num += 1  # increment frame
 
                 if self.num_bots > 0:
                     # DETECT ROBOTS AND UPDATE TRAJECTORY
-                    self.detect_robot(frame, fps_counter)
+                    self.detect_robot(frame, fps_counter,pix_2metric)
 
                     # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
                     self.control_trajectory(frame, start, arduino)
@@ -706,7 +701,7 @@ class Tracker:
                     self.display_hud(frame)
 
                 # Compute and record self.fps
-                self.get_fps(fps_counter, frame, resize_scale)
+                self.get_fps(fps_counter, frame, resize_scale, pix_2metric)
             else:
                 self.display_livestream_info(frame, fps_counter, resize_scale)
             
