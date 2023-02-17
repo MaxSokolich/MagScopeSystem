@@ -193,22 +193,25 @@ class Tracker:
         y_2_new = 2 * max_height
         new_crop = [int(x_1_new), int(y_1_new), int(x_2_new), int(y_2_new)]
         
-        
+       
+
         # calculate velocity based on last position and self.fps
         #print(pix_2metric)
         if len(bot.position_list) > 5:
             velx = (
-                (current_pos[0] + x_1 - bot.position_list[-5][0])
-                * fps.get_fps()*5
+                (current_pos[0] + x_1 - bot.position_list[-1][0])
                 / (pix_2metric)
+                * (fps.get_fps())
             )
+
             vely = (
-                (current_pos[1] + y_1 - bot.position_list[-5][1])
-                * fps.get_fps()*5
+                (current_pos[1] + y_1 - bot.position_list[-1][1])
                 / (pix_2metric)
+                * (fps.get_fps())
+                
             )
+
             velz = 0
-            
             if len(bot.blur_list) > 0:
                 velz = (bot.blur_list[-4] - blur)    #This needs to be scaled or something
             vel = Velocity(velx, vely, 0)
@@ -340,7 +343,7 @@ class Tracker:
         if len(self.robot_list[-1].trajectory) > 1:
             #Draw trajectory
             pts = np.array(self.robot_list[-1].trajectory, np.int32)
-            cv2.polylines(frame, [pts], False, (1, 1, 255), 3)
+            cv2.polylines(frame, [pts], False, (1, 1, 255), 2)
 
             #logic for arrival condition
             if self.node == len(self.robot_list[-1].trajectory):
@@ -534,7 +537,7 @@ class Tracker:
 
             # display dragon tails
             pts = np.array(self.robot_list[bot_id].position_list, np.int32)
-            cv2.polylines(frame, [pts], False, bot_color, 3)
+            cv2.polylines(frame, [pts], False, bot_color, 2)
 
             # if there are more than 10 velocities recorded in the robot, get
             # and display the average velocity
@@ -892,7 +895,7 @@ class Tracker:
         Returns:
             None
         """
-        self.plot()
+        #self.plot()
         pickles = []
         print(" --- writing robots ---")
         for bot in tqdm(self.robot_list):

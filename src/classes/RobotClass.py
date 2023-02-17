@@ -192,7 +192,7 @@ class Robot:
             "VelY": vel_y,
             "VelZ": vel_z,
             "VMag": v_mag,
-            "Area:": self.area_list,
+            "Area": self.area_list,
             "Cropped Frame Dim": self.cropped_frame,
             "Avg Area": self.avg_area,
             "Track_Params(frame,error,current_pos,target_pos,alpha,freq,time)": self.tracks,

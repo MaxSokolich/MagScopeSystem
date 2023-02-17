@@ -3,7 +3,6 @@ Bugs:
 5) test 3D tracking, add Z position
 11) maybe get ps5 controller working
 13) fix acoustic digitial potentiameter mapping
-14) fix closed loop rolling direction
 15) fix velocity scale
 16) create seperate class for closed loop control algorithms
 
