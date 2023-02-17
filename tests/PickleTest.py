@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import style
 plt.style.use('dark_background')
-obj = pd.read_pickle("/home/max/Documents/MagScopeSystem/testdata.pickle")
+obj = pd.read_pickle("/home/max/Documents/MagScopeSystem/.pickle")
 
 
 Vel_list = []

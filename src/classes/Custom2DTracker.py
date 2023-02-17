@@ -365,7 +365,7 @@ class Tracker:
                 #calculate error between node and robot
                 direction_vec = [targetx - robotx, targety - roboty]
                 error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
-                self.alpha = np.arctan2(direction_vec[1], direction_vec[0])
+                self.alpha = np.arctan2(-direction_vec[1], direction_vec[0])
 
                 B_vec = np.array([1, 0])
 
@@ -381,7 +381,7 @@ class Tracker:
                     [0, 0, 0],
                     3,
                 )
-                if error < 20:
+                if error < 5:
                     self.node += 1
 
                 ##ROLLING
