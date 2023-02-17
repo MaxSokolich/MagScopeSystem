@@ -112,7 +112,7 @@ class Tracker:
             self.robot_list.append(robot)
 
             # add starting point of trajectory
-            self.node = 0
+            self.node = 1
             self.robot_list[-1].add_trajectory(bot_loc)
             self.num_bots += 1
 
@@ -338,43 +338,39 @@ class Tracker:
             None
         """
         if len(self.robot_list[-1].trajectory) > 1:
+            #Draw trajectory
+            pts = np.array(self.robot_list[-1].trajectory, np.int32)
+            cv2.polylines(frame, [pts], False, (1, 1, 255), 3)
+
+            #logic for arrival condition
             if self.node == len(self.robot_list[-1].trajectory):
-                self.alpha = 1000  # can be any number not 0 - 2pi. indicates stop outpting current
-                # define first node in traj array
-                # define first node in traj array
-                targetx = self.robot_list[-1].trajectory[-1][0]
-                targety = self.robot_list[-1].trajectory[-1][1]
-
-                # calcualte bots position
-                # choose the last bot that was pressed for now
-                robotx = self.robot_list[-1].position_list[-1][0]
-                roboty = self.robot_list[-1].position_list[-1][1]
-
-                error = np.sqrt((targetx - robotx) ** 2 + (targety - roboty) ** 2)
                 print("arrived")
                 unique_control_param = None
                 if arduino.conn is not None:
                     arduino.send(4, 0, 0, 0)
+                
+            #closed loop algorithm 
             else:
-                # non-linear closed loop
-                # display trajectory
-                # initialize a B_vec for orientation algorithm, not really used,
-                # just needs to be defined for algorithm to work
-                B_vec = np.array([1, 0])
-
-                pts = np.array(self.robot_list[-1].trajectory, np.int32)
-                cv2.polylines(frame, [pts], False, (1, 1, 255), 1)
-
-                # define first node in traj array
+                #define target coordinate
                 targetx = self.robot_list[-1].trajectory[self.node][0]
                 targety = self.robot_list[-1].trajectory[self.node][1]
 
-                # calcualte bots position
-                # choose the last bot that was pressed for now
+                #define robots current position
                 robotx = self.robot_list[-1].position_list[-1][0]
                 roboty = self.robot_list[-1].position_list[-1][1]
+                
+                #calculate error between node and robot
+                direction_vec = [targetx - robotx, targety - roboty]
+                error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
+                self.alpha = np.arctan2(direction_vec[1], direction_vec[0])
 
-                # calcualte error
+                B_vec = np.array([1, 0])
+
+                #draw trajectory
+                pts = np.array(self.robot_list[-1].trajectory, np.int32)
+                cv2.polylines(frame, [pts], False, (1, 1, 255), 3)
+
+                #draw error arrow
                 cv2.arrowedLine(
                     frame,
                     (int(robotx), int(roboty)),
@@ -382,27 +378,16 @@ class Tracker:
                     [0, 0, 0],
                     3,
                 )
-                error = np.sqrt((targetx - robotx) ** 2 + (targety - roboty) ** 2)
-
                 if error < 20:
-                    targetx = self.robot_list[-1].trajectory[self.node][0]
-                    targety = self.robot_list[-1].trajectory[self.node][1]
-                    direction_vec = [targetx - robotx, targety - roboty]
-                    self.alpha = np.arctan2(direction_vec[1], direction_vec[0])
-
                     self.node += 1
 
-                else:
-                    direction_vec = [targetx - robotx, targety - roboty]
-                    self.alpha = np.arctan2(direction_vec[1], direction_vec[0])
-
-                # now update params and output to coils if True
+                ##ROLLING
                 if (
                     self.status_params["rolling_status"]
                     and not self.status_params["orient_status"]
                 ):
                     typ = 1
-                    my_alpha = self.alpha - np.pi / 2
+                    my_alpha = self.alpha + np.pi/2
                     if arduino.conn is not None:
                         input1 = my_alpha
                         input2 = self.control_params["rolling_frequency"]
@@ -411,7 +396,7 @@ class Tracker:
                             typ,input1,input2,input3
                         )
                     unique_control_param = "Roll"
-
+                ##ORIENTING
                 elif (
                     self.status_params["orient_status"]
                     and not self.status_params["rolling_status"]
@@ -486,16 +471,16 @@ class Tracker:
                     if arduino.conn is not None:
                         arduino.send(4, 0, 0, 0)
 
-            self.robot_list[-1].add_track(
-                self.frame_num,
-                error,
-                [robotx, roboty],
-                [targetx, targety],
-                self.alpha,
-                self.control_params["rolling_frequency"],
-                time.time(),
-                unique_control_param,
-            )
+                self.robot_list[-1].add_track(
+                    self.frame_num,
+                    error,
+                    [robotx, roboty],
+                    [targetx, targety],
+                    self.alpha,
+                    self.control_params["rolling_frequency"],
+                    time.time(),
+                    unique_control_param,
+                )
 
     def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int, pix_2metric: float):
         """
@@ -549,7 +534,7 @@ class Tracker:
 
             # display dragon tails
             pts = np.array(self.robot_list[bot_id].position_list, np.int32)
-            cv2.polylines(frame, [pts], False, bot_color, 4)
+            cv2.polylines(frame, [pts], False, bot_color, 3)
 
             # if there are more than 10 velocities recorded in the robot, get
             # and display the average velocity
