@@ -231,7 +231,7 @@ class Tracker:
             -1,
         )
 
-    def detect_robot(self, frame: np.ndarray, fps: FPSCounter, pix_2metric: float):
+    def detect_robot(self, frame: np.ndarray, fps: FPSCounter, pix_2metric: float, F):
         """
         For each robot defined through clicking, crop a frame around it based on initial
         left mouse click position, then:
@@ -248,9 +248,7 @@ class Tracker:
 
             # crop the frame based on initial ROI dimensions
             x_1, y_1, x_2, y_2 = bot.cropped_frame[-1]
-            area_threshold = bot.avg_area / 20
-            area_list = []  # store areas of microbots
-            avg_area = None
+            
             max_width = 0  # max width of the contours
             max_height = 0  # max height of the contours
 
@@ -260,46 +258,37 @@ class Tracker:
         
             cropped_frame = frame[y_1 : y_1 + y_2, x_1 : x_1 + x_2]
             
+            #CSIC mask
             contours, blur = self.cp.get_contours(cropped_frame,self.control_params)
             bot.add_blur(blur)
+            #test mask
+            #fgmask = F.apply(cropped_frame)
+            #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 1))
+            #fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
+            #contours, hierarchy = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            #blur = 0
+            if len(contours) !=0:
+                max_cnt = contours[0]
+                for contour in contours:
+                    # alcualte max_contour
+                    if cv2.contourArea(contour) > cv2.contourArea(max_cnt):
+                        max_cnt = contour
 
-            for contour in contours:
-                # remove small elements by calcualting arrea
-                area = cv2.contourArea(contour)
-
-                if area > area_threshold:  # and area < 3000:# and area < 2000: #um
-                    area_list.append(area)
-
-
-                    #TRY USING CV2.MOMENTS TO FIND X,Y CENTROID
-                    #M = cv2.moments(contour)
-                    #cx = int(M["m10"] / M["m00"])
-                    #cy = int(M["m01"] / M["m00"])
-                    #current_pos = [cx,cy]
-                    x, y, w, h = cv2.boundingRect(contour)
-                    current_pos = [(x + x + w) / 2, (y + y + h) / 2]
-
-                    # track the maximum width and height of the contours
-                    if w > max_width:
-                        max_width = w
-                    if h > max_height:
-                        max_height = h
-
-                    #cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
-                    # -1: draw all
-                    cv2.drawContours(cropped_frame, [contour], -1, (0, 255, 255), 1)
-
-            # interesting condition for when a robot splits
-            if len(area_list) > 1:
-                pass
-                # print("bot split")
-
-            # TRACK AND UPDATE ROBOT
-            # %%
-            if area_list:
-                avg_area = (sum(area_list) / len(area_list))  * (1/pix_2metric**2) # record average area of all detected contours
+                #record area of contour
+                area = cv2.contourArea(max_cnt)* (1/pix_2metric**2)
+                
+                x, y, w, h = cv2.boundingRect(max_cnt)
+                current_pos = [(x + x + w) / 2, (y + y + h) / 2]
+                # track the maximum width and height of the contours
+                if w > max_width:
+                    max_width = w
+                if h > max_height:
+                    max_height = h
+                cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
+                cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
+   
                 self.track_robot_position(
-                    avg_area,
+                    area,
                     bot,
                     cropped_frame,
                     (x_1, y_1),
@@ -309,14 +298,7 @@ class Tracker:
                     fps,
                     pix_2metric
                 )
-            # else:
-            #     pass
-            # if when i click there is no detected area: delete the most recent robot instance
-
-            # del self.robot_list[-1]
-            # self.num_bots -=1
-            # i also want to recent everything and clear the screen
-    
+        
     
     
 
@@ -548,6 +530,7 @@ class Tracker:
                 bot = self.robot_list[bot_id]
                 vmag = [v.mag for v in bot.velocity_list[-10:]]
                 vmag_avg = sum(vmag) / len(vmag)
+                #print(vmag_avg)
 
                 # blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
                 blur = (
@@ -665,6 +648,8 @@ class Tracker:
 
         # Continously read and preprocess frames until end of video or error
         # is reached
+
+        F = cv2.createBackgroundSubtractorMOG2()
         while True:
             fps_counter.update()
             success, frame = cam.read()
@@ -695,7 +680,7 @@ class Tracker:
 
                 if self.num_bots > 0:
                     # DETECT ROBOTS AND UPDATE TRAJECTORY
-                    self.detect_robot(frame, fps_counter,pix_2metric)
+                    self.detect_robot(frame, fps_counter,pix_2metric, F)
 
                     # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
                     self.control_trajectory(frame, start, arduino)
@@ -794,7 +779,7 @@ class Tracker:
 
 
         contours, blur = self.cp.get_contours(firstframe,self.control_params)
-        area_threshold = 0    
+        area_threshold = 10  
 
         for contour in contours:
             # remove small elements by calcualting arrea
@@ -905,4 +890,4 @@ class Tracker:
         print(" -- writing pickle --")
         with open(filename + ".pickle", "wb") as handle:
             pickle.dump(pickles, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        print(" -- DONE -- ")
+        print(" -- ({}.pickle) DONE -- ".format(filename))

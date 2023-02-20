@@ -10,7 +10,7 @@ Vel_list = []
 Size_list = []
 
 bots = []
-cm_subsection = np.linspace(0,len(obj),40)
+cm_subsection = np.linspace(0,len(obj),100)
 color = [plt.cm.jet(x) for x in cm_subsection]
 fig, ax = plt.subplots(3,1)
 
@@ -27,14 +27,15 @@ for i,c in zip(range(len(obj)),color):
     Area = robot["Avg Area"]
     Size = np.sqrt(4*Area/np.pi)
     
+    if len(Vmag) != 0:
+        Vel = sum(Vmag)/len(Vmag)
+        print(Vel)
+        Vel_list.append(Vel)
+        Size_list.append(Size)
     
-    Vel = sum(Vmag)/len(Vmag)
-    Vel_list.append(Vel)
-    Size_list.append(Size)
- 
-    ax[0].plot(X,Y,color =c,linewidth = 4)
-    ax[1].bar(i,Vel,color =c)
-    ax[2].bar(i, Size,color =c)
+        ax[0].plot(X,Y,color =c,linewidth = 4)
+        ax[1].bar(i,Vel,color =c)
+        ax[2].bar(i, Size,color =c)
 
 
 
