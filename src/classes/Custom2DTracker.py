@@ -13,6 +13,7 @@ import pickle
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+plt.style.use('dark_background')
 from tqdm import tqdm
 from tkinter import Tk
 
@@ -231,7 +232,7 @@ class Tracker:
             -1,
         )
 
-    def detect_robot(self, frame: np.ndarray, fps: FPSCounter, pix_2metric: float, F):
+    def detect_robot(self, frame: np.ndarray, fps: FPSCounter, pix_2metric: float):
         """
         For each robot defined through clicking, crop a frame around it based on initial
         left mouse click position, then:
@@ -267,11 +268,14 @@ class Tracker:
             #fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
             #contours, hierarchy = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             #blur = 0
+
+            #area_thresh = bot.avg_area*2
             if len(contours) !=0:
                 max_cnt = contours[0]
                 for contour in contours:
                     # alcualte max_contour
-                    if cv2.contourArea(contour) > cv2.contourArea(max_cnt):
+                   
+                    if cv2.contourArea(contour) > cv2.contourArea(max_cnt): 
                         max_cnt = contour
 
                 #record area of contour
@@ -285,7 +289,7 @@ class Tracker:
                 if h > max_height:
                     max_height = h
                 cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
-                cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
+                #cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
    
                 self.track_robot_position(
                     area,
@@ -300,9 +304,6 @@ class Tracker:
                 )
         
     
-    
-
-
     def control_trajectory(
         self, frame: np.ndarray, start: float, arduino: ArduinoHandler
     ):
@@ -649,7 +650,7 @@ class Tracker:
         # Continously read and preprocess frames until end of video or error
         # is reached
 
-        F = cv2.createBackgroundSubtractorMOG2()
+        
         while True:
             fps_counter.update()
             success, frame = cam.read()
@@ -680,7 +681,7 @@ class Tracker:
 
                 if self.num_bots > 0:
                     # DETECT ROBOTS AND UPDATE TRAJECTORY
-                    self.detect_robot(frame, fps_counter,pix_2metric, F)
+                    self.detect_robot(frame, fps_counter,pix_2metric)
 
                     # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
                     self.control_trajectory(frame, start, arduino)
@@ -811,9 +812,6 @@ class Tracker:
         cv2.imwrite("initialimg.png",firstframe)
         cam.release()
        
-   
-        
-
 
 
     def plot(self):
@@ -825,49 +823,57 @@ class Tracker:
         Returns:
             None
         """
+        print(" -- PLOTTING -- ")
         color = plt.cm.rainbow(np.linspace(0, 1, self.num_bots))
 
-        plt.figure()
-        plt.xlim((0, (1936 * self.camera_params["resize_scale"] / 100)))
-        plt.ylim(((1440 * self.camera_params["resize_scale"] / 100), 0))
-        plt.title("ALL TRAGECTORYS")
-        for bot, bot_color in zip(self.num_bots, color):
-            datax = []
-            datay = []
-            for i in bot.position_list:
-                datax.append(i[0])
-                datay.append(i[1])
-                plt.plot(datax, datay, color=bot_color)
+        #plt.figure()
+        #plt.xlim((0, (1936 * self.camera_params["resize_scale"] / 100)))
+        #plt.ylim(((1440 * self.camera_params["resize_scale"] / 100), 0))
+        #plt.title("ALL TRAGECTORYS")\
 
-        plt.figure()
-        plt.xlim((0, (1936 * self.camera_params["resize_scale"] / 100)))
-        plt.ylim(((1440 * self.camera_params["resize_scale"] / 100), 0))
-        plt.title("CONTROL LOOP TRAJECTORIES")
-        for bot, bot_color in zip(self.num_bots, color):
-            # calcualte desired tragectory
 
-            # plt.plot(calc_trag[0][0], calc_trag[0][1], calc_trag[1][0],calc_trag[1][1], color=c,marker = "o")
+        fig, ax = plt.subplots(3,1)
+        Vel_list = []
+        Size_list= []
 
-            calcx = []
-            calcy = []
+        for i, c in zip(range(len(self.robot_list)), color):
+            bot = self.robot_list[i]
+            X = np.array(bot.position_list)[:, 0]
+            Y = np.array(bot.position_list)[:, 1]
+            VX = np.array([v.x for v in bot.velocity_list])
+            VY = np.array([v.y for v in bot.velocity_list])
+            VZ = np.array([v.z for v in bot.velocity_list])
+            Vmag = np.array([v.mag for v in bot.velocity_list])
+            Area = bot.avg_area
+            Size = np.sqrt(4*Area/np.pi)
+            
+            if len(Vmag) != 0:
+                Vel = sum(Vmag)/len(Vmag)
+                Vel_list.append(Vel)
+                Size_list.append(Size)
+            
+                ax[0].plot(X,Y,color =c,linewidth = 4)
+                ax[1].bar(i,Vel,color =c)
+                ax[2].bar(i, Size,color =c)
 
-            actual_x = []
-            actual_y = []
-            for track in bot.tracks:
-                actual_x.append(track[2][0])
-                actual_y.append(track[2][1])
 
-            # ,markersize  = 3, marker = "*")
-            plt.plot(actual_x, actual_y, color=bot_color, label="actual")
+        ax[0].set_title("trajectories")
+        ax[0].invert_yaxis()
+        ax[0].set_xlabel("X")
+        ax[0].set_xlabel("Y")
 
-            for i in bot.trajectory:
-                calcx.append(i[0])
-                calcy.append(i[1])
+        ax[1].set_title("average velocity: {}um/s".format(round(np.mean(Vel_list),2)))
+        ax[1].set_xlabel("MR")
+        ax[1].axhline(np.mean(Vel_list), color = "w", linewidth=4)
 
-            plt.plot(calcx, calcy, color=bot_color * 0.5, label="desired")
+        ax[2].set_title("average size:{}um".format(round(np.mean(Size_list),2)))
+        ax[2].set_xlabel("MR")
+        ax[2].axhline(np.mean(Size_list), color = "w", linewidth = 4)
 
-        plt.legend()
         plt.show()
+
+
+
 
     def convert2pickle(self, filename: str):
         """
@@ -875,12 +881,11 @@ class Tracker:
 
         Args:
             filename:   name of output file
-            rolling_frequency:  Rolling frequency of video
 
         Returns:
             None
         """
-        #self.plot()
+        self.plot()  #plot the data
         pickles = []
         print(" --- writing robots ---")
         for bot in tqdm(self.robot_list):

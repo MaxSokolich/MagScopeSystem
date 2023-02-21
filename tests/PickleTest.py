@@ -15,6 +15,7 @@ color = [plt.cm.jet(x) for x in cm_subsection]
 fig, ax = plt.subplots(3,1)
 
 
+
 for i,c in zip(range(len(obj)),color):
     robot = obj[i]
     frames = robot["Frame"]
@@ -40,6 +41,7 @@ for i,c in zip(range(len(obj)),color):
 
 
 ax[0].set_title("trajectories")
+ax[0].invert_yaxis()
 ax[0].set_xlabel("X")
 ax[0].set_xlabel("Y")
 
