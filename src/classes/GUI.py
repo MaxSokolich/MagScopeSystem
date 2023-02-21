@@ -32,7 +32,7 @@ from src.classes.JoystickProcess import JoystickProcess
 
 CONTROL_PARAMS = {
     "lower_thresh": 0,
-    "upper_thresh": 130,
+    "upper_thresh": 104,
     "bounding_length": 10,
     "area_filter": 3,
     "field_strength": 1,
@@ -43,9 +43,9 @@ CONTROL_PARAMS = {
 
 CAMERA_PARAMS = {
     "resize_scale": 50, 
-    "framerate": 23, 
+    "framerate": 18, 
     "exposure": 10000, 
-    "Obj": 10}
+    "Obj": 50}
 
 STATUS_PARAMS = {
     "rolling_status": False,
