@@ -831,7 +831,7 @@ class Tracker:
         #plt.ylim(((1440 * self.camera_params["resize_scale"] / 100), 0))
         #plt.title("ALL TRAGECTORYS")\
 
-        #edited
+        
         fig, ax = plt.subplots(3,1)
         Vel_list = []
         Size_list= []
