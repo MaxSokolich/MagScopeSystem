@@ -229,15 +229,6 @@ class GUI:
             bg = 'white',
             fg= 'black'
         )
-
-        live_button = Button(master, 
-            text="Live", 
-            command=self.live, 
-            height=1, 
-            width=10,
-            bg = 'yellow',
-            fg= 'black'
-            )
         
         track_button = Button(
             master, 
@@ -298,17 +289,6 @@ class GUI:
         self.video_option_frame = Bfield_frame = Frame(master = master)
         self.video_option_frame.grid(row=3,column=2,rowspan = 2)
         
-        #live button
-        live_button = Button(
-            self.video_option_frame, 
-            text="Live", 
-            command=self.live, 
-            height=1, 
-            width=10,
-            bg = 'yellow',
-            fg= 'black'
-            )
-        live_button.grid(row=0, column=0)
 
 
         #choose video from file browser
@@ -845,19 +825,6 @@ class GUI:
         """
 
         STATUS_PARAMS["record_status"] = False
-
-    def live(self):
-        """
-        Opens and window for the live or pre-recorded screen of the microbots.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-
-        self.track(use_live_button=True, enable_tracking=False)
 
     def track(self, use_live_button: bool = False, enable_tracking: bool = True):
         """

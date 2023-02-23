@@ -31,7 +31,8 @@ class Robot:
         self.avg_blur = 0  # current average blur of the bot in this frame
         self.tracks = []  # adds frame info on bot's error from manual track
         self.trajectory = []  # track points from manual pathing
-
+        self.times = []  #time step per frame in seconds
+ 
 
     def add_area(self, area: float):
         """
@@ -162,6 +163,9 @@ class Robot:
             [frame, error, actual_tracks, desired_tracks, alpha,freq, time, control_param]
         )
 
+    def add_time(self, time):
+        self.times.append(time)
+
     def as_dict(self) -> dict:
         """
         Convert's the bot's current frame and position information into a
@@ -186,6 +190,7 @@ class Robot:
             traj_x,traj_y = None,None
         mydict = {
             "Frame": self.frame_list,
+            "Times": self.times,
             "PositionX": pos_x,
             "PositionY": pos_y,
             "VelX": vel_x,

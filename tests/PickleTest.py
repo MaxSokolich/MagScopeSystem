@@ -18,6 +18,8 @@ fig, ax = plt.subplots(3,1)
 
 for i,c in zip(range(len(obj)),color):
     robot = obj[i]
+    time = robot["Times"]
+    print(time)
     frames = robot["Frame"]
     X = robot["PositionX"]
     Y = robot["PositionY"]

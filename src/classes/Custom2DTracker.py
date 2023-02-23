@@ -48,8 +48,8 @@ class Tracker:
         status_params: dict,
         use_cuda: bool = False,
     ):
-        self.alpha = 1000
-
+    
+        self.start = time.time()
         self.draw_trajectory = False  # determines if trajectory is manually being drawn
         self.robot_list = []  # list of actively tracked robots
         # self.raw_frames = []
@@ -222,6 +222,7 @@ class Tracker:
         bot.add_crop(new_crop)
         bot.add_position([current_pos[0] + x_1, current_pos[1] + y_1])
         bot.add_frame(self.frame_num)
+        bot.add_time(round(time.time()-self.start,2))
 
         # display
         cv2.circle(
@@ -557,48 +558,6 @@ class Tracker:
                     1,
                 )
 
-    def display_livestream_info(
-        self, frame: np.ndarray, fps: FPSCounter, resize_scale: int
-    ):
-        """
-        Displays non-tracking live-feed info to OpenCV window
-
-        Args:
-            frame: np array representation of the current video frame read in
-            fps: FPSCounter object for updating current fps information
-            resize_scale:   scaling factor for resizing a GUI element
-        Returns:
-            None
-        """
-        cv2.putText(
-            frame,
-            str(int(fps.get_fps())),
-            (
-                int((self.width * resize_scale / 100) / 40),
-                int((self.height * resize_scale / 100) / 20),
-            ),
-            cv2.FONT_HERSHEY_COMPLEX,
-            0.5,
-            (0, 255, 0),
-            1,
-        )
-        cv2.putText(
-            frame,
-            str(
-                [
-                    int((self.width * resize_scale / 100)),
-                    int((self.height * resize_scale / 100)),
-                ]
-            ),
-            (
-                int((self.width * resize_scale / 100) / 40),
-                int((self.height * resize_scale / 100) / 60),
-            ),
-            cv2.FONT_HERSHEY_COMPLEX,
-            0.5,
-            (0, 255, 0),
-            1,
-        )
 
     def single_bot_thread(
         self,
@@ -676,23 +635,22 @@ class Tracker:
             pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"]  
             
 
-            if enable_tracking:
-                self.frame_num += 1  # increment frame
+            
+            self.frame_num += 1  # increment frame
 
-                if self.num_bots > 0:
-                    # DETECT ROBOTS AND UPDATE TRAJECTORY
-                    self.detect_robot(frame, fps_counter,pix_2metric)
+            if self.num_bots > 0:
+                # DETECT ROBOTS AND UPDATE TRAJECTORY
+                self.detect_robot(frame, fps_counter,pix_2metric)
 
-                    # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
-                    self.control_trajectory(frame, start, arduino)
+                # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
+                self.control_trajectory(frame, start, arduino)
 
-                    # UPDATE AND DISPLAY HUD ELEMENTS
-                    self.display_hud(frame)
+                # UPDATE AND DISPLAY HUD ELEMENTS
+                self.display_hud(frame)
 
-                # Compute and record self.fps
-                self.get_fps(fps_counter, frame, resize_scale, pix_2metric)
-            else:
-                self.display_livestream_info(frame, fps_counter, resize_scale)
+            # Compute and record self.fps
+            self.get_fps(fps_counter, frame, resize_scale, pix_2metric)
+        
             
             #CONVERT BACK INTO RGB
             
@@ -728,6 +686,7 @@ class Tracker:
 
             
             # display frame to CV2 window
+            
             cv2.imshow("im", frame)
 
             
