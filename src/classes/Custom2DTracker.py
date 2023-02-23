@@ -719,7 +719,7 @@ class Tracker:
                     [0, 0, 0],
                     3,
                 )
-                if error < 5:
+                if error < 10:
                     self.node += 1
 
                 ##ROLLING
