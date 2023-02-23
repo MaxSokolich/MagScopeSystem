@@ -263,13 +263,7 @@ class Tracker:
             #CSIC mask
             contours, blur = self.cp.get_contours(cropped_frame,self.control_params)
             bot.add_blur(blur)
-            #test mask
-            #fgmask = F.apply(cropped_frame)
-            #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 1))
-            #fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
-            #contours, hierarchy = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            #blur = 0
-
+    
             #area_thresh = bot.avg_area*2
             if len(contours) !=0:
                 max_cnt = contours[0]
@@ -304,7 +298,367 @@ class Tracker:
                     pix_2metric
                 )
         
-    
+
+
+    def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int, pix_2metric: float):
+        """
+        Compute and display average FPS up to this frame
+
+        Args:
+            fps: FPSCounter object for updating current fps information
+            frame: np array representation of the current video frame read in
+            resize_scale:   scaling factor for resizing a GUI element
+            pix2_metric = 0.0964 pixels / 1um @ 1x
+        Returns:
+            None
+        """
+
+        # display information to the screen
+        cv2.putText(
+            frame,
+            str(int(fps.get_fps())),
+            (
+                int((self.width * resize_scale / 100) / 40),
+                int((self.height * resize_scale / 100) / 30),
+            ),
+            cv2.FONT_HERSHEY_COMPLEX,
+            0.5,
+            (0, 255, 0),
+            1,
+        )
+
+        # scale bar
+        cv2.line(
+            frame, (75, 80), (75 + int(100 * (pix_2metric)),80), (0, 0, 255), 3
+        )
+
+    def display_hud(self, frame: np.ndarray):
+        """
+        Display dragon tails (bot trajectories) and other HUD graphics
+
+        Args:
+            frame: np array representation of the current video frame read in
+        Returns:
+            None
+        """
+        #convert from gray to color
+       
+        color = plt.cm.rainbow(np.linspace(0, 1, self.num_bots)) * 255
+        # bot_ids = [i for i in range(self.num_bots)]
+        for (
+            bot_id,
+            bot_color,
+        ) in zip(range(self.num_bots), color):
+
+            # display dragon tails
+            pts = np.array(self.robot_list[bot_id].position_list, np.int32)
+            cv2.polylines(frame, [pts], False, bot_color, 2)
+            
+
+            #display target positions
+            targets = self.robot_list[bot_id].trajectory
+            if len(targets) > 0:
+                tar = targets[-1]
+                cv2.circle(frame,
+                    (int(tar[0]), int(tar[1])),
+                    4,
+                    (bot_color),
+                    -1,
+                )
+
+
+            # if there are more than 10 velocities recorded in the robot, get
+            # and display the average velocity
+            if len(self.robot_list[bot_id].velocity_list) > 10:
+                # a "velocity" list is in the form of [x, y, magnitude];
+                # get the magnitude of the 10 most recent velocities, find their
+                # average, and display it on the tracker
+                bot = self.robot_list[bot_id]
+                vmag = [v.mag for v in bot.velocity_list[-10:]]
+                vmag_avg = sum(vmag) / len(vmag)
+                #print(vmag_avg)
+
+                # blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
+                blur = (
+                    bot.blur_list[(len(bot.blur_list) - len(bot.blur_list) % 10) - 1]
+                    if len(bot.blur_list) > 0
+                    else 0
+                )
+                #Vz value calculated from blur
+                vz = [v.z for v in bot.velocity_list[-10:]]
+                vz_avg = sum(vz)/len(vz)
+
+                #average diamter of bot (calcuating from area of circle)
+                dia = np.sqrt(4*bot.avg_area/np.pi)
+                
+                
+                cv2.putText(
+                    frame,
+                    f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um",
+                    (0, 150 + bot_id * 20),
+                    cv2.FONT_HERSHEY_COMPLEX,
+                    0.5,
+                    bot_color,
+                    1,
+                )
+
+
+    def single_bot_thread(
+        self,
+        filepath: Union[str, None],
+        arduino: ArduinoHandler,
+        main_window: Tk,
+        output_name: str = "",
+    ):
+        """
+        Connect to a camera or video file and perform real time tracking and analysis of microbots
+        through a separate OpenCV window
+
+        Args:
+            filepath:   filepath to video file to be analyzed
+
+        Returns:
+            None
+        """
+
+        # Use when using EasyPySpin camera, an FLIR mahcine vision camera python API
+        # global self.BFIELD
+        if filepath is None:
+            try:
+                cam = EasyPySpin.VideoCapture(0)
+            except EasyPySpin.EasyPySpinWarning:
+                print("EasyPySpin camera not found, using standard camera")
+            # cam = cv2.VideoCapture(0)
+        else:
+            # Use when reading in a video file
+            cam = cv2.VideoCapture(filepath)
+
+        # Get the video input's self.width, self.height, and self.fps
+        self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        cam_fps = cam.get(cv2.CAP_PROP_FPS)
+        print(self.width, self.height, cam_fps)
+
+        params = {"arduino": arduino}
+        cv2.namedWindow("im")  # name of CV2 window
+        cv2.setMouseCallback("im", self.mouse_points, params)  # set callback func
+
+        # %%
+        rec_start_time = None
+        result = None
+        start = time.time()
+        fps_counter = FPSCounter()
+
+        # Continously read and preprocess frames until end of video or error
+        # is reached
+
+        
+        while True:
+            fps_counter.update()
+            success, frame = cam.read()
+       
+            self.curr_frame = frame
+            if not success or frame is None:
+                print("Game Over")
+                break
+
+            # Set exposure of camera
+            cam.set(cv2.CAP_PROP_EXPOSURE, self.camera_params["exposure"])
+            cam.set(cv2.CAP_PROP_FPS, self.camera_params["framerate"])
+            # resize output based on the chosen ratio
+            resize_scale = self.camera_params["resize_scale"]
+            resize_ratio = (
+                self.width * resize_scale // 100,
+                self.height * resize_scale // 100,
+            )
+            frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
+
+            #calculate pixel to metric for varying res
+            #106.2 um = 1024 pixels  @ 50%  resize and 100 x
+            pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
+            self.frame_num += 1  # increment frame
+
+            if self.num_bots > 0:
+                # DETECT ROBOTS AND UPDATE TRAJECTORY
+                self.detect_robot(frame, fps_counter,pix_2metric)
+
+                # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
+                if self.status_params["algorithm_status"] == True:
+                    self.control_trajectory(frame, start, arduino)
+                    #self.algorithm(arduino)
+
+                # UPDATE AND DISPLAY HUD ELEMENTS
+                self.display_hud(frame)
+
+               
+
+            # Compute and record self.fps
+            self.get_fps(fps_counter, frame, resize_scale, pix_2metric)
+        
+
+            
+            # add videos a seperate list to save space and write the video afterwords
+            if self.status_params["record_status"]:
+                if rec_start_time is None:
+                    rec_start_time = time.time()
+
+                if result is None:
+                    result = cv2.VideoWriter(
+                        output_name + ".mp4",
+                        cv2.VideoWriter_fourcc(*"mp4v"),
+                        20,
+                        resize_ratio
+                    )
+
+                cv2.putText(
+                    frame,
+                    "time (s): " + str(np.round(time.time() - rec_start_time, 3)),
+                    (
+                        int((self.width * resize_scale / 100) * (7 / 10)),
+                        int((self.height * resize_scale / 100) * (9.9 / 10)),
+                    ),
+                    cv2.FONT_HERSHEY_COMPLEX,
+                    0.5,
+                    (255, 255, 255),
+                    1,
+                )
+                result.write(frame)
+            elif result is not None and not self.status_params["record_status"]:
+                result.release()
+                result = None
+
+        
+            
+            cv2.imshow("im", frame)
+
+            
+            if filepath is None:
+                delay = 1
+            else:
+                delay = int((1/self.camera_params["framerate"])*1000)
+            
+            # Exit
+            main_window.update()
+            if cv2.waitKey(delay) & 0xFF == ord("q"):
+                break
+        
+        
+        cam.release()
+        cv2.destroyAllWindows()
+        arduino.send(4, 0, 0, 0)
+
+    def create_robotlist(self,filepath: Union[str, None]):
+        #
+        """
+        begin by reading single frame and generating robot instances for all
+        #detected contours
+        Args:
+            filepath: either FLIR camera or presaved video
+        Returns:
+            None
+        """
+        if filepath is None:
+            try:
+                cam = EasyPySpin.VideoCapture(0)
+            except EasyPySpin.EasyPySpinWarning:
+                print("EasyPySpin camera not found, using standard camera")
+            # cam = cv2.VideoCapture(0)
+        else:
+            # Use when reading in a video file
+            cam = cv2.VideoCapture(filepath)
+            
+        self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+
+        success,firstframe = cam.read()
+        resize_scale = self.camera_params["resize_scale"]
+        resize_ratio = (
+                self.width * resize_scale // 100,
+                self.height * resize_scale // 100,
+            )
+        firstframe = cv2.resize(firstframe, resize_ratio, interpolation=cv2.INTER_AREA)
+
+
+        contours, blur = self.cp.get_contours(firstframe,self.control_params)
+        area_threshold = 10  
+
+        for contour in contours:
+            # remove small elements by calcualting arrea
+            area = cv2.contourArea(contour)
+
+            if area > area_threshold:  # and area < 3000:# and area < 2000: #pixels
+
+
+                x, y, w, h = cv2.boundingRect(contour)
+                current_pos = [(x + x + w) / 2, (y + y + h) / 2]
+
+                x,y = current_pos
+
+                x_1 = int(x - self.control_params["bounding_length"] / 2)
+                y_1 = int(y - self.control_params["bounding_length"] / 2)
+                w = self.control_params["bounding_length"]
+                h = self.control_params["bounding_length"]
+
+                robot = Robot()  # create robot instance
+                robot.add_position(current_pos)  # add position of the robot
+                robot.add_crop([x_1, y_1, w, h])
+                robot.add_blur(
+                    self.cp.calculate_blur(firstframe[y_1 : y_1 + h, x_1 : x_1 + w])
+                )
+                self.robot_list.append(robot)
+
+                # add starting point of trajectory
+                self.num_bots += 1
+        cv2.imwrite("initialimg.png",firstframe)
+        cam.release()
+       
+
+    def algorithm(self,arduino):
+        """
+        apply an algorithm
+        Args:
+            None
+        Returns:
+            action commands to be sent to arduino
+        """
+
+        frequencies = [1,10,30] #frequency
+        current_positions = []
+        goal_positions = []
+        for bot in range(len(self.robot_list)):
+            pos = self.robot_list[bot].position_list[-1]
+            goal= self.robot_list[bot].trajectory[-1]
+
+            
+            current_positions.append(pos)
+            goal_positions.append(goal)
+
+        
+        #generate the action
+        for f in frequencies:
+            t1 = -1 * np.sum((np.array([position[0] for position in current_positions]) - np.array([position[0] for position in goal_positions])) *np.array(f))
+            t2 = -1 * np.sum((np.array([position[1] for position in current_positions]) - np.array([position[1] for position in goal_positions])) *np.array(f))
+            
+            norm_f = np.linalg.norm(f)
+            t1 /= (norm_f **2)
+            t1 /= (norm_f **2)
+
+
+            alpha = np.arctan2(t2,t1)
+            application_time = np.sqrt(t1**2+t2**2)  #best way to apply 
+            frequency = f        
+            gamma = 90
+        
+            #apply the action
+            if arduino.conn is not None:            
+                arduino.send(1,alpha,frequency,gamma)
+        
+        
+
+
+
+
     def control_trajectory(
         self, frame: np.ndarray, start: float, arduino: ArduinoHandler
     ):
@@ -469,308 +823,6 @@ class Tracker:
                     unique_control_param,
                 )
 
-    def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int, pix_2metric: float):
-        """
-        Compute and display average FPS up to this frame
-
-        Args:
-            fps: FPSCounter object for updating current fps information
-            frame: np array representation of the current video frame read in
-            resize_scale:   scaling factor for resizing a GUI element
-            pix2_metric = 0.0964 pixels / 1um @ 1x
-        Returns:
-            None
-        """
-
-        # display information to the screen
-        cv2.putText(
-            frame,
-            str(int(fps.get_fps())),
-            (
-                int((self.width * resize_scale / 100) / 40),
-                int((self.height * resize_scale / 100) / 30),
-            ),
-            cv2.FONT_HERSHEY_COMPLEX,
-            0.5,
-            (0, 255, 0),
-            1,
-        )
-
-        # scale bar
-        cv2.line(
-            frame, (75, 80), (75 + int(100 * (pix_2metric)),80), (0, 0, 255), 3
-        )
-
-    def display_hud(self, frame: np.ndarray):
-        """
-        Display dragon tails (bot trajectories) and other HUD graphics
-
-        Args:
-            frame: np array representation of the current video frame read in
-        Returns:
-            None
-        """
-        #convert from gray to color
-       
-        color = plt.cm.rainbow(np.linspace(0, 1, self.num_bots)) * 255
-        # bot_ids = [i for i in range(self.num_bots)]
-        for (
-            bot_id,
-            bot_color,
-        ) in zip(range(self.num_bots), color):
-
-            # display dragon tails
-            pts = np.array(self.robot_list[bot_id].position_list, np.int32)
-            cv2.polylines(frame, [pts], False, bot_color, 2)
-
-            # if there are more than 10 velocities recorded in the robot, get
-            # and display the average velocity
-            if len(self.robot_list[bot_id].velocity_list) > 10:
-                # a "velocity" list is in the form of [x, y, magnitude];
-                # get the magnitude of the 10 most recent velocities, find their
-                # average, and display it on the tracker
-                bot = self.robot_list[bot_id]
-                vmag = [v.mag for v in bot.velocity_list[-10:]]
-                vmag_avg = sum(vmag) / len(vmag)
-                #print(vmag_avg)
-
-                # blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
-                blur = (
-                    bot.blur_list[(len(bot.blur_list) - len(bot.blur_list) % 10) - 1]
-                    if len(bot.blur_list) > 0
-                    else 0
-                )
-                #Vz value calculated from blur
-                vz = [v.z for v in bot.velocity_list[-10:]]
-                vz_avg = sum(vz)/len(vz)
-
-                #average diamter of bot (calcuating from area of circle)
-                dia = np.sqrt(4*bot.avg_area/np.pi)
-                
-                
-                cv2.putText(
-                    frame,
-                    f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um",
-                    (0, 150 + bot_id * 20),
-                    cv2.FONT_HERSHEY_COMPLEX,
-                    0.5,
-                    bot_color,
-                    1,
-                )
-
-
-    def single_bot_thread(
-        self,
-        filepath: Union[str, None],
-        arduino: ArduinoHandler,
-        main_window: Tk,
-        enable_tracking: bool = True,
-        output_name: str = "",
-    ):
-        """
-        Connect to a camera or video file and perform real time tracking and analysis of microbots
-        through a separate OpenCV window
-
-        Args:
-            filepath:   filepath to video file to be analyzed
-
-        Returns:
-            None
-        """
-
-        # Use when using EasyPySpin camera, an FLIR mahcine vision camera python API
-        # global self.BFIELD
-        if filepath is None:
-            try:
-                cam = EasyPySpin.VideoCapture(0)
-            except EasyPySpin.EasyPySpinWarning:
-                print("EasyPySpin camera not found, using standard camera")
-            # cam = cv2.VideoCapture(0)
-        else:
-            # Use when reading in a video file
-            cam = cv2.VideoCapture(filepath)
-
-        # Get the video input's self.width, self.height, and self.fps
-        self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        cam_fps = cam.get(cv2.CAP_PROP_FPS)
-        print(self.width, self.height, cam_fps)
-
-        params = {"arduino": arduino}
-        cv2.namedWindow("im")  # name of CV2 window
-        cv2.setMouseCallback("im", self.mouse_points, params)  # set callback func
-
-        # %%
-        rec_start_time = None
-        result = None
-        start = time.time()
-        fps_counter = FPSCounter()
-
-        # Continously read and preprocess frames until end of video or error
-        # is reached
-
-        
-        while True:
-            fps_counter.update()
-            success, frame = cam.read()
-       
-            self.curr_frame = frame
-            if not success or frame is None:
-                print("Game Over")
-                break
-
-            # Set exposure of camera
-            cam.set(cv2.CAP_PROP_EXPOSURE, self.camera_params["exposure"])
-            cam.set(cv2.CAP_PROP_FPS, self.camera_params["framerate"])
-            # resize output based on the chosen ratio
-            resize_scale = self.camera_params["resize_scale"]
-            resize_ratio = (
-                self.width * resize_scale // 100,
-                self.height * resize_scale // 100,
-            )
-            frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
-
-            #calculate pixel to metric for varying res
-            #106.2 um = 1024 pixels  @ 50%  resize and 100 x
-            pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"]  
-            
-
-            
-            self.frame_num += 1  # increment frame
-
-            if self.num_bots > 0:
-                # DETECT ROBOTS AND UPDATE TRAJECTORY
-                self.detect_robot(frame, fps_counter,pix_2metric)
-
-                # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
-                self.control_trajectory(frame, start, arduino)
-
-                # UPDATE AND DISPLAY HUD ELEMENTS
-                self.display_hud(frame)
-
-            # Compute and record self.fps
-            self.get_fps(fps_counter, frame, resize_scale, pix_2metric)
-        
-            
-            #CONVERT BACK INTO RGB
-            
-            # add videos a seperate list to save space and write the video afterwords
-            if self.status_params["record_status"]:
-                if rec_start_time is None:
-                    rec_start_time = time.time()
-
-                if result is None:
-                    result = cv2.VideoWriter(
-                        output_name + ".mp4",
-                        cv2.VideoWriter_fourcc(*"mp4v"),
-                        20,
-                        resize_ratio
-                    )
-
-                cv2.putText(
-                    frame,
-                    "time (s): " + str(np.round(time.time() - rec_start_time, 3)),
-                    (
-                        int((self.width * resize_scale / 100) * (7 / 10)),
-                        int((self.height * resize_scale / 100) * (9.9 / 10)),
-                    ),
-                    cv2.FONT_HERSHEY_COMPLEX,
-                    0.5,
-                    (255, 255, 255),
-                    1,
-                )
-                result.write(frame)
-            elif result is not None and not self.status_params["record_status"]:
-                result.release()
-                result = None
-
-            
-            # display frame to CV2 window
-            
-            cv2.imshow("im", frame)
-
-            
-            if filepath is None:
-                delay = 1
-            else:
-                delay = int((1/self.camera_params["framerate"])*1000)
-            
-            # Exit
-            main_window.update()
-            if cv2.waitKey(delay) & 0xFF == ord("q"):
-                break
-        
-        
-        cam.release()
-        cv2.destroyAllWindows()
-        arduino.send(4, 0, 0, 0)
-
-    def create_robotlist(self,filepath: Union[str, None]):
-        #
-        """
-        begin by reading single frame and generating robot instances for all
-        #detected contours
-        Args:
-            filepath: either FLIR camera or presaved video
-        Returns:
-            None
-        """
-        if filepath is None:
-            try:
-                cam = EasyPySpin.VideoCapture(0)
-            except EasyPySpin.EasyPySpinWarning:
-                print("EasyPySpin camera not found, using standard camera")
-            # cam = cv2.VideoCapture(0)
-        else:
-            # Use when reading in a video file
-            cam = cv2.VideoCapture(filepath)
-            
-        self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-
-        success,firstframe = cam.read()
-        resize_scale = self.camera_params["resize_scale"]
-        resize_ratio = (
-                self.width * resize_scale // 100,
-                self.height * resize_scale // 100,
-            )
-        firstframe = cv2.resize(firstframe, resize_ratio, interpolation=cv2.INTER_AREA)
-
-
-        contours, blur = self.cp.get_contours(firstframe,self.control_params)
-        area_threshold = 10  
-
-        for contour in contours:
-            # remove small elements by calcualting arrea
-            area = cv2.contourArea(contour)
-
-            if area > area_threshold:  # and area < 3000:# and area < 2000: #pixels
-
-
-                x, y, w, h = cv2.boundingRect(contour)
-                current_pos = [(x + x + w) / 2, (y + y + h) / 2]
-
-                x,y = current_pos
-
-                x_1 = int(x - self.control_params["bounding_length"] / 2)
-                y_1 = int(y - self.control_params["bounding_length"] / 2)
-                w = self.control_params["bounding_length"]
-                h = self.control_params["bounding_length"]
-
-                robot = Robot()  # create robot instance
-                robot.add_position(current_pos)  # add position of the robot
-                robot.add_crop([x_1, y_1, w, h])
-                robot.add_blur(
-                    self.cp.calculate_blur(firstframe[y_1 : y_1 + h, x_1 : x_1 + w])
-                )
-                self.robot_list.append(robot)
-
-                # add starting point of trajectory
-                self.num_bots += 1
-        cv2.imwrite("initialimg.png",firstframe)
-        cam.release()
-       
 
 
     def plot(self):

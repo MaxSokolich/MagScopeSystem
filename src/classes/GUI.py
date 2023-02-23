@@ -50,6 +50,7 @@ CAMERA_PARAMS = {
 STATUS_PARAMS = {
     "rolling_status": False,
     "orient_status": False,
+    "algorithm_status": False,
     "record_status": False,
 }
 
@@ -99,6 +100,13 @@ class GUI:
         self.joystick_q.cancel_join_thread()
         self.main_window.after(10, self.CheckJoystickPoll, self.joystick_q)
 
+        # Tracker-related attributes
+        self.arduino = arduino
+        self.external_file = None
+
+
+        
+    
         #define instance of acoustic module
         self.AcousticModule = AcousticClass()
         self.AcousticModule.dp_activate()
@@ -117,9 +125,7 @@ class GUI:
         )
         self.text_box.configure(yscrollcommand=self.scroll_bar.set)
 
-        # Tracker-related attributes
-        self.arduino = arduino
-        self.external_file = None
+        
 
         coil_roll_button = Button(
             master, 
@@ -240,6 +246,8 @@ class GUI:
             fg= 'white'
         )
 
+        
+
         status_button = Button(
             master, 
             text="Stop:\nZero All Signals", 
@@ -289,6 +297,17 @@ class GUI:
         self.video_option_frame = Bfield_frame = Frame(master = master)
         self.video_option_frame.grid(row=3,column=2,rowspan = 2)
         
+        #run algorithm button
+        run_algo_button = Button(
+            self.video_option_frame,
+            text="Run Algo", 
+            command=self.run_algo, 
+            height=1, 
+            width=10,
+            bg = 'yellow',
+            fg= 'black'
+        )
+        run_algo_button.grid(row=0, column=0)
 
 
         #choose video from file browser
@@ -338,6 +357,7 @@ class GUI:
         stop_record_button.grid(row=4, column=4)
         savepickle_box.grid(row=0, column=4)
         track_button.grid(row=3, column=1,rowspan=3)
+        
        
         close_button.grid(row=4, column=5)
         self.text_box.grid(row=0, column=5, rowspan=2, sticky="nwse")
@@ -408,7 +428,16 @@ class GUI:
         """
         STATUS_PARAMS["orient_status"] = True
 
+    def run_algo(self):
+        """
+        Flips the state of algorthm status to True when "run_algo" is clicked
 
+        Args:
+            None
+        Returns:
+            None
+        """
+        STATUS_PARAMS["algorithm_status"] = True
 
 
     def edit_closed_loop_params(self):
@@ -826,7 +855,7 @@ class GUI:
 
         STATUS_PARAMS["record_status"] = False
 
-    def track(self, use_live_button: bool = False, enable_tracking: bool = True):
+    def track(self, enable_tracking: bool = True):
         """
         Initiates a Tracker instance for microbot tracking
 
@@ -843,8 +872,7 @@ class GUI:
             self.get_widget(self.main_window, "cuda_checkbox").var.get(),
         )
         if (
-            use_live_button
-            or self.get_widget(self.video_option_frame, "live_checkbox").var.get()
+            self.get_widget(self.video_option_frame, "live_checkbox").var.get()
         ):
             video_name = None
         else:
@@ -857,14 +885,15 @@ class GUI:
             tracker.create_robotlist(video_name)
 
         tracker.single_bot_thread(
-            video_name, self.arduino, self.main_window, enable_tracking, output_name
+            video_name, self.arduino, self.main_window, output_name
         )
         
         if self.get_widget(self.main_window, "savepickle").var.get():
             tracker.convert2pickle(output_name)
 
       
-
+        
+        
 
 
 
@@ -883,8 +912,10 @@ class GUI:
 
         STATUS_PARAMS["rolling_status"] = False
         STATUS_PARAMS["orient_status"] = False
+        STATUS_PARAMS["algorithm_status"] = False
         print(" -- Orient OFF -- ")
         print(" -- Roll OFF -- ")
+        print(" -- Algorithm OFF --")
         
         self.text_box.insert(END, "Zeroed\n")
         self.text_box.see("end")

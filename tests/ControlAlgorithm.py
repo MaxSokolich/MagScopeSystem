@@ -1,60 +1,43 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Module containing the Tracker class
+#typ =1 : spherical ---> Roll [1, alpha, freq, gamma]
 
-@authors: Max Sokolich, Brennan Gallamoza, Luke Halko, Trea Holley,
-          Alexis Mainiero, Cameron Thacker, Zoe Valladares
-"""
-
-import time
-from typing import List, Tuple, Union
-import pickle
-import numpy as np
 import cv2
-import matplotlib.pyplot as plt
-plt.style.use('dark_background')
-from tqdm import tqdm
+import time
+import numpy as np
+from typing import List, Tuple, Union
 from tkinter import Tk
+import EasyPySpin
+import matplotlib.pyplot as plt
 
-from src.classes.RobotClass import Robot
-from src.classes.ContourProcessor import ContourProcessor
+from src.classes.Custom2DTracker import Tracker
 from src.classes.Velocity import Velocity
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.FPSCounter import FPSCounter
+from src.classes.RobotClass import Robot
+from src.classes.ContourProcessor import ContourProcessor
 
-import EasyPySpin
-import warnings
-
-warnings.filterwarnings("error")
 
 
 class Algorithm:
-    """
-    Tracker class for tracking microbots. Creates an interactable interface using OpenCV for
-    tracking the trajectories of microbots on a video input (either through a live camera
-    or a video file).
+    def __init__(self, main_window: Tk, 
+                 arduino: ArduinoHandler,
+                control_params: dict,
+                camera_params: dict,
+                status_params: dict,
+                use_cuda: bool = False,
+                ):
 
-    Args:
-        control_params: dict containing modifiable controller variables in the GUI
-        camera_params: dict containing modifiable camera variables in the GUI
-        status_params: dict containing modifiable status variables in the GUI
-    """
 
-    def __init__(
-        self,
-        control_params: dict,
-        camera_params: dict,
-        status_params: dict,
-        use_cuda: bool = False,
-    ):
-    
+        self.arduino = arduino
+        self.main_window = main_window
+        self.control_params = control_params
+        self.camera_params = camera_params
+        self.status_params = status_params
+
+        self.cp = ContourProcessor(self.control_params,use_cuda)
+
         self.start = time.time()
         self.draw_trajectory = False  # determines if trajectory is manually being drawn
         self.robot_list = []  # list of actively tracked robots
-        # self.raw_frames = []
-        # self.bot_loc = None
-        # self.target = None
         self.curr_frame = np.array([])
         self.node = None  # index of node having their trajectory manually influenced
         self.num_bots = 0  # current number of bots
@@ -62,17 +45,10 @@ class Algorithm:
         self.elapsed_time = 0  # time elapsed while tracking
         self.prev_frame_time = 0  # prev frame time, used for self.fps calcs
         self.new_frame_time = 0  # time of newest frame, used for self.fps calcs
-        # self.fps_list = []  # Store the self.fps at the current frame
-
         self.width = 0  # width of cv2 window
         self.height = 0  # height of cv2 window
 
-        self.control_params = control_params
-        self.camera_params = camera_params
-        self.status_params = status_params
-
-        self.cp = ContourProcessor(self.control_params,use_cuda)
-
+    
     def mouse_points(self, event: int, x: int, y: int, flags, params):
         """
         CV2 mouse callback function. This function is called when the mouse is
@@ -145,6 +121,7 @@ class Algorithm:
             if params["arduino"].conn is not None:
                 params["arduino"].send(4, 0, 0, 0)
 
+    
     def track_robot_position(
         self,
         avg_area: float,
@@ -194,6 +171,8 @@ class Algorithm:
         y_2_new = 2 * max_height
         new_crop = [int(x_1_new), int(y_1_new), int(x_2_new), int(y_2_new)]
         
+       
+
         # calculate velocity based on last position and self.fps
         #print(pix_2metric)
         if len(bot.position_list) > 5:
@@ -257,9 +236,18 @@ class Algorithm:
          
         
             cropped_frame = frame[y_1 : y_1 + y_2, x_1 : x_1 + x_2]
-        
+            
+            #CSIC mask
             contours, blur = self.cp.get_contours(cropped_frame,self.control_params)
             bot.add_blur(blur)
+            #test mask
+            #fgmask = F.apply(cropped_frame)
+            #kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 1))
+            #fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
+            #contours, hierarchy = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            #blur = 0
+
+            #area_thresh = bot.avg_area*2
             if len(contours) !=0:
                 max_cnt = contours[0]
                 for contour in contours:
@@ -292,7 +280,7 @@ class Algorithm:
                     fps,
                     pix_2metric
                 )
-        
+
 
     def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int, pix_2metric: float):
         """
@@ -347,13 +335,21 @@ class Algorithm:
             # display dragon tails
             pts = np.array(self.robot_list[bot_id].position_list, np.int32)
             cv2.polylines(frame, [pts], False, bot_color, 2)
+            
+            #display target positions
+            targets = self.robot_list[bot_id].trajectory
+            if len(targets) > 0:
+                target = targets[-1]
+                cv2.circle(frame,
+                    (int(target[0]), int(target[1])),
+                    4,
+                    (bot_color),
+                    -1,
+                )
 
             # if there are more than 10 velocities recorded in the robot, get
             # and display the average velocity
             if len(self.robot_list[bot_id].velocity_list) > 10:
-                # a "velocity" list is in the form of [x, y, magnitude];
-                # get the magnitude of the 10 most recent velocities, find their
-                # average, and display it on the tracker
                 bot = self.robot_list[bot_id]
                 vmag = [v.mag for v in bot.velocity_list[-10:]]
                 vmag_avg = sum(vmag) / len(vmag)
@@ -383,60 +379,47 @@ class Algorithm:
                     1,
                 )
 
-    def display_livestream_info(
-        self, frame: np.ndarray, fps: FPSCounter, resize_scale: int
-    ):
+    def algorithm(self, arduino):
         """
-        Displays non-tracking live-feed info to OpenCV window
+        
+        
 
-        Args:
-            frame: np array representation of the current video frame read in
-            fps: FPSCounter object for updating current fps information
-            resize_scale:   scaling factor for resizing a GUI element
-        Returns:
-            None
+        Returns: actions
         """
-        cv2.putText(
-            frame,
-            str(int(fps.get_fps())),
-            (
-                int((self.width * resize_scale / 100) / 40),
-                int((self.height * resize_scale / 100) / 20),
-            ),
-            cv2.FONT_HERSHEY_COMPLEX,
-            0.5,
-            (0, 255, 0),
-            1,
-        )
-        cv2.putText(
-            frame,
-            str(
-                [
-                    int((self.width * resize_scale / 100)),
-                    int((self.height * resize_scale / 100)),
-                ]
-            ),
-            (
-                int((self.width * resize_scale / 100) / 40),
-                int((self.height * resize_scale / 100) / 60),
-            ),
-            cv2.FONT_HERSHEY_COMPLEX,
-            0.5,
-            (0, 255, 0),
-            1,
-        )
+        f = 1 #frequency
+        pos_list = []
+        target_list = []
+        for bot in range(len(self.robot_list)):
+            current_position = self.robot_list[bot].position_list[-1]
+            target_position = self.robot_list[bot].trajectory[-1]
+            past_position = self.robot_list[bot].position_list[-2]
 
-    def single_bot_thread(
+        
+        t1 = 1
+        t2 = 2
+        alpha = np.arctan2(t2,t1)
+        application_time = np.sqrt(t1**2+t2**2)
+        frequency = f        
+        gamma = 90
+        
+        if arduino.conn is not None:            
+            arduino.send(1,alpha,frequency,gamma)
+        
+     
+        
+    
+
+
+    
+    def run(
         self,
         filepath: Union[str, None],
         arduino: ArduinoHandler,
         main_window: Tk,
-        enable_tracking: bool = True,
         output_name: str = "",
     ):
         """
-        Connect to a camera or video file and perform real time tracking and analysis of microbots
-        through a separate OpenCV window
+        Runs the different algorithm custom tracker thread 
 
         Args:
             filepath:   filepath to video file to be analyzed
@@ -445,8 +428,6 @@ class Algorithm:
             None
         """
 
-        # Use when using EasyPySpin camera, an FLIR mahcine vision camera python API
-        # global self.BFIELD
         if filepath is None:
             try:
                 cam = EasyPySpin.VideoCapture(0)
@@ -467,14 +448,9 @@ class Algorithm:
         cv2.namedWindow("im")  # name of CV2 window
         cv2.setMouseCallback("im", self.mouse_points, params)  # set callback func
 
-        # %%
         rec_start_time = None
         result = None
-        start = time.time()
         fps_counter = FPSCounter()
-
-        # Continously read and preprocess frames until end of video or error
-        # is reached
         while True:
             fps_counter.update()
             success, frame = cam.read()
@@ -497,33 +473,56 @@ class Algorithm:
 
             #calculate pixel to metric for varying res
             #106.2 um = 1024 pixels  @ 50%  resize and 100 x
-            pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"]  
-            
+            pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
+            self.frame_num += 1  # increment frame
 
-            if enable_tracking:
-                self.frame_num += 1  # increment frame
+            if self.num_bots > 0:
+                # DETECT ROBOTS AND UPDATE TRAJECTORY
+                self.detect_robot(frame, fps_counter,pix_2metric)
 
-                if self.num_bots > 0:
-                    # DETECT ROBOTS AND UPDATE TRAJECTORY
-                    self.detect_robot(frame, fps_counter,pix_2metric)
+                # UPDATE AND DISPLAY HUD ELEMENTS
+                self.display_hud(frame)
 
-                    # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
-                    self.control_trajectory(frame, start, arduino)
+                # RUN ALGORITHM
+                #self.run(self.arduino)
+              
 
-                    # UPDATE AND DISPLAY HUD ELEMENTS
-                    self.display_hud(frame)
-
-                # Compute and record self.fps
-                self.get_fps(fps_counter, frame, resize_scale, pix_2metric)
-            else:
-                self.display_livestream_info(frame, fps_counter, resize_scale)
-            
-     
-            
-
+            # Compute and record self.fps
+            self.get_fps(fps_counter, frame, resize_scale, pix_2metric)
+        
 
             
-            # display frame to CV2 window
+            # add videos a seperate list to save space and write the video afterwords
+            if self.status_params["record_status"]:
+                if rec_start_time is None:
+                    rec_start_time = time.time()
+
+                if result is None:
+                    result = cv2.VideoWriter(
+                        output_name + ".mp4",
+                        cv2.VideoWriter_fourcc(*"mp4v"),
+                        20,
+                        resize_ratio
+                    )
+
+                cv2.putText(
+                    frame,
+                    "time (s): " + str(np.round(time.time() - rec_start_time, 3)),
+                    (
+                        int((self.width * resize_scale / 100) * (7 / 10)),
+                        int((self.height * resize_scale / 100) * (9.9 / 10)),
+                    ),
+                    cv2.FONT_HERSHEY_COMPLEX,
+                    0.5,
+                    (255, 255, 255),
+                    1,
+                )
+                result.write(frame)
+            elif result is not None and not self.status_params["record_status"]:
+                result.release()
+                result = None
+
+        
             
             cv2.imshow("im", frame)
 
@@ -543,27 +542,3 @@ class Algorithm:
         cv2.destroyAllWindows()
         arduino.send(4, 0, 0, 0)
 
-
-
-
-    def convert2pickle(self, filename: str):
-        """
-        Converts recorded microbot tracking info into a pickle file for storage.
-
-        Args:
-            filename:   name of output file
-
-        Returns:
-            None
-        """
-        self.plot()  #plot the data
-        pickles = []
-        print(" --- writing robots ---")
-        for bot in tqdm(self.robot_list):
-            if len(bot.area_list) > 1:
-                pickles.append(bot.as_dict())
-
-        print(" -- writing pickle --")
-        with open(filename + ".pickle", "wb") as handle:
-            pickle.dump(pickles, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        print(" -- ({}.pickle) DONE -- ".format(filename))
