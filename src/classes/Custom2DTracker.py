@@ -857,9 +857,8 @@ class Tracker:
             VZ = np.array([v.z for v in bot.velocity_list])
             Vmag = np.array([v.mag for v in bot.velocity_list])
             
-           
+            #pleasse
             
-            #ok ok
             Area = bot.avg_area
             Size = np.sqrt(4*Area/np.pi)
             
