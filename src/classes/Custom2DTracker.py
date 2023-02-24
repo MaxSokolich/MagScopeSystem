@@ -284,7 +284,7 @@ class Tracker:
                 if h > max_height:
                     max_height = h
                 cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
-                #cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
+                cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
    
                 self.track_robot_position(
                     area,
@@ -852,35 +852,40 @@ class Tracker:
             
             X = np.array(bot.position_list)[:, 0]
             Y = np.array(bot.position_list)[:, 1]
+
+            ax[0].plot(X,Y,color =c,linewidth = 4)
             VX = np.array([v.x for v in bot.velocity_list])
             VY = np.array([v.y for v in bot.velocity_list])
             VZ = np.array([v.z for v in bot.velocity_list])
             Vmag = np.array([v.mag for v in bot.velocity_list])
-            
-            #pleasse
+         
             
             Area = bot.avg_area
+            print(Area)
             Size = np.sqrt(4*Area/np.pi)
+            if Size != 0:
+                Size_list.append(Size)
+                ax[2].bar(i, Size,color =c)
             
             if len(Vmag) != 0:
 
                 Vmax = max(Vmag)
+                
                 #filter out extreams and when the microrobot is at rest (Vmag =0)
+                Vmag = Vmag[Vmag<Vmax*.9]
+               
                 Vmag = Vmag[Vmag>Vmax*.3]
-                #Vmag = Vmag[Vmag<Vmax*.8]
-
-
-
+                
                 Vel = round(sum(Vmag)/len(Vmag),2)
                 Vel_list.append(Vel)
-                Size_list.append(Size)
+                
             
-                ax[0].plot(X,Y,color =c,linewidth = 4)
+               
                 
                 rolling_avg = pd.DataFrame(Vmag).rolling(20).mean()
                 ax[1].plot(rolling_avg,color =c, label = "{}".format(Vel))
 
-                ax[2].bar(i, Size,color =c)
+                
                 
                 
                
@@ -893,7 +898,7 @@ class Tracker:
 
         ax[1].set_title("average velocity: {}um/s".format(round(np.mean(Vel_list),2)))
         ax[1].set_xlabel("Frame")
-        
+        ax[1].set_ylim([0,max(Vel_list)*2])
         ax[1].legend()
         ax[1].axhline(np.mean(Vel_list), color = "w", linewidth=4)
 
