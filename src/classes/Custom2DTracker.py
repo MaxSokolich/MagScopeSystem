@@ -6,7 +6,7 @@ Module containing the Tracker class
 @authors: Max Sokolich, Brennan Gallamoza, Luke Halko, Trea Holley,
           Alexis Mainiero, Cameron Thacker, Zoe Valladares
 """
-
+import pandas as pd
 import time
 from typing import List, Tuple, Union
 import pickle
@@ -849,23 +849,42 @@ class Tracker:
 
         for i, c in zip(range(len(self.robot_list)), color):
             bot = self.robot_list[i]
+            
             X = np.array(bot.position_list)[:, 0]
             Y = np.array(bot.position_list)[:, 1]
             VX = np.array([v.x for v in bot.velocity_list])
             VY = np.array([v.y for v in bot.velocity_list])
             VZ = np.array([v.z for v in bot.velocity_list])
             Vmag = np.array([v.mag for v in bot.velocity_list])
+            
+           
+            
+            
             Area = bot.avg_area
             Size = np.sqrt(4*Area/np.pi)
             
             if len(Vmag) != 0:
-                Vel = sum(Vmag)/len(Vmag)
+
+                Vmax = max(Vmag)
+                #filter out extreams and when the microrobot is at rest (Vmag =0)
+                Vmag = Vmag[Vmag>Vmax*.3]
+                #Vmag = Vmag[Vmag<Vmax*.8]
+
+
+
+                Vel = round(sum(Vmag)/len(Vmag),2)
                 Vel_list.append(Vel)
                 Size_list.append(Size)
             
                 ax[0].plot(X,Y,color =c,linewidth = 4)
-                ax[1].bar(i,Vel,color =c)
+                
+                rolling_avg = pd.DataFrame(Vmag).rolling(20).mean()
+                ax[1].plot(rolling_avg,color =c, label = "{}".format(Vel))
+
                 ax[2].bar(i, Size,color =c)
+                
+                
+               
 
 
         ax[0].set_title("trajectories")
@@ -874,7 +893,9 @@ class Tracker:
         ax[0].set_xlabel("Y")
 
         ax[1].set_title("average velocity: {}um/s".format(round(np.mean(Vel_list),2)))
-        ax[1].set_xlabel("MR")
+        ax[1].set_xlabel("Frame")
+        
+        ax[1].legend()
         ax[1].axhline(np.mean(Vel_list), color = "w", linewidth=4)
 
         ax[2].set_title("average size:{}um".format(round(np.mean(Size_list),2)))
