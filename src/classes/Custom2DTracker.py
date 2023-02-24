@@ -859,7 +859,7 @@ class Tracker:
             
            
             
-            #ok
+            #ok ok
             Area = bot.avg_area
             Size = np.sqrt(4*Area/np.pi)
             
