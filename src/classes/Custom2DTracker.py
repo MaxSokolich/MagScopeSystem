@@ -860,12 +860,12 @@ class Tracker:
             Vmag = np.array([v.mag for v in bot.velocity_list])
          
             
-            Area = bot.avg_area
-            print(Area)
+            Area = round(bot.avg_area,3)
             Size = np.sqrt(4*Area/np.pi)
-            if Size != 0:
+            if Area != 0:
                 Size_list.append(Size)
-                ax[2].bar(i, Size,color =c)
+                b = ax[2].bar(i, Size,color =c,label = "{}".format(Size))
+                ax[2].bar_label(b, label_type='center'). 
             
             if len(Vmag) != 0:
 
@@ -904,6 +904,7 @@ class Tracker:
 
         ax[2].set_title("average size:{}um".format(round(np.mean(Size_list),2)))
         ax[2].set_xlabel("MR")
+        ax[2].legend()
         ax[2].axhline(np.mean(Size_list), color = "w", linewidth = 4)
 
         plt.show()
