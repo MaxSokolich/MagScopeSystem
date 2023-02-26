@@ -4,6 +4,7 @@ Main script for performing microbot tracking
 @authors: Max Sokolich, Brennan Gallamoza, Luke Halko, Trea Holley,
           Alexis Mainiero, Cameron Thacker, Zoe Valladares
 """
+
 import time
 from tkinter import Tk
 import asyncio
@@ -14,6 +15,8 @@ from multiprocessing import Process, Queue
 #arduino signal: [typ, input1, input2, input3]
 #typ =1 : spherical ---> Roll
 #typ =2 : cartesian --> Orient
+
+#NOTE: VELZ SET AS 0
 
 PORT = "/dev/ttyACM0"
 

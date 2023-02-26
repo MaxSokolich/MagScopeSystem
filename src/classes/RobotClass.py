@@ -10,6 +10,7 @@ Module containing the Robot class
 from typing import List, Tuple, Union
 import numpy as np
 from src.classes.Velocity import Velocity
+from src.classes.Position import Position
 
 
 class Robot:
@@ -23,7 +24,7 @@ class Robot:
     def __init__(self):
         self.velocity_list = []  # stores bot velocities per frame
         self.position_list = []  # stores bot positions per frame
-        self.blur_list = []  # stores calculated blur values per frame
+        self.blur_list = []  # stores calculated blur values per frame (AKA z-value)
         self.frame_list = []  # unused? stores frames
         self.area_list = []  # stores the cropped areas
         self.cropped_frame = []  # cropped section of a frame representing the bot
@@ -82,6 +83,7 @@ class Robot:
             None
         """
         self.position_list.append(position)
+    
 
     def add_frame(self, frame: int):
         """

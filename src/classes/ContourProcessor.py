@@ -33,7 +33,7 @@ class ContourProcessor:
         self.blur_thresh = 100  # Blur measure threshold when to start adjusting preprocessing
         self.lower_thresh = control_params["lower_thresh"]   # lower threshold when applying inRange preprocessing
         self.upper_thresh = control_params["upper_thresh"] # upper threshold when applying inRange preprocessing
-        self.baseline_blur = self.calculate_blur(cv2.imread(baseline_blur_img), True)
+        self.baseline_blur = 0#self.calculate_blur(cv2.imread(baseline_blur_img), True)
 
         if use_cuda and cv2.cuda.getCudaEnabledDeviceCount() > 0:
             self.use_cuda = True
@@ -55,7 +55,7 @@ class ContourProcessor:
             float value representing the variance of the image after applying the
             Laplacian operator.
         """
-
+        
         if apply_grayscale:
             cropped_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2GRAY)
         return cv2.Laplacian(cropped_frame, cv2.CV_64F).var()
@@ -79,11 +79,30 @@ class ContourProcessor:
             kernel = int(kernel * blur_reduction)
             if kernel % 2 == 0:
                 kernel += 1
-        
         if kernel == 0:
             return None
         else:
             return (kernel, kernel)
+    
+    def get_brightness_and_contrast(self, blur: float) -> Tuple[int, int]:
+        """
+        Calculate the brightness and contrast to be used on a cropped image for
+        preprocessing. The higher the blur, the more contrast and brightnening is
+        applied to the image, allowing for contours to be found.
+
+        Args:
+            blur:  float representing the Laplacian blur variance of an image
+        Returns:
+            A 2-tuple containing the brightness and contrast to be used on the
+            image, respectively
+        """
+        brightness = 0
+        contrast = 0
+        if blur != 0 and blur < self.blur_thresh:
+            contrast = (self.blur_thresh*8) / blur
+
+        return brightness, contrast
+
 
     def apply_brightness_contrast(
             self,
@@ -113,27 +132,9 @@ class ContourProcessor:
         img = img * (contrast/127 + 1) - contrast + brightness
         img = np.clip(img, 0, 255)
         img = np.uint8(img)
-
         return img
 
-    def get_brightness_and_contrast(self, blur: float) -> Tuple[int, int]:
-        """
-        Calculate the brightness and contrast to be used on a cropped image for
-        preprocessing. The higher the blur, the more contrast and brightnening is
-        applied to the image, allowing for contours to be found.
-
-        Args:
-            blur:  float representing the Laplacian blur variance of an image
-        Returns:
-            A 2-tuple containing the brightness and contrast to be used on the
-            image, respectively
-        """
-        brightness = 0
-        contrast = 0
-        if blur != 0 and blur < self.blur_thresh:
-            contrast = (self.blur_thresh*8) / blur
-
-        return brightness, contrast
+    
 
     def apply_pipeline(
             self,
@@ -158,8 +159,7 @@ class ContourProcessor:
         """
         # Apply preprocessing pipeline to cropped image
         # convert to grayscale
-        crop_mask = cv2.cvtColor(
-            cropped_frame, cv2.COLOR_BGR2GRAY)
+        crop_mask = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2GRAY)
 
         # get blur after grayscale is applied
         blur = self.calculate_blur(crop_mask)
@@ -167,7 +167,7 @@ class ContourProcessor:
         # get the avg blur based on the current blur and last 5 other frames
         if bot_blur_list:
             avg_blur = (blur + (sum(bot_blur_list[-3:]))) / 3
-            print(avg_blur)
+            #print(avg_blur)
             
         if debug_mode:
             print("BLUR:\t", blur)
@@ -175,16 +175,16 @@ class ContourProcessor:
         # apply gaussian blur based on avg_blur
         kernel = self.get_blur_kernel(blur)   # dynamic kernel
         if kernel is not None:
-            crop_mask = cv2.GaussianBlur(
-                crop_mask, kernel, 0)
+            crop_mask = cv2.GaussianBlur(crop_mask, kernel, 0)
 
         # apply brightness/contrast based on avg_blur
         brightness, contrast = self.get_brightness_and_contrast(blur)
         crop_mask = self.apply_brightness_contrast(crop_mask, brightness, contrast)
+        #cv2.imshow("mask", crop_mask)
         self.lower_thresh = control_params["lower_thresh"]
         self.upper_thresh = control_params["upper_thresh"]
-        crop_mask = cv2.inRange(
-            crop_mask, self.lower_thresh, (self.upper_thresh))
+        crop_mask = cv2.inRange(crop_mask, self.lower_thresh, (self.upper_thresh))
+        
 
         # Return the preprocessed cropping and the blur value of the current frame
         return crop_mask, blur
@@ -256,8 +256,7 @@ class ContourProcessor:
             crop_mask, blur = self.apply_pipeline(cropped_frame, control_params, bot_blur_list, debug_mode)
 
         # find contours and areas of contours
-        contours, _ = cv2.findContours(
-            crop_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(crop_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         # Return the contours and the blur value of the current frame
         return contours, blur - self.baseline_blur

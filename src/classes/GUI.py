@@ -43,7 +43,7 @@ CONTROL_PARAMS = {
 
 CAMERA_PARAMS = {
     "resize_scale": 50, 
-    "framerate": 18, 
+    "framerate": 40, 
     "exposure": 10000, 
     "Obj": 50}
 
