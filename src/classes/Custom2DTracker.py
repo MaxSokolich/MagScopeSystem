@@ -25,7 +25,7 @@ from src.classes.Velocity import Velocity
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.FPSCounter import FPSCounter
 
-#import EasyPySpin
+import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -323,13 +323,12 @@ class Tracker:
         """
 
         # display information to the screen
-        cv2.putText(
-            frame,
-            str(int(fps.get_fps())),
-            (
-                int((self.width * resize_scale / 100) / 40),
-                int((self.height * resize_scale / 100) / 30),
-            ),
+        w = (self.width * resize_scale / 100) 
+        h = (self.height * resize_scale / 100) 
+        
+        #fps
+        cv2.putText(frame,str(int(fps.get_fps())),
+            (int(w / 40),int(h / 30)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
             (0, 255, 0),
@@ -337,8 +336,19 @@ class Tracker:
         )
 
         # scale bar
+        cv2.putText(frame,"100 um",
+            (int(w / 40),int(h / 18)),
+            cv2.FONT_HERSHEY_COMPLEX,
+            0.5,
+            (0, 255, 0),
+            1,
+        )
         cv2.line(
-            frame, (75, 80), (75 + int(100 * (pix_2metric)),80), (0, 0, 255), 3
+            frame, 
+            (int(w / 40),int(h / 14)),
+            (int(w / 40) + int(100 * (pix_2metric)),int(h / 14)), 
+            (0, 0, 0), 
+            3
         )
 
     def display_hud(self, frame: np.ndarray):
@@ -398,7 +408,7 @@ class Tracker:
                 
                 cv2.putText(
                     frame,
-                    f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um. area: {round(area,2)}. ",
+                    f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um. blur: {round(blur,2)}. ",
                     (0, 150 + bot_id * 20),
                     cv2.FONT_HERSHEY_COMPLEX,
                     0.5,
@@ -660,9 +670,6 @@ class Tracker:
         
         
 
-
-
-
     def control_trajectory(
         self, frame: np.ndarray, start: float, arduino: ArduinoHandler
     ):
@@ -859,22 +866,24 @@ class Tracker:
             if len(bot.frame_list) > 50:
 
                 #ADD 2D PLOT
-                X = np.array(bot.position_list)[:-1, 0] /self.scale
-                Y = np.array(bot.position_list)[:-1, 1] /self.scale
+                X = np.array(bot.position_list)[:, 0] /self.scale
+                Y = np.array(bot.position_list)[:, 1] /self.scale
                 ax[0].plot(X,Y,color =c,linewidth = 1 )
                 
                 #ADD 3D PLOT
-                Z = np.array(bot.area_list)[:]    #need to fix scal, will also need to normalize this
-                rolling_avgZ = pd.DataFrame(Z).rolling(10).mean().values
-                l = [i[0] for i in rolling_avgZ]
-                if max(Z) > max_z:
+                
+                Z = np.array(bot.blur_list)[:]    #need to fix scal, will also need to normalize this
+                Z = Z - np.min(Z)
+
+                #Z = ((Z - np.min(Z)) / (np.max(Z) - np.min(Z))) #normalize
+                rolling_avgZ = pd.DataFrame(Z).rolling(30).mean().values
+                avgZ = [i[0] for i in rolling_avgZ]
+                
+                if max(Z) > max_z: #for plot z max limit
                     max_z = max(Z)
                        
-                
-                rolling_avgZ = pd.DataFrame(Z).rolling(20).mean().to_numpy()
-                #print(len(X),len(Y),len(Z))
-                ax2.plot3D(X,Y,l,color =c,linewidth = 1)
-                print(self.width,self.height)
+                ax2.plot3D(X,Y,avgZ,color =c,linewidth = 1)
+
 
 
                 #ADD SIZE PLOT
@@ -928,14 +937,12 @@ class Tracker:
         ax2.set_title("3D Trajectories")
         ax2.axes.set_xlim3d(left=0, right=(self.width * resize_scale // 100) /self.scale) 
         ax2.axes.set_ylim3d(bottom=(self.height * resize_scale // 100) /self.scale, top=0) 
-        ax2.axes.set_zlim3d(bottom= 0, top=max_z*3) 
+        ax2.axes.set_zlim3d(bottom= 0, top=max_z*2 if max_z>0 else 1) 
 
         ax2.set_xlabel("X (um)")
         ax2.set_ylabel("Y (um)")
-        ax2.set_zlabel("Z (um)")
-
-
-        #plt.tight_layout()
+        ax2.set_zlabel("Z (contrast units)")
+   
         plt.show()
 
 

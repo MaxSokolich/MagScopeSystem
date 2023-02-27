@@ -21,13 +21,15 @@ class ContourProcessor:
     tracking the trajectories of microbots on a video input (either through a live camera 
     or a video file).
 
+    NOTE: USING CONTRAST IN PLACE OF BLUR FOR A ARTIFICAL Z VALUE
+
     Args:
         use_cuda: boolean specifying whether CUDA preprocessing should be performed
         baseline_blur_img: path to the "standard image" of an in-focus microbot
     '''
 
     def __init__(self,control_params: dict,use_cuda: bool=False, baseline_blur_img: str=DEFAULT_IMG):
-        self.kernel_size = 21
+        self.kernel_size = 23
         self.base_brightness = 0
         self.base_contrast = 0
         self.blur_thresh = 100  # Blur measure threshold when to start adjusting preprocessing
@@ -79,6 +81,7 @@ class ContourProcessor:
             kernel = int(kernel * blur_reduction)
             if kernel % 2 == 0:
                 kernel += 1
+        
         if kernel == 0:
             return None
         else:
@@ -100,6 +103,7 @@ class ContourProcessor:
         contrast = 0
         if blur != 0 and blur < self.blur_thresh:
             contrast = (self.blur_thresh*8) / blur
+      
 
         return brightness, contrast
 
@@ -187,7 +191,7 @@ class ContourProcessor:
         
 
         # Return the preprocessed cropping and the blur value of the current frame
-        return crop_mask, blur
+        return crop_mask, contrast  #switched from blur
 
     def apply_cuda_pipeline(self, cropped_frame: np.ndarray,control_params: dict,):
         """
@@ -228,7 +232,7 @@ class ContourProcessor:
         gpu_frame = cv2.cuda.bitwise_not(gpu_frame)
         crop_mask = gpu_frame.download()
 
-        return crop_mask, blur
+        return crop_mask, contrast  #switched from blur
 
     def get_contours(
             self,
@@ -251,15 +255,15 @@ class ContourProcessor:
         """
 
         if self.use_cuda:
-            crop_mask, blur = self.apply_cuda_pipeline(cropped_frame,control_params)
+            crop_mask, contrast = self.apply_cuda_pipeline(cropped_frame,control_params)
         else:
-            crop_mask, blur = self.apply_pipeline(cropped_frame, control_params, bot_blur_list, debug_mode)
+            crop_mask, contrast = self.apply_pipeline(cropped_frame, control_params, bot_blur_list, debug_mode)
 
         # find contours and areas of contours
         contours, _ = cv2.findContours(crop_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         # Return the contours and the blur value of the current frame
-        return contours, blur - self.baseline_blur
+        return contours, contrast#blur - self.baseline_blur
 
     def plot_contours(self, contours: Tuple[np.ndarray]):
         """
