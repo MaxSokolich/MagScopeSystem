@@ -1,9 +1,11 @@
 Bugs:
-4) scale text and hud based on resize scale
 5) test 3D tracking, add Z position
 11) maybe get ps5 controller working
 13) fix acoustic digitial potentiameter mapping
 16) create seperate class for closed loop control algorithms
+17) normalize and scale z tracks
+
+
 
 
 

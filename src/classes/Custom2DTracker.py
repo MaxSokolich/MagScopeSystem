@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 plt.style.use('dark_background')
 from tqdm import tqdm
 from tkinter import Tk
+from mpl_toolkits import mplot3d
+
 
 from src.classes.RobotClass import Robot
 from src.classes.ContourProcessor import ContourProcessor
@@ -66,10 +68,14 @@ class Tracker:
 
         self.width = 0  # width of cv2 window
         self.height = 0  # height of cv2 window
-
+        
+        self.scale = 1
+        
         self.control_params = control_params
         self.camera_params = camera_params
         self.status_params = status_params
+
+        
 
         self.cp = ContourProcessor(self.control_params,use_cuda)
 
@@ -105,11 +111,13 @@ class Tracker:
 
 
             robot = Robot()  # create robot instance
+            blur_z = self.cp.calculate_blur(self.curr_frame[y_1 : y_1 + h, x_1 : x_1 + w])
+            robot.add_blur(blur_z)
+
             robot.add_position(bot_loc)  # add position of the robot
+            
             robot.add_crop([x_1, y_1, w, h])
-            robot.add_blur(
-                self.cp.calculate_blur(self.curr_frame[y_1 : y_1 + h, x_1 : x_1 + w])
-            )
+            
             self.robot_list.append(robot)
 
             # add starting point of trajectory
@@ -214,13 +222,14 @@ class Tracker:
 
             velz = 0
             if len(bot.blur_list) > 0:
-                velz = (bot.blur_list[-4] - blur)    #This needs to be scaled or something
+                velz = (bot.blur_list[-5] - blur)    #This needs to be scaled or something (takes the past 5th blur value to get a rate)
             vel = Velocity(velx, vely, 0)
             bot.add_velocity(vel)
           
         # update robots params
         bot.add_crop(new_crop)
         bot.add_position([current_pos[0] + x_1, current_pos[1] + y_1])
+        bot.add_blur(blur)
         bot.add_frame(self.frame_num)
         bot.add_time(round(time.time()-self.start,2))
 
@@ -261,11 +270,11 @@ class Tracker:
             cropped_frame = frame[y_1 : y_1 + y_2, x_1 : x_1 + x_2]
             
             #CSIC mask
-            contours, blur = self.cp.get_contours(cropped_frame,self.control_params)
-            bot.add_blur(blur)
-    
+            contours, blur = self.cp.get_contours(cropped_frame, self.control_params)
+         
             #area_thresh = bot.avg_area*2
             if len(contours) !=0:
+               
                 max_cnt = contours[0]
                 for contour in contours:
                     # alcualte max_contour
@@ -314,13 +323,12 @@ class Tracker:
         """
 
         # display information to the screen
-        cv2.putText(
-            frame,
-            str(int(fps.get_fps())),
-            (
-                int((self.width * resize_scale / 100) / 40),
-                int((self.height * resize_scale / 100) / 30),
-            ),
+        w = (self.width * resize_scale / 100) 
+        h = (self.height * resize_scale / 100) 
+        
+        #fps
+        cv2.putText(frame,str(int(fps.get_fps())),
+            (int(w / 40),int(h / 30)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
             (0, 255, 0),
@@ -328,8 +336,19 @@ class Tracker:
         )
 
         # scale bar
+        cv2.putText(frame,"100 um",
+            (int(w / 40),int(h / 18)),
+            cv2.FONT_HERSHEY_COMPLEX,
+            0.5,
+            (0, 255, 0),
+            1,
+        )
         cv2.line(
-            frame, (75, 80), (75 + int(100 * (pix_2metric)),80), (0, 0, 255), 3
+            frame, 
+            (int(w / 40),int(h / 14)),
+            (int(w / 40) + int(100 * (pix_2metric)),int(h / 14)), 
+            (0, 0, 0), 
+            3
         )
 
     def display_hud(self, frame: np.ndarray):
@@ -376,25 +395,20 @@ class Tracker:
                 bot = self.robot_list[bot_id]
                 vmag = [v.mag for v in bot.velocity_list[-10:]]
                 vmag_avg = sum(vmag) / len(vmag)
-                #print(vmag_avg)
+    
 
-                # blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
-                blur = (
-                    bot.blur_list[(len(bot.blur_list) - len(bot.blur_list) % 10) - 1]
-                    if len(bot.blur_list) > 0
-                    else 0
-                )
+                area = bot.area_list[-1]
                 #Vz value calculated from blur
+                blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
                 vz = [v.z for v in bot.velocity_list[-10:]]
                 vz_avg = sum(vz)/len(vz)
 
-                #average diamter of bot (calcuating from area of circle)
+                #average diamter of bot(calcuating from area of circle)
                 dia = np.sqrt(4*bot.avg_area/np.pi)
-                
                 
                 cv2.putText(
                     frame,
-                    f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um",
+                    f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um. blur: {round(blur,2)}. ",
                     (0, 150 + bot_id * 20),
                     cv2.FONT_HERSHEY_COMPLEX,
                     0.5,
@@ -472,10 +486,10 @@ class Tracker:
                 self.height * resize_scale // 100,
             )
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
-
             #calculate pixel to metric for varying res
             #106.2 um = 1024 pixels  @ 50%  resize and 100 x
             pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
+            self.scale = pix_2metric
             self.frame_num += 1  # increment frame
 
             if self.num_bots > 0:
@@ -583,7 +597,7 @@ class Tracker:
         contours, blur = self.cp.get_contours(firstframe,self.control_params)
         area_threshold = 10  
 
-        for contour in contours:
+        for contour in contours: #treating each contour as a robot
             # remove small elements by calcualting arrea
             area = cv2.contourArea(contour)
 
@@ -655,9 +669,6 @@ class Tracker:
                 arduino.send(1,alpha,frequency,gamma)
         
         
-
-
-
 
     def control_trajectory(
         self, frame: np.ndarray, start: float, arduino: ArduinoHandler
@@ -827,6 +838,7 @@ class Tracker:
 
     def plot(self):
         """
+        ##ADD 3D PLOT of TRAJECTORIES
         Plot all trajectories from each robot using matplotlib
 
         Args:
@@ -836,80 +848,102 @@ class Tracker:
         """
         print(" -- PLOTTING -- ")
         color = plt.cm.rainbow(np.linspace(0, 1, self.num_bots))
+        resize_scale = self.camera_params["resize_scale"]
 
-        #plt.figure()
-        #plt.xlim((0, (1936 * self.camera_params["resize_scale"] / 100)))
-        #plt.ylim(((1440 * self.camera_params["resize_scale"] / 100), 0))
-        #plt.title("ALL TRAGECTORYS")\
+        _, ax = plt.subplots(3,1, figsize=(5, 8))
+        _,ax2 = plt.subplots(1,1, figsize=(8, 8))
+        ax2 = plt.axes(projection = '3d')
+        #xx, yy = np.meshgrid(range(400), range(400))
+        #zz = yy*0
+        #ax2.plot_surface(xx, yy, zz)
 
-        
-        fig, ax = plt.subplots(3,1)
+
         Vel_list = []
         Size_list= []
-
+        max_z = 0
         for i, c in zip(range(len(self.robot_list)), color):
             bot = self.robot_list[i]
+            if len(bot.frame_list) > 50:
+
+                #ADD 2D PLOT
+                X = np.array(bot.position_list)[:, 0] /self.scale
+                Y = np.array(bot.position_list)[:, 1] /self.scale
+                ax[0].plot(X,Y,color =c,linewidth = 1 )
+                
+                #ADD 3D PLOT
+                
+                Z = np.array(bot.blur_list)[:]    #need to fix scal, will also need to normalize this
+                Z = Z - np.min(Z)
+
+                #Z = ((Z - np.min(Z)) / (np.max(Z) - np.min(Z))) #normalize
+                rolling_avgZ = pd.DataFrame(Z).rolling(30).mean().values
+                avgZ = [i[0] for i in rolling_avgZ]
+                
+                if max(Z) > max_z: #for plot z max limit
+                    max_z = max(Z)
+                       
+                ax2.plot3D(X,Y,avgZ,color =c,linewidth = 1)
+
+
+
+                #ADD SIZE PLOT
+                Area = round(bot.avg_area,3)
+                Size = np.sqrt(4*Area/np.pi)
+                if Area != 0:
+                    Size_list.append(Size)
+                    b = ax[2].bar(i, Size,color =c,label = "{}".format(round(Size,2)))
+                    ax[2].bar_label(b, label_type='center') 
+
+
+                #ADD VELOCITY PLOT
+                VX = np.array([v.x for v in bot.velocity_list])
+                VY = np.array([v.y for v in bot.velocity_list])
+                VZ = np.array([v.z for v in bot.velocity_list])
+                Vmag = np.array([v.mag for v in bot.velocity_list])        
+                
+                if len(Vmag) > 0:
+                    Vmax = max(Vmag)
+                    #filter out extreams and when the microrobot is at rest (Vmag =0)
+                    Vmag = Vmag[Vmag<Vmax*1]
+                    Vmag = Vmag[Vmag>Vmax*0]
+                    Vel = round(sum(Vmag)/len(Vmag),2)
+                    Vel_list.append(Vel)
+                    rolling_avg = pd.DataFrame(Vmag).rolling(20).mean()
+                    ax[1].plot(rolling_avg,color =c, label = "{}".format(Vel))
             
-            X = np.array(bot.position_list)[:, 0]
-            Y = np.array(bot.position_list)[:, 1]
-
-            ax[0].plot(X,Y,color =c,linewidth = 4)
-            VX = np.array([v.x for v in bot.velocity_list])
-            VY = np.array([v.y for v in bot.velocity_list])
-            VZ = np.array([v.z for v in bot.velocity_list])
-            Vmag = np.array([v.mag for v in bot.velocity_list])
-         
             
-            Area = round(bot.avg_area,3)
-            Size = np.sqrt(4*Area/np.pi)
-            if Area != 0:
-                Size_list.append(Size)
-                b = ax[2].bar(i, Size,color =c,label = "{}".format(Size))
-                ax[2].bar_label(b, label_type='center'). 
-            
-            if len(Vmag) != 0:
-
-                Vmax = max(Vmag)
-                
-                #filter out extreams and when the microrobot is at rest (Vmag =0)
-                Vmag = Vmag[Vmag<Vmax*.9]
-               
-                Vmag = Vmag[Vmag>Vmax*.3]
-                
-                Vel = round(sum(Vmag)/len(Vmag),2)
-                Vel_list.append(Vel)
-                
-            
-               
-                
-                rolling_avg = pd.DataFrame(Vmag).rolling(20).mean()
-                ax[1].plot(rolling_avg,color =c, label = "{}".format(Vel))
-
-                
-                
-                
-               
-
-
-        ax[0].set_title("trajectories")
+        
+        #2D
+        ax[0].set_title("2D Trajectories")
         ax[0].invert_yaxis()
-        ax[0].set_xlabel("X")
-        ax[0].set_xlabel("Y")
-
+        ax[0].set_xlabel("X (um)")
+        ax[0].set_ylabel("Y (um)")
+        ax[0].set_xlim([0,(self.width * resize_scale // 100) /self.scale])
+        ax[0].set_ylim([(self.height * resize_scale // 100) /self.scale, 0])
+        
+        #VEL
         ax[1].set_title("average velocity: {}um/s".format(round(np.mean(Vel_list),2)))
         ax[1].set_xlabel("Frame")
         ax[1].set_ylim([0,max(Vel_list)*2])
         ax[1].legend()
         ax[1].axhline(np.mean(Vel_list), color = "w", linewidth=4)
 
+        #SIZE
         ax[2].set_title("average size:{}um".format(round(np.mean(Size_list),2)))
         ax[2].set_xlabel("MR")
-        ax[2].legend()
         ax[2].axhline(np.mean(Size_list), color = "w", linewidth = 4)
+        
+        #3D
+        ax2.set_title("3D Trajectories")
+        ax2.axes.set_xlim3d(left=0, right=(self.width * resize_scale // 100) /self.scale) 
+        ax2.axes.set_ylim3d(bottom=(self.height * resize_scale // 100) /self.scale, top=0) 
+        ax2.axes.set_zlim3d(bottom= 0, top=max_z*2 if max_z>0 else 1) 
 
+        ax2.set_xlabel("X (um)")
+        ax2.set_ylabel("Y (um)")
+        ax2.set_zlabel("Z (contrast units)")
+   
         plt.show()
-
-
 
 
     def convert2pickle(self, filename: str):
