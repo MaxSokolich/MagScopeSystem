@@ -37,7 +37,7 @@ def mouse_points(event,x,y,flags,params):
             
 b = [0,0]
 fps = count_fps()       
-cam = EasyPySpin.VideoCapture(0)
+cam = cv2.VideoCapture(0)
 width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
 cam.set(cv2.CAP_PROP_FPS,24)
@@ -50,6 +50,8 @@ cv2.setMouseCallback("img", mouse_points)  # set callback func
 while True:
     fps.update()
     suc, frame = cam.read()
+    if not suc:
+        print("error")
     #click object on half resd image
     #find coords of obj in
     #do contouring based on full res img
