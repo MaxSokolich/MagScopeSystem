@@ -1,4 +1,5 @@
 import cv2
+import PySpin
 import EasyPySpin
 import time
 import numpy as np
@@ -8,7 +9,7 @@ BFS-U3-50S5C-Color
 2448x2048
 35 fps
 
-NOTE: need to add cam.PixelFormat.SetValue(PySpin.PixelFormat_BGR8) in Easypyspin videocapture
+NOTE: need to add cam.PixelFormat.SetValue(PySpin.PixelFormat_BGR8) above self.cam.BeginAcquistion() line in Easypyspin videocapture
 '''
 
 class count_fps:
@@ -36,7 +37,7 @@ def mouse_points(event,x,y,flags,params):
             
 b = [0,0]
 fps = count_fps()       
-cam = EasyPySpin.VideoCaptureEX(0)
+cam = EasyPySpin.VideoCapture(0)
 width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
 cam.set(cv2.CAP_PROP_FPS,24)
