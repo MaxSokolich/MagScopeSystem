@@ -25,7 +25,7 @@ from src.classes.Velocity import Velocity
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.FPSCounter import FPSCounter
 
-import EasyPySpin
+#import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -450,6 +450,7 @@ class Tracker:
         # Get the video input's self.width, self.height, and self.fps
         self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+     
         cam_fps = cam.get(cv2.CAP_PROP_FPS)
         print(self.width, self.height, cam_fps)
 
