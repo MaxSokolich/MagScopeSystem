@@ -25,7 +25,7 @@ from src.classes.Velocity import Velocity
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.FPSCounter import FPSCounter
 
-import EasyPySpin
+#import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -232,6 +232,7 @@ class Tracker:
         bot.add_blur(blur)
         bot.add_frame(self.frame_num)
         bot.add_time(round(time.time()-self.start,2))
+        
 
         # display
         cv2.circle(
@@ -351,6 +352,25 @@ class Tracker:
             (0, 0, 0), 
             3
         )
+
+
+    def delete_bots(self,k):
+        """
+        Deals with deleting single bots if there tracking becomes awry
+
+        Args:
+            k: cv2.waitkey() object
+        Returns:
+            None
+        """
+        #delete single bots
+        if self.num_bots < 10:
+            for bot_id in range(self.num_bots):
+                if k == ord(str(bot_id+1)):
+                        del self.robot_list[bot_id]
+                        self.num_bots -= 1
+
+
 
     def display_hud(self, frame: np.ndarray):
         """
@@ -545,6 +565,7 @@ class Tracker:
 
         
             
+
             cv2.imshow("im", frame)
 
             
@@ -552,11 +573,16 @@ class Tracker:
                 delay = 1
             else:
                 delay = int((1/self.camera_params["framerate"])*1000)
+            k = cv2.waitKey(delay)
+                
             
             # Exit
+            self.delete_bots(k)  #call delete bots function to handle deleting single bots
             main_window.update()
-            if cv2.waitKey(delay) & 0xFF == ord("q"):
+            
+            if k & 0xFF == ord("q"):
                 break
+            
         
         
         cam.release()

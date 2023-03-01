@@ -31,10 +31,10 @@ class ContourProcessor:
     def __init__(self,control_params: dict,use_cuda: bool=False, baseline_blur_img: str=DEFAULT_IMG):
         self.kernel_size = 21
         self.base_brightness = 0
-        self.base_contrast = 0
-        self.blur_thresh = 100  # Blur measure threshold when to start adjusting preprocessing
-        self.lower_thresh = control_params["lower_thresh"]   # lower threshold when applying inRange preprocessing
-        self.upper_thresh = control_params["upper_thresh"] # upper threshold when applying inRange preprocessing
+        #self.blur_thresh = control_params["blur_thresh"]  # Blur measure threshold when to start adjusting preprocessing
+        #self.lower_thresh = control_params["lower_thresh"]   # lower threshold when applying inRange preprocessing
+        #self.upper_thresh = control_params["upper_thresh"] # upper threshold when applying inRange preprocessing
+        self.control_params = control_params
         self.baseline_blur = 0#self.calculate_blur(cv2.imread(baseline_blur_img), True)
         self.counter = 0
         if use_cuda and cv2.cuda.getCudaEnabledDeviceCount() > 0:
@@ -79,6 +79,7 @@ class ContourProcessor:
             A Gaussian kernel size in the form of a 2-tuple (height, width). May also
             return None if no blur kernel should be applied.
         """
+        self.blur_thresh = self.control_params["blur_thresh"] 
         kernel = self.kernel_size
         if blur < self.blur_thresh:
             blur_reduction = blur / self.blur_thresh
@@ -108,7 +109,7 @@ class ContourProcessor:
         if blur != 0 and blur < self.blur_thresh:
             contrast = (self.blur_thresh*8) / blur
       
-        print(blur , " < ", self.blur_thresh)
+        #print(blur , " < ", self.blur_thresh)
         return brightness, contrast
 
 

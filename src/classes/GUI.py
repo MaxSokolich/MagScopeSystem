@@ -33,7 +33,8 @@ from src.classes.JoystickProcess import JoystickProcess
 CONTROL_PARAMS = {
     "lower_thresh": 0,
     "upper_thresh": 104,
-    "bounding_length": 10,       #intial size of "screenshot" cropped frame 
+    "blur_thresh": 100,
+    "bounding_length": 15,       #intial size of "screenshot" cropped frame 
     "area_filter": 2,            #cropped frame dimensions mulitplier
     "field_strength": 1,
     "rolling_frequency": 10,
@@ -42,7 +43,7 @@ CONTROL_PARAMS = {
 }
 
 CAMERA_PARAMS = {
-    "resize_scale": 50, 
+    "resize_scale": 100, 
     "framerate": 24, 
     "exposure": 10000, 
     "Obj": 50}
@@ -475,6 +476,7 @@ class GUI:
 
             CONTROL_PARAMS["lower_thresh"] = int(lower_thresh_slider.get())
             CONTROL_PARAMS["upper_thresh"] = int(upper_thresh_slider.get())
+            CONTROL_PARAMS["blur_thresh"] = int(blur_thresh_slider.get())
             CONTROL_PARAMS["bounding_length"] = int(bounding_length_slider.get())
             CONTROL_PARAMS["area_filter"] = int(area_filter_slider.get())
             CONTROL_PARAMS["field_strength"] = float(field_strength_slider.get())
@@ -486,6 +488,7 @@ class GUI:
 
         lower_thresh = DoubleVar()
         upper_thresh = DoubleVar()
+        blur_thresh = DoubleVar()
         bounding_length = DoubleVar()
         area_filter = DoubleVar()
         field_strength = DoubleVar()
@@ -512,6 +515,18 @@ class GUI:
             to=255,
             resolution=1,
             variable=upper_thresh,
+            width=20,
+            length=200,
+            orient=HORIZONTAL,
+            command=update_loop_slider_values,
+        )
+        blur_thresh_slider = Scale(
+            master=window3,
+            label="blur_thresh",
+            from_=50,
+            to=250,
+            resolution=1,
+            variable=blur_thresh,
             width=20,
             length=200,
             orient=HORIZONTAL,
@@ -594,6 +609,7 @@ class GUI:
 
         lower_thresh_slider.set(CONTROL_PARAMS["lower_thresh"])
         upper_thresh_slider.set(CONTROL_PARAMS["upper_thresh"])
+        blur_thresh_slider.set(CONTROL_PARAMS["blur_thresh"])
         bounding_length_slider.set(CONTROL_PARAMS["bounding_length"])
         area_filter_slider.set(CONTROL_PARAMS["area_filter"])
         field_strength_slider.set(CONTROL_PARAMS["field_strength"])
@@ -603,6 +619,7 @@ class GUI:
 
         lower_thresh_slider.pack()
         upper_thresh_slider.pack()
+        blur_thresh_slider.pack()
         bounding_length_slider.pack()
         area_filter_slider.pack()
         field_strength_slider.pack()

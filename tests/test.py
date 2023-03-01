@@ -1,8 +1,16 @@
-import numpy as np
+import keyboard
+print(keyboard.read_key())
+'''while True:
+   
+    print(keyboard.read_key())
+    if keyboard.read_key() == "a":
+        break'''
 
 
-def convert_speed(dist, time):
-    speed = dist/time
-    print(speed)
 
-convert_speed(198,9.73)
+def delete_bots(self,k):
+    #delete single bots
+    for bot_id in range(self.num_bots):
+        if k == ord(str(bot_id+1)):
+                del self.robot_list[bot_id]
+                self.num_bots -= 1
