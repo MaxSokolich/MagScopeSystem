@@ -901,12 +901,19 @@ class Tracker:
                 VY = np.array([v.y for v in bot.velocity_list])
                 VZ = np.array([v.z for v in bot.velocity_list])
                 Vmag = np.array([v.mag for v in bot.velocity_list])        
-                
+                print(Vmag)
+                print(len(Vmag))
                 if len(Vmag) > 0:
                     Vmax = max(Vmag)
+                    Vmin = min(Vmag)
+                    #if Vmin == 0:
+                    #    Vmag = Vmag[Vmag != 0]
+                    #else:
+                    #    pass
+
                     #filter out extreams and when the microrobot is at rest (Vmag =0)
                     Vmag = Vmag[Vmag<Vmax*1]
-                    Vmag = Vmag[Vmag>Vmax*0]
+                    #Vmag = Vmag[Vmag>Vmax*0]
                     Vel = round(sum(Vmag)/len(Vmag),2)
                     Vel_list.append(Vel)
                     rolling_avg = pd.DataFrame(Vmag).rolling(20).mean()
