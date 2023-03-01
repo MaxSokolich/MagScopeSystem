@@ -25,7 +25,7 @@ from src.classes.Velocity import Velocity
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.FPSCounter import FPSCounter
 
-#import EasyPySpin
+import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -74,6 +74,8 @@ class Tracker:
         self.control_params = control_params
         self.camera_params = camera_params
         self.status_params = status_params
+        
+        self.use_cuda = use_cuda
 
         
 
@@ -111,9 +113,7 @@ class Tracker:
 
 
             robot = Robot()  # create robot instance
-            blur_z = self.cp.calculate_blur(self.curr_frame[y_1 : y_1 + h, x_1 : x_1 + w])
-            robot.add_blur(blur_z)
-
+            
             robot.add_position(bot_loc)  # add position of the robot
             
             robot.add_crop([x_1, y_1, w, h])
@@ -269,9 +269,10 @@ class Tracker:
         
             cropped_frame = frame[y_1 : y_1 + y_2, x_1 : x_1 + x_2]
             
-            #CSIC mask
+            #grab original blur threshold of robot at frame 5
+            
             contours, blur = self.cp.get_contours(cropped_frame, self.control_params)
-         
+            
             #area_thresh = bot.avg_area*2
             if len(contours) !=0:
                
@@ -289,9 +290,9 @@ class Tracker:
                 current_pos = [(x + x + w) / 2, (y + y + h) / 2]
                 # track the maximum width and height of the contours
                 if w > max_width:
-                    max_width = w
+                    max_width = w*self.control_params["area_filter"]
                 if h > max_height:
-                    max_height = h
+                    max_height = h*self.control_params["area_filter"]
                 cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
                 cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
    
@@ -864,11 +865,11 @@ class Tracker:
         max_z = 0
         for i, c in zip(range(len(self.robot_list)), color):
             bot = self.robot_list[i]
-            if len(bot.frame_list) > 50:
+            if len(bot.frame_list) > 10:
 
                 #ADD 2D PLOT
-                X = np.array(bot.position_list)[:, 0] /self.scale
-                Y = np.array(bot.position_list)[:, 1] /self.scale
+                X = np.array(bot.position_list)[1:, 0] /self.scale
+                Y = np.array(bot.position_list)[1:, 1] /self.scale
                 ax[0].plot(X,Y,color =c,linewidth = 1 )
                 
                 #ADD 3D PLOT
@@ -900,24 +901,23 @@ class Tracker:
                 VX = np.array([v.x for v in bot.velocity_list])
                 VY = np.array([v.y for v in bot.velocity_list])
                 VZ = np.array([v.z for v in bot.velocity_list])
-                Vmag = np.array([v.mag for v in bot.velocity_list])        
-                print(Vmag)
-                print(len(Vmag))
-                if len(Vmag) > 0:
-                    Vmax = max(Vmag)
-                    Vmin = min(Vmag)
-                    #if Vmin == 0:
-                    #    Vmag = Vmag[Vmag != 0]
-                    #else:
-                    #    pass
+                Vmag = np.array([v.mag for v in bot.velocity_list])
+                #print(Vmag)        
+                #if len(Vmag) > 0:
+                Vmax = max(Vmag)
+                #if Vmin == 0:
+                #    Vmag = Vmag[Vmag != 0]
+                #else:
+                #    pass
 
-                    #filter out extreams and when the microrobot is at rest (Vmag =0)
-                    Vmag = Vmag[Vmag<Vmax*1]
-                    #Vmag = Vmag[Vmag>Vmax*0]
-                    Vel = round(sum(Vmag)/len(Vmag),2)
-                    Vel_list.append(Vel)
-                    rolling_avg = pd.DataFrame(Vmag).rolling(20).mean()
-                    ax[1].plot(rolling_avg,color =c, label = "{}".format(Vel))
+                #filter out extreams and when the microrobot is at rest (Vmag =0)
+                Vmag = Vmag[Vmag<Vmax*1]
+            
+                Vel = round(sum(Vmag)/len(Vmag),2)
+                Vel_list.append(Vel)
+                rolling_avg = pd.DataFrame(Vmag).rolling(20).mean()
+    
+                ax[1].plot(rolling_avg,color =c, label = "{}".format(Vel))
             
             
         

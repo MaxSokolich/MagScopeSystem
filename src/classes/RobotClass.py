@@ -35,6 +35,7 @@ class Robot:
         self.times = []  #time step per frame in seconds
  
 
+
     def add_area(self, area: float):
         """
         Add area value to the bot's area_list

@@ -33,8 +33,8 @@ from src.classes.JoystickProcess import JoystickProcess
 CONTROL_PARAMS = {
     "lower_thresh": 0,
     "upper_thresh": 104,
-    "bounding_length": 10,
-    "area_filter": 3,
+    "bounding_length": 10,       #intial size of "screenshot" cropped frame 
+    "area_filter": 2,            #cropped frame dimensions mulitplier
     "field_strength": 1,
     "rolling_frequency": 10,
     "gamma": 90,
@@ -533,7 +533,7 @@ class GUI:
             master=window3,
             label="area filter",
             from_=1,
-            to=100,
+            to=5,
             resolution=1,
             variable=area_filter,
             width=20,

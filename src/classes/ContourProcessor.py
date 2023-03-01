@@ -29,20 +29,21 @@ class ContourProcessor:
     '''
 
     def __init__(self,control_params: dict,use_cuda: bool=False, baseline_blur_img: str=DEFAULT_IMG):
-        self.kernel_size = 23
+        self.kernel_size = 21
         self.base_brightness = 0
         self.base_contrast = 0
         self.blur_thresh = 100  # Blur measure threshold when to start adjusting preprocessing
         self.lower_thresh = control_params["lower_thresh"]   # lower threshold when applying inRange preprocessing
         self.upper_thresh = control_params["upper_thresh"] # upper threshold when applying inRange preprocessing
         self.baseline_blur = 0#self.calculate_blur(cv2.imread(baseline_blur_img), True)
-
+        self.counter = 0
         if use_cuda and cv2.cuda.getCudaEnabledDeviceCount() > 0:
             self.use_cuda = True
         else:
             if use_cuda:
                 print("No CUDA devices were found, disabling CUDA for current Tracker")
             self.use_cuda = False
+
 
     def calculate_blur(self, cropped_frame: np.ndarray, apply_grayscale=False) -> float:
         """
@@ -57,7 +58,10 @@ class ContourProcessor:
             float value representing the variance of the image after applying the
             Laplacian operator.
         """
-        
+        self.counter+=1
+        if self.counter == 6:
+            self.blur_baseline =  cv2.Laplacian(cropped_frame, cv2.CV_64F).var()
+
         if apply_grayscale:
             cropped_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2GRAY)
         return cv2.Laplacian(cropped_frame, cv2.CV_64F).var()
@@ -104,7 +108,7 @@ class ContourProcessor:
         if blur != 0 and blur < self.blur_thresh:
             contrast = (self.blur_thresh*8) / blur
       
-
+        print(blur , " < ", self.blur_thresh)
         return brightness, contrast
 
 
@@ -136,6 +140,7 @@ class ContourProcessor:
         img = img * (contrast/127 + 1) - contrast + brightness
         img = np.clip(img, 0, 255)
         img = np.uint8(img)
+        cv2.imshow("mask", img)
         return img
 
     
@@ -191,7 +196,7 @@ class ContourProcessor:
         
 
         # Return the preprocessed cropping and the blur value of the current frame
-        return crop_mask, contrast  #switched from blur
+        return crop_mask, contrast   #switched from blur
 
     def apply_cuda_pipeline(self, cropped_frame: np.ndarray,control_params: dict,):
         """
