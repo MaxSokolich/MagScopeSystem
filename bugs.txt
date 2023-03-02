@@ -4,6 +4,7 @@ Bugs:
 13) fix acoustic digitial potentiameter mapping
 16) create seperate class for closed loop control algorithms
 17) normalize and scale z tracks
+18) fix track all tracking. maybe dont use contourprocessing.py
 
 
 

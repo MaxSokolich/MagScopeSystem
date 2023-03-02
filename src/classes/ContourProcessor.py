@@ -31,9 +31,6 @@ class ContourProcessor:
     def __init__(self,control_params: dict,use_cuda: bool=False, baseline_blur_img: str=DEFAULT_IMG):
         self.kernel_size = 21
         self.base_brightness = 0
-        #self.blur_thresh = control_params["blur_thresh"]  # Blur measure threshold when to start adjusting preprocessing
-        #self.lower_thresh = control_params["lower_thresh"]   # lower threshold when applying inRange preprocessing
-        #self.upper_thresh = control_params["upper_thresh"] # upper threshold when applying inRange preprocessing
         self.control_params = control_params
         self.baseline_blur = 0#self.calculate_blur(cv2.imread(baseline_blur_img), True)
         self.counter = 0
@@ -58,9 +55,10 @@ class ContourProcessor:
             float value representing the variance of the image after applying the
             Laplacian operator.
         """
-        self.counter+=1
-        if self.counter == 6:
-            self.blur_baseline =  cv2.Laplacian(cropped_frame, cv2.CV_64F).var()
+        #grab the original blur value after 6 frames from clicking on a bot
+        
+        if self.counter == 0:
+            self.blur_baseline = cv2.Laplacian(cropped_frame, cv2.CV_64F).var()
 
         if apply_grayscale:
             cropped_frame = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2GRAY)
@@ -265,10 +263,14 @@ class ContourProcessor:
         else:
             crop_mask, contrast = self.apply_pipeline(cropped_frame, control_params, bot_blur_list, debug_mode)
 
+        if self.counter == 0:
+            cv2.imwrite("initialmask.png",crop_mask)
         # find contours and areas of contours
         contours, _ = cv2.findContours(crop_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         # Return the contours and the blur value of the current frame
+        
+        self.counter+=1
         return contours, contrast#blur - self.baseline_blur
 
     def plot_contours(self, contours: Tuple[np.ndarray]):

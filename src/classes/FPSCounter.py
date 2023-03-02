@@ -45,3 +45,4 @@ class FPSCounter:
             None
         """
         return self.fps
+

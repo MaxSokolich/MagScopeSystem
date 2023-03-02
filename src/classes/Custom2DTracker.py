@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 plt.style.use('dark_background')
 from tqdm import tqdm
 from tkinter import Tk
+from tkinter import *
 from mpl_toolkits import mplot3d
 
 
@@ -25,7 +26,7 @@ from src.classes.Velocity import Velocity
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.FPSCounter import FPSCounter
 
-#import EasyPySpin
+import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -45,10 +46,12 @@ class Tracker:
 
     def __init__(
         self,
+        main_window: Tk,
         control_params: dict,
         camera_params: dict,
         status_params: dict,
         use_cuda: bool = False,
+        
     ):
     
         self.start = time.time()
@@ -69,17 +72,84 @@ class Tracker:
         self.width = 0  # width of cv2 window
         self.height = 0  # height of cv2 window
         
-        self.scale = 1
+        self.pix2metric = 1#((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
         
         self.control_params = control_params
         self.camera_params = camera_params
         self.status_params = status_params
-        
         self.use_cuda = use_cuda
 
-        
-
         self.cp = ContourProcessor(self.control_params,use_cuda)
+
+        self.main_window = main_window
+
+        self.robot_window = None#Toplevel(self.main_window)
+       
+
+
+        self.robot_var_list = []
+        self.robot_checklist_list = []
+
+
+
+
+
+    def create_robot_checkbox(self, window,bot_id):
+        """
+        creates a seperate window for handeling the status of tracked robots
+
+        Args:
+            window: tkinter toplevel window to put the checkboxes on 
+            bot_id: the bot number to add a checkbox for
+        Returns:
+            None
+        """
+        robot_var = IntVar(master=window, name=str(bot_id))
+
+        robot_check = Checkbutton(
+            window,
+            name="robot"+str(bot_id),
+            text="robot "+str(bot_id),
+            variable=robot_var,
+            onvalue=1,
+            offvalue=0,
+        )
+
+        robot_var.set(1)
+        robot_check.var = robot_var
+        robot_check.grid(row=bot_id, column=0)
+
+        self.robot_var_list.append(robot_var)
+        self.robot_checklist_list.append(robot_check)
+
+
+
+    def check_robot_checkbox_status(self,window):
+        """
+        Deals with deleting single bots if there tracking becomes awry
+
+        Args:
+            k: cv2.waitkey() object
+        Returns:
+            None
+        """
+        #delete single bots
+
+        for var in range(len(self.robot_checklist_list)):
+            if self.robot_var_list[var].get() == 0:
+                self.robot_checklist_list[var].destroy()
+                del self.robot_checklist_list[var]
+                del self.robot_var_list[var]
+                del self.robot_list[var]
+                
+                self.num_bots -= 1
+                break
+                
+            else:
+                pass
+
+    
+
 
     def mouse_points(self, event: int, x: int, y: int, flags, params):
         """
@@ -113,17 +183,17 @@ class Tracker:
 
 
             robot = Robot()  # create robot instance
-            
             robot.add_position(bot_loc)  # add position of the robot
-            
             robot.add_crop([x_1, y_1, w, h])
-            
             self.robot_list.append(robot)
 
             # add starting point of trajectory
             self.node = 1
             self.robot_list[-1].add_trajectory(bot_loc)
             self.num_bots += 1
+
+            #create robot checkbox in gui
+            self.create_robot_checkbox(self.robot_window, self.num_bots)
 
         # Right mouse click event; allows you to draw the trajectory of the
         # most currently added microbot, so long as the button is held
@@ -150,8 +220,16 @@ class Tracker:
             del self.robot_list[:]
             self.num_bots = 0
             self.node = 0
+            self.robot_window.destroy()
+            del self.robot_checklist_list[:]
+            del self.robot_var_list[:]
+            del self.robot_list[:]
             if params["arduino"].conn is not None:
                 params["arduino"].send(4, 0, 0, 0)
+
+            #reset window
+            self.robot_window = Toplevel(self.main_window)
+            self.robot_window.title("Robot Status")
 
     def track_robot_position(
         self,
@@ -353,25 +431,6 @@ class Tracker:
             3
         )
 
-
-    def delete_bots(self,k):
-        """
-        Deals with deleting single bots if there tracking becomes awry
-
-        Args:
-            k: cv2.waitkey() object
-        Returns:
-            None
-        """
-        #delete single bots
-        if self.num_bots < 10:
-            for bot_id in range(self.num_bots):
-                if k == ord(str(bot_id+1)):
-                        del self.robot_list[bot_id]
-                        self.num_bots -= 1
-
-
-
     def display_hud(self, frame: np.ndarray):
         """
         Display dragon tails (bot trajectories) and other HUD graphics
@@ -442,7 +501,6 @@ class Tracker:
         self,
         filepath: Union[str, None],
         arduino: ArduinoHandler,
-        main_window: Tk,
         output_name: str = "",
     ):
         """
@@ -455,6 +513,10 @@ class Tracker:
         Returns:
             None
         """
+        #create robot window
+        self.robot_window = Toplevel(self.main_window)
+        self.robot_window.title("Robot Status")
+
 
         # Use when using EasyPySpin camera, an FLIR mahcine vision camera python API
         # global self.BFIELD
@@ -510,13 +572,13 @@ class Tracker:
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
             #calculate pixel to metric for varying res
             #106.2 um = 1024 pixels  @ 50%  resize and 100 x
-            pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
-            self.scale = pix_2metric
+            self.pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
+            
             self.frame_num += 1  # increment frame
 
             if self.num_bots > 0:
                 # DETECT ROBOTS AND UPDATE TRAJECTORY
-                self.detect_robot(frame, fps_counter,pix_2metric)
+                self.detect_robot(frame, fps_counter,self.pix_2metric)
 
                 # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
                 if self.status_params["algorithm_status"] == True:
@@ -529,7 +591,7 @@ class Tracker:
                
 
             # Compute and record self.fps
-            self.get_fps(fps_counter, frame, resize_scale, pix_2metric)
+            self.get_fps(fps_counter, frame, resize_scale, self.pix_2metric)
         
 
             
@@ -565,7 +627,7 @@ class Tracker:
 
         
             
-
+            self.check_robot_checkbox_status(self.robot_window)
             cv2.imshow("im", frame)
 
             
@@ -577,15 +639,14 @@ class Tracker:
                 
             
             # Exit
-            self.delete_bots(k)  #call delete bots function to handle deleting single bots
-            main_window.update()
-            
+            self.main_window.update()
             if k & 0xFF == ord("q"):
                 break
             
         
         
         cam.release()
+        
         cv2.destroyAllWindows()
         arduino.send(4, 0, 0, 0)
 
@@ -623,7 +684,7 @@ class Tracker:
 
 
         contours, blur = self.cp.get_contours(firstframe,self.control_params)
-        area_threshold = 10  
+        area_threshold = 0  
 
         for contour in contours: #treating each contour as a robot
             # remove small elements by calcualting arrea
@@ -642,12 +703,17 @@ class Tracker:
                 w = self.control_params["bounding_length"]
                 h = self.control_params["bounding_length"]
 
+
+                #if w > max_width:
+                #    max_width = w*self.control_params["area_filter"]
+                #if h > max_height:
+                #    max_height = h*self.control_params["area_filter"]
+
+
                 robot = Robot()  # create robot instance
                 robot.add_position(current_pos)  # add position of the robot
                 robot.add_crop([x_1, y_1, w, h])
-                robot.add_blur(
-                    self.cp.calculate_blur(firstframe[y_1 : y_1 + h, x_1 : x_1 + w])
-                )
+                robot.add_blur(self.cp.calculate_blur(firstframe[y_1 : y_1 + h, x_1 : x_1 + w]))
                 self.robot_list.append(robot)
 
                 # add starting point of trajectory
@@ -894,8 +960,8 @@ class Tracker:
             if len(bot.frame_list) > 10:
 
                 #ADD 2D PLOT
-                X = np.array(bot.position_list)[1:, 0] /self.scale
-                Y = np.array(bot.position_list)[1:, 1] /self.scale
+                X = np.array(bot.position_list)[1:, 0] /self.pix2metric
+                Y = np.array(bot.position_list)[1:, 1] /self.pix2metric
                 ax[0].plot(X,Y,color =c,linewidth = 1 )
                 
                 #ADD 3D PLOT
@@ -952,8 +1018,8 @@ class Tracker:
         ax[0].invert_yaxis()
         ax[0].set_xlabel("X (um)")
         ax[0].set_ylabel("Y (um)")
-        ax[0].set_xlim([0,(self.width * resize_scale // 100) /self.scale])
-        ax[0].set_ylim([(self.height * resize_scale // 100) /self.scale, 0])
+        ax[0].set_xlim([0,(self.width * resize_scale // 100) /self.pix2metric])
+        ax[0].set_ylim([(self.height * resize_scale // 100) /self.pix2metric, 0])
         
         #VEL
         ax[1].set_title("average velocity: {}um/s".format(round(np.mean(Vel_list),2)))
@@ -969,8 +1035,8 @@ class Tracker:
         
         #3D
         ax2.set_title("3D Trajectories")
-        ax2.axes.set_xlim3d(left=0, right=(self.width * resize_scale // 100) /self.scale) 
-        ax2.axes.set_ylim3d(bottom=(self.height * resize_scale // 100) /self.scale, top=0) 
+        ax2.axes.set_xlim3d(left=0, right=(self.width * resize_scale // 100) /self.pix2metric) 
+        ax2.axes.set_ylim3d(bottom=(self.height * resize_scale // 100) /self.pix2metric, top=0) 
         ax2.axes.set_zlim3d(bottom= 0, top=max_z*2 if max_z>0 else 1) 
 
         ax2.set_xlabel("X (um)")
@@ -990,7 +1056,7 @@ class Tracker:
         Returns:
             None
         """
-        self.plot()  #plot the data
+        
         pickles = []
         print(" --- writing robots ---")
         for bot in tqdm(self.robot_list):
@@ -1001,3 +1067,5 @@ class Tracker:
         with open(filename + ".pickle", "wb") as handle:
             pickle.dump(pickles, handle, protocol=pickle.HIGHEST_PROTOCOL)
         print(" -- ({}.pickle) DONE -- ".format(filename))
+
+        self.plot()  #plot the data

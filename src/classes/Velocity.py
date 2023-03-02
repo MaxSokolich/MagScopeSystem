@@ -36,3 +36,7 @@ class Velocity:
         self.y = y
         self.z = z
         self.mag = get_magnitude(x, y, z)
+
+
+
+

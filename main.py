@@ -15,6 +15,7 @@ from multiprocessing import Process, Queue
 #arduino signal: [typ, input1, input2, input3]
 #typ =1 : spherical ---> Roll
 #typ =2 : cartesian --> Orient
+#typ =3 : tweezer --> [+y,+x,-y,-x]
 
 #NOTE: VELZ SET AS 0
 

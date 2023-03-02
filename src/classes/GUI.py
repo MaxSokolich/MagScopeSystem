@@ -35,7 +35,7 @@ CONTROL_PARAMS = {
     "upper_thresh": 104,
     "blur_thresh": 100,
     "bounding_length": 15,       #intial size of "screenshot" cropped frame 
-    "area_filter": 2,            #cropped frame dimensions mulitplier
+    "area_filter": 1,            #cropped frame dimensions mulitplier
     "field_strength": 1,
     "rolling_frequency": 10,
     "gamma": 90,
@@ -43,7 +43,7 @@ CONTROL_PARAMS = {
 }
 
 CAMERA_PARAMS = {
-    "resize_scale": 100, 
+    "resize_scale": 50, 
     "framerate": 24, 
     "exposure": 10000, 
     "Obj": 50}
@@ -882,15 +882,19 @@ class GUI:
         Returns:
             None
         """
+
+
+        
         tracker = Tracker(
+            self.main_window,
             CONTROL_PARAMS,
             CAMERA_PARAMS,
             STATUS_PARAMS,
             self.get_widget(self.main_window, "cuda_checkbox").var.get(),
         )
-        if (
-            self.get_widget(self.video_option_frame, "live_checkbox").var.get()
-        ):
+
+
+        if (self.get_widget(self.video_option_frame, "live_checkbox").var.get()):
             video_name = None
         else:
             video_name = self.external_file
@@ -901,19 +905,16 @@ class GUI:
         if self.get_widget(self.main_window, "trackall_checkbox").var.get():
             tracker.create_robotlist(video_name)
 
-        tracker.single_bot_thread(
-            video_name, self.arduino, self.main_window, output_name
-        )
+        tracker.single_bot_thread(video_name, self.arduino, output_name)
         
         if self.get_widget(self.main_window, "savepickle").var.get():
             tracker.convert2pickle(output_name)
 
+        
+
+
       
         
-        
-
-
-
 
     def status(self):
         """
@@ -945,22 +946,7 @@ class GUI:
             self.joystick.shutdown()
             
 
-        
-    def exit(self):
-        """
-        Quits the main window (self.main_window) and quits the ardunio connection
-            exit()
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        self.AcousticModule.exit()
-        self.main_window.quit()
-        self.main_window.destroy()
-        self.arduino.close()
+    
 
     def get_widget(self, window: Union[Tk, Toplevel], widget_name: str) -> Widget:
         """
@@ -1091,6 +1077,22 @@ class GUI:
             self.main_window.after(10,self.CheckSensorPoll, s_queue)
     
    
+    def exit(self):
+        """
+        Quits the main window (self.main_window) and quits the ardunio connection
+            exit()
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        self.AcousticModule.exit()
+        self.main_window.quit()
+        self.main_window.destroy()
+        self.arduino.close()
+
 
     def main(self) -> None:
         """
