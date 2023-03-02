@@ -9,6 +9,8 @@ These setups include:
 TO ADD:
 
 - Electrical Schematic
+- CAD Models and Figures
+- Code Flowcharts
 - Bill of Materials
 - Updated Reqs.txt
 - Continue on Bugs.
