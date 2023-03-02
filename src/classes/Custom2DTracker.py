@@ -82,71 +82,9 @@ class Tracker:
         self.cp = ContourProcessor(self.control_params,use_cuda)
 
         self.main_window = main_window
-
-        self.robot_window = None#Toplevel(self.main_window)
-       
-
-
+        self.robot_window = None
         self.robot_var_list = []
         self.robot_checklist_list = []
-
-
-
-
-
-    def create_robot_checkbox(self, window,bot_id):
-        """
-        creates a seperate window for handeling the status of tracked robots
-
-        Args:
-            window: tkinter toplevel window to put the checkboxes on 
-            bot_id: the bot number to add a checkbox for
-        Returns:
-            None
-        """
-        robot_var = IntVar(master=window, name=str(bot_id))
-
-        robot_check = Checkbutton(
-            window,
-            name="robot"+str(bot_id),
-            text="robot "+str(bot_id),
-            variable=robot_var,
-            onvalue=1,
-            offvalue=0,
-        )
-
-        robot_var.set(1)
-        robot_check.var = robot_var
-        robot_check.grid(row=bot_id, column=0)
-
-        self.robot_var_list.append(robot_var)
-        self.robot_checklist_list.append(robot_check)
-
-
-
-    def check_robot_checkbox_status(self,window):
-        """
-        Deals with deleting single bots if there tracking becomes awry
-
-        Args:
-            k: cv2.waitkey() object
-        Returns:
-            None
-        """
-        #delete single bots
-
-        for var in range(len(self.robot_checklist_list)):
-            if self.robot_var_list[var].get() == 0:
-                self.robot_checklist_list[var].destroy()
-                del self.robot_checklist_list[var]
-                del self.robot_var_list[var]
-                del self.robot_list[var]
-                
-                self.num_bots -= 1
-                break
-                
-            else:
-                pass
 
     
 
@@ -230,6 +168,59 @@ class Tracker:
             #reset window
             self.robot_window = Toplevel(self.main_window)
             self.robot_window.title("Robot Status")
+
+
+    def create_robot_checkbox(self, window,bot_id):
+        """
+        creates a seperate window for handeling the status of tracked robots
+
+        Args:
+            window: tkinter toplevel window to put the checkboxes on 
+            bot_id: the bot number to add a checkbox for
+        Returns:
+            None
+        """
+        robot_var = IntVar(master=window, name=str(bot_id))
+
+        robot_check = Checkbutton(
+            window,
+            name="robot"+str(bot_id),
+            text="robot "+str(bot_id),
+            variable=robot_var,
+            onvalue=1,
+            offvalue=0,
+        )
+
+        robot_var.set(1)
+        robot_check.var = robot_var
+        robot_check.grid(row=bot_id, column=0)
+
+        self.robot_var_list.append(robot_var)
+        self.robot_checklist_list.append(robot_check)
+
+
+
+    def check_robot_checkbox_status(self,window):
+        """
+        Deals with deleting single bots if there tracking becomes awry
+
+        Args:
+            k: cv2.waitkey() object
+        Returns:
+            None
+        """
+        for var in range(len(self.robot_checklist_list)):
+            if self.robot_var_list[var].get() == 0:
+                self.robot_checklist_list[var].destroy()
+                del self.robot_checklist_list[var]
+                del self.robot_var_list[var]
+                del self.robot_list[var]     
+                self.num_bots -= 1
+                break
+            else:
+                pass
+
+
 
     def track_robot_position(
         self,
