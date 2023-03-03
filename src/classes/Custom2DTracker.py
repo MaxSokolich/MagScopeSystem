@@ -131,7 +131,8 @@ class Tracker:
             self.num_bots += 1
 
             #create robot checkbox in gui
-            self.create_robot_checkbox(self.robot_window, self.num_bots)
+            
+            self.create_robot_checkbox(self.robot_window)
 
         # Right mouse click event; allows you to draw the trajectory of the
         # most currently added microbot, so long as the button is held
@@ -165,12 +166,12 @@ class Tracker:
             if params["arduino"].conn is not None:
                 params["arduino"].send(4, 0, 0, 0)
 
-            #reset window
-            self.robot_window = Toplevel(self.main_window)
-            self.robot_window.title("Robot Status")
+            #reset robot checkboxes
+            self.robot_window = Frame(master= self.main_window)#Toplevel(self.main_window)
+            self.robot_window.grid(row=1,column=4, rowspan=7)
 
 
-    def create_robot_checkbox(self, window,bot_id):
+    def create_robot_checkbox(self, window):
         """
         creates a seperate window for handeling the status of tracked robots
 
@@ -180,27 +181,30 @@ class Tracker:
         Returns:
             None
         """
-        robot_var = IntVar(master=window, name=str(bot_id))
+        del self.robot_var_list[:]
+        del self.robot_checklist_list[:]
+        for bot_id in range(len(self.robot_list)):
+            robot_var = IntVar(master=window, name=str(bot_id))
 
-        robot_check = Checkbutton(
-            window,
-            name="robot"+str(bot_id),
-            text="robot "+str(bot_id),
-            variable=robot_var,
-            onvalue=1,
-            offvalue=0,
-        )
+            robot_check = Checkbutton(
+                window,
+                name="robot"+str(bot_id),
+                text="robot "+str(bot_id+1),
+                variable=robot_var,
+                onvalue=1,
+                offvalue=0,
+            )
 
-        robot_var.set(1)
-        robot_check.var = robot_var
-        robot_check.grid(row=bot_id, column=0)
+            robot_var.set(1)
+            robot_check.var = robot_var
+            robot_check.grid(row=bot_id, column=0)
 
-        self.robot_var_list.append(robot_var)
-        self.robot_checklist_list.append(robot_check)
+            self.robot_var_list.append(robot_var)
+            self.robot_checklist_list.append(robot_check)
 
 
 
-    def check_robot_checkbox_status(self,window):
+    def check_robot_checkbox_status(self):
         """
         Deals with deleting single bots if there tracking becomes awry
 
@@ -211,11 +215,14 @@ class Tracker:
         """
         for var in range(len(self.robot_checklist_list)):
             if self.robot_var_list[var].get() == 0:
+                for w in self.robot_checklist_list: w.destroy()
                 self.robot_checklist_list[var].destroy()
-                del self.robot_checklist_list[var]
-                del self.robot_var_list[var]
+                del self.robot_checklist_list[:]
+                del self.robot_var_list[:]
                 del self.robot_list[var]     
                 self.num_bots -= 1
+                self.create_robot_checkbox(self.robot_window)
+                
                 break
             else:
                 pass
@@ -505,8 +512,9 @@ class Tracker:
             None
         """
         #create robot window
-        self.robot_window = Toplevel(self.main_window)
-        self.robot_window.title("Robot Status")
+        self.robot_window = Frame(master= self.main_window)#Toplevel(self.main_window)
+        self.robot_window.grid(row=1,column=4, rowspan=7)
+        #self.robot_window.title("Robot Status")
 
 
         # Use when using EasyPySpin camera, an FLIR mahcine vision camera python API
@@ -618,7 +626,7 @@ class Tracker:
 
         
             
-            self.check_robot_checkbox_status(self.robot_window)
+            self.check_robot_checkbox_status()  #update robot status window with approiate checkboxes
             cv2.imshow("im", frame)
 
             
@@ -709,6 +717,10 @@ class Tracker:
 
                 # add starting point of trajectory
                 self.num_bots += 1
+
+                #create checkboxes for each robot
+                self.create_robot_checkbox(self.robot_window)
+                
         cv2.imwrite("initialimg.png",firstframe)
         cam.release()
        

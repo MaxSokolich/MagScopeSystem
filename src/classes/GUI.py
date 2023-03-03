@@ -43,7 +43,7 @@ CONTROL_PARAMS = {
 }
 
 CAMERA_PARAMS = {
-    "resize_scale": 50, 
+    "resize_scale": 20, 
     "framerate": 24, 
     "exposure": 10000, 
     "Obj": 50}
@@ -118,13 +118,14 @@ class GUI:
         self.switch_state = 0
 
         # Tkinter widget attributes
-        self.text_box = Text(master, width=22, height=1)
+        self.text_box = Text(master, width=22, height=4)
         self.scroll_bar = Scrollbar(
             master, 
             command=self.text_box.yview, 
             orient="vertical"
         )
         self.text_box.configure(yscrollcommand=self.scroll_bar.set)
+        self.text_box.grid(row=7, column=2, columnspan =2,sticky="nwse")
 
         
 
@@ -133,7 +134,7 @@ class GUI:
             text="Rotate On", 
             command=self.coil_roll, 
             height=1, 
-            width=20,
+            width=18,
             bg = 'green2',
             fg= 'black'
         )
@@ -143,7 +144,7 @@ class GUI:
             text="Orient On", 
             command=self.coil_orient, 
             height=1, 
-            width=20,
+            width=18,
             bg = 'green4',
             fg= 'white'
         )
@@ -153,7 +154,7 @@ class GUI:
             text="Joystick On", 
             command=self.joy_proc, 
             height=1, 
-            width=20,
+            width=18,
             bg = 'magenta',
             fg= 'white'
         )
@@ -163,24 +164,12 @@ class GUI:
             text="Sensor On", 
             command=self.sensor_proc, 
             height=1, 
-            width=20,
+            width=18,
             bg = 'black',
             fg= 'white'
         )
 
-        savepickle = IntVar(master=master, name="savepickle_var")
         
-        savepickle_box = Checkbutton(
-            master, 
-            name = "savepickle",
-            text="Save Pickle File", 
-            variable=savepickle, 
-            onvalue=1, 
-            offvalue=0
-        )
-
-        savepickle_box.var = savepickle
-
         closed_loop_params_button = Button(
             master,
             text="Edit Control Params",
@@ -211,14 +200,16 @@ class GUI:
             fg= 'black'
         )
 
-        
-       
-        
-        output_name = Entry(master, name="output_name")
+        #VIDEO RECORD FRAME
+        self.video_record_frame = Frame(master = master)
+        self.video_record_frame.grid(row=3,column=3,rowspan = 2)
+
+
+        output_name = Entry(master=self.video_record_frame, name="output_name")
         output_name.insert(10, "")
 
         record_button = Button(
-            master, 
+            self.video_record_frame, 
             text="Record", 
             command=self.record, 
             height=1, 
@@ -228,7 +219,7 @@ class GUI:
         )
 
         stop_record_button = Button(
-            master, 
+            self.video_record_frame, 
             text="Stop Record", 
             command=self.stop_record, 
             height=1, 
@@ -236,42 +227,38 @@ class GUI:
             bg = 'white',
             fg= 'black'
         )
-        
-        track_button = Button(
-            master, 
-            text="Track", 
-            command=self.track, 
-            height=5, 
-            width=20,
-            bg = 'blue',
-            fg= 'white'
-        )
 
+        Label(master = self.video_record_frame, text="Output Name").grid(row=0, column=0)
+        output_name.grid(row=1, column=0)
+        record_button.grid(row=2, column=0)
+        stop_record_button.grid(row=3, column=0)
         
 
-        status_button = Button(
-            master, 
-            text="Stop:\nZero All Signals", 
-            command=self.status, 
-            height=5, 
-            width=20,
-            bg = 'red',
-            fg= 'white'
-        )
-
+        
        
-        close_button = Button(master, 
-            text="Exit", 
-            width=10, 
-            height=5, 
-            command=self.exit, 
-            bg = 'black',
-            fg= 'white')
+
+        #3 CHECKBOXES FRAME
+
+        self.checkboxes_frame = Frame(master = master)
+        self.checkboxes_frame.grid(row=7,column=1,rowspan = 2)
+
+        savepickle = IntVar(master=master, name="savepickle_var")
+        
+        savepickle_box = Checkbutton(
+            master=self.checkboxes_frame, 
+            name = "savepickle",
+            text="Save Pickle File", 
+            variable=savepickle, 
+            onvalue=1, 
+            offvalue=0
+        )
+
+        savepickle_box.var = savepickle
 
         cuda_var = IntVar(master=master, name="cuda_var")
 
         cuda_button = Checkbutton(
-            master,
+            master=self.checkboxes_frame,
             name="cuda_checkbox",
             text="Use CUDA?",
             variable=cuda_var,
@@ -284,7 +271,7 @@ class GUI:
         trackall_var = IntVar(master=master, name="trackall_var")
 
         trackall_button = Checkbutton(
-            master,
+            master=self.checkboxes_frame,
             name="trackall_checkbox",
             text="TRACK ALL",
             variable=trackall_var,
@@ -293,12 +280,20 @@ class GUI:
         )
 
         trackall_button.var = trackall_var
+
+        savepickle_box.grid(row=0, column=0)
+        cuda_button.grid(row=1, column=0)
+        trackall_button.grid(row=2,column= 0)
+
+
+
+
         
-        #video option frame
-        self.video_option_frame = Bfield_frame = Frame(master = master)
+        #CHOOSE VIDEO FRAME
+        self.video_option_frame = Frame(master = master)
         self.video_option_frame.grid(row=3,column=2,rowspan = 2)
-        
-        #run algorithm button
+
+
         run_algo_button = Button(
             self.video_option_frame,
             text="Run Algo", 
@@ -308,10 +303,8 @@ class GUI:
             bg = 'yellow',
             fg= 'black'
         )
-        run_algo_button.grid(row=0, column=0)
+       
 
-
-        #choose video from file browser
         vid_name = Button(
             self.video_option_frame,
             name="vid_name",
@@ -322,9 +315,7 @@ class GUI:
             bg = 'white',
             fg= 'black'
         )
-        vid_name.grid(row=1, column=0)
-
-        #live camera option
+        
         live_var = IntVar(master=master, name="live_var")
 
         livecam_button = Checkbutton(
@@ -335,18 +326,58 @@ class GUI:
             onvalue=1,
             offvalue=0,
         )
-
         livecam_button.var = live_var
+
+        run_algo_button.grid(row=0, column=0)
+        vid_name.grid(row=1, column=0)
         livecam_button.grid(row=2, column=0)
 
-        # WINDOW 1: GUI MAINFRAME
-        Label(master, text="Output Name").grid(row=3, column=3)
+
+
+        #3 BIG BUTTONS
+        track_button = Button(
+            master, 
+            text="Track", 
+            command=self.track, 
+            height=5, 
+            width=20,
+            bg = 'blue',
+            fg= 'white'
+        )
+
+        
+        status_button = Button(
+            master, 
+            text="Stop:\nZero All Signals", 
+            command=self.status, 
+            height=5, 
+            width=20,
+            bg = 'red',
+            fg= 'white'
+        )
+
+        close_button = Button(master, 
+            text="Exit", 
+            width=10, 
+            height=4, 
+            command=self.exit, 
+            bg = 'black',
+            fg= 'white')
+
+
+        track_button.grid(row=3, column=1,rowspan=3)
+        status_button.grid(row=0, column=1,rowspan =3)
+        close_button.grid(row=7, column=0)
+
+        # GUI MAINFRAME: OTHER
+        Label(master, text="---Robot List---").grid(row=0, column=4)
+        
         
         closed_loop_params_button.grid(row=0, column=0)
         cam_params_button.grid(row=1, column=0)
         acoustic_params_button.grid(row=2, column=0)
 
-        status_button.grid(row=0, column=1,rowspan =3)
+        
         
         coil_roll_button.grid(row=0, column=2)
         coil_orient_button.grid(row=1, column=2)
@@ -354,20 +385,15 @@ class GUI:
         sensor_button.grid(row=1, column=3,rowspan =1)
         
         
-        record_button.grid(row=4, column=3)
-        stop_record_button.grid(row=4, column=4)
-        savepickle_box.grid(row=0, column=4)
-        track_button.grid(row=3, column=1,rowspan=3)
+        
+        
+
         
        
-        close_button.grid(row=4, column=5)
-        self.text_box.grid(row=0, column=5, rowspan=2, sticky="nwse")
-        output_name.grid(row=3, column=4)
-        cuda_button.grid(row=1, column=4)
-        trackall_button.grid(row=2,column= 4)
+        
 
     
-        #Bfield display
+        #BFIELD FRAME
         Bfield_frame = Frame(master = master)
         Bfield_frame.grid(row=3,column=0,rowspan = 3)
 
@@ -890,7 +916,7 @@ class GUI:
             CONTROL_PARAMS,
             CAMERA_PARAMS,
             STATUS_PARAMS,
-            self.get_widget(self.main_window, "cuda_checkbox").var.get(),
+            self.get_widget(self.checkboxes_frame, "cuda_checkbox").var.get(),
         )
 
 
@@ -899,15 +925,15 @@ class GUI:
         else:
             video_name = self.external_file
 
-        output_name = str(self.get_widget(self.main_window, "output_name").get())
+        output_name = str(self.get_widget(self.video_record_frame, "output_name").get())
         
         #track all robots if the widget is checked(true)
-        if self.get_widget(self.main_window, "trackall_checkbox").var.get():
+        if self.get_widget(self.checkboxes_frame, "trackall_checkbox").var.get():
             tracker.create_robotlist(video_name)
 
         tracker.single_bot_thread(video_name, self.arduino, output_name)
         
-        if self.get_widget(self.main_window, "savepickle").var.get():
+        if self.get_widget(self.checkboxes_frame, "savepickle").var.get():
             tracker.convert2pickle(output_name)
 
         

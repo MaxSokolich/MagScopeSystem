@@ -139,7 +139,7 @@ class ContourProcessor:
         img = img * (contrast/127 + 1) - contrast + brightness
         img = np.clip(img, 0, 255)
         img = np.uint8(img)
-        cv2.imshow("mask", img)
+        #cv2.imshow("mask", img)
         return img
 
     
