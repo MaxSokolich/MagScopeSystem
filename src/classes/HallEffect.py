@@ -31,9 +31,9 @@ try:
             self.i2c = busio.I2C(board.SCL, board.SDA)
             self.ads = ADS.ADS1115(self.i2c)
             
-            self.chanPosY = AnalogIn(self.ads, ADS.P0)
+            self.chanPosY = AnalogIn(self.ads, ADS.P2)
             self.chanPosX = AnalogIn(self.ads, ADS.P1)  #big external EM
-            self.chanNegY = AnalogIn(self.ads, ADS.P2)  # one of the 4 coil config Em
+            self.chanNegY = AnalogIn(self.ads, ADS.P0)  # one of the 4 coil config Em
             self.chanNegX = AnalogIn(self.ads, ADS.P3)
     
             #set up queue and exit condition

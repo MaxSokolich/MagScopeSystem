@@ -86,6 +86,9 @@ class Tracker:
         self.robot_var_list = []
         self.robot_checklist_list = []
 
+        self.B_vec = np.array([1,0])
+        self.T_R = 1
+
     
 
 
@@ -719,7 +722,8 @@ class Tracker:
                 self.num_bots += 1
 
                 #create checkboxes for each robot
-                self.create_robot_checkbox(self.robot_window)
+        
+        #self.create_robot_checkbox(self.robot_window)
                 
         cv2.imwrite("initialimg.png",firstframe)
         cam.release()
@@ -795,8 +799,13 @@ class Tracker:
             if self.node == len(self.robot_list[-1].trajectory):
                 print("arrived")
                 unique_control_param = None
-                if arduino.conn is not None:
-                    arduino.send(4, 0, 0, 0)
+                typ = 4
+                input1 = 0
+                input2 = 0
+                input3 = 0
+
+
+                
                 
             #closed loop algorithm 
             else:
@@ -813,7 +822,7 @@ class Tracker:
                 error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
                 self.alpha = np.arctan2(-direction_vec[1], direction_vec[0])
 
-                B_vec = np.array([1, 0])
+           
 
                 #draw trajectory
                 pts = np.array(self.robot_list[-1].trajectory, np.int32)
@@ -835,75 +844,55 @@ class Tracker:
                     self.status_params["rolling_status"]
                     and not self.status_params["orient_status"]
                 ):
-                    typ = 1
+                    #OUTPUT SIGNAL
                     my_alpha = self.alpha + np.pi/2
-                    if arduino.conn is not None:
-                        input1 = my_alpha
-                        input2 = self.control_params["rolling_frequency"]
-                        input3 = self.control_params["gamma"]
-                        arduino.send(
-                            typ,input1,input2,input3
-                        )
+                    typ = 1
+                    input1 = my_alpha
+                    input2 = self.control_params["rolling_frequency"]
+                    input3 = self.control_params["gamma"]
+                        
                     unique_control_param = "Roll"
                 ##ORIENTING
                 elif (
                     self.status_params["orient_status"]
                     and not self.status_params["rolling_status"]
-                    and self.robot_list[-1] > self.control_params["memory"] - 1
-                ):
+                    and len(self.robot_list[-1].velocity_list) > self.control_params["memory"] - 1
+                ):  
+
                     bot = self.robot_list[-1]
                     if len(bot.velocity_list) % self.control_params["memory"] == 0:
                         # only update every memory frames
 
-                        vx = np.mean(
-                            np.array(
-                                bot.velocity_list[-self.control_params["memory"] :]
-                            )[:, 0]
-                        )  # taking the previous 10 velocities and avg to reduce noise
-                        vy = np.mean(
-                            np.array(
-                                bot.velocity_list[-self.control_params["memory"] :]
-                            )[:, 1]
-                        )
-                        vel_bot = np.array(
-                            [vx, vy]
-                        )  # current velocity of self propelled robot
 
+                        vx = np.mean(np.array([v.x for v in bot.velocity_list[-self.control_params["memory"]:]]))
+                        vy = np.mean(np.array([v.y for v in bot.velocity_list[-self.control_params["memory"]:]]))
+                           
+                        
+                        
+                        vel_bot = np.array([vx, vy])  # current velocity of self propelled robot
                         vd = np.linalg.norm(vel_bot)
-                        bd = np.linalg.norm(B_vec)
+                        bd = np.linalg.norm(self.B_vec)
 
-                        costheta = np.dot(vel_bot, B_vec) / (vd * bd)
-                        sintheta = (vel_bot[0] * B_vec[1] - vel_bot[1] * B_vec[0]) / (
-                            vd * bd
-                        )
+                        costheta = np.dot(vel_bot, self.B_vec) / (vd * bd)
+                        sintheta = (vel_bot[0] * self.B_vec[1] - vel_bot[1] * self.B_vec[0]) / (vd * bd)
                       
 
                         if not np.isnan(vd):
-                            # Text_Box.insert(tk.END, str(round(B_vec*180/np.pi,3))+"\n")
-                            # Text_Box.see("end")
+                            self.T_R = np.array([[costheta, -sintheta], [sintheta, costheta]])
 
-                            T_R = np.array(
-                                [[costheta, -sintheta], [sintheta, costheta]]
-                            )
+                    self.B_vec = np.dot(self.T_R, direction_vec)
 
-                            B_vec = np.dot(T_R, direction_vec)
-
-                            Bx = B_vec[0] / np.sqrt(B_vec[0] ** 2 + B_vec[1] ** 2)
-                            By = B_vec[1] / np.sqrt(B_vec[0] ** 2 + B_vec[1] ** 2)
-                            Bz = 0
-                            # OUTPUT
-
-                            self.alpha = np.arctan2(By, Bx)
-                            typ = 2
-                            if arduino.conn is not None:
-                                input1 = Bx
-                                input2 = By
-                                input3 = Bz
-                                arduino.send(
-                                    typ,input1,input2,input3
-                                )
+                    #OUTPUT SIGNAL      
                     unique_control_param = "Orient"
-
+                    Bx = self.B_vec[0] / np.sqrt(self.B_vec[0] ** 2 + self.B_vec[1] ** 2)
+                    By = self.B_vec[1] / np.sqrt(self.B_vec[0] ** 2 + self.B_vec[1] ** 2)
+                    Bz = 0
+                    self.alpha = np.arctan2(By, Bx)
+                    
+                    typ = 2
+                    input1 = Bx
+                    input2 = By
+                    input3 = Bz
                     try:
                         start_arrow = (100, 150 + (self.num_bots - 1) * 20)
                         end_arrow = (
@@ -917,8 +906,13 @@ class Tracker:
                         pass
                 else:
                     unique_control_param = None
-                    if arduino.conn is not None:
-                        arduino.send(4, 0, 0, 0)
+                    typ = 4
+                    input1 = 0
+                    input2 = 0
+                    input3 = 0
+
+                if arduino.conn is not None:
+                    arduino.send(typ,input1,input2,input3)
 
                 self.robot_list[-1].add_track(
                     self.frame_num,

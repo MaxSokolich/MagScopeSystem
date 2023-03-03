@@ -43,7 +43,7 @@ CONTROL_PARAMS = {
 }
 
 CAMERA_PARAMS = {
-    "resize_scale": 20, 
+    "resize_scale": 50, 
     "framerate": 24, 
     "exposure": 10000, 
     "Obj": 50}
@@ -918,7 +918,7 @@ class GUI:
             STATUS_PARAMS,
             self.get_widget(self.checkboxes_frame, "cuda_checkbox").var.get(),
         )
-
+        #self.tracker = tracker
 
         if (self.get_widget(self.video_option_frame, "live_checkbox").var.get()):
             video_name = None
@@ -939,7 +939,6 @@ class GUI:
         
 
 
-      
         
 
     def status(self):
@@ -963,6 +962,8 @@ class GUI:
         
         self.text_box.insert(END, "Zeroed\n")
         self.text_box.see("end")
+
+        #self.tracker.robot_window.destroy()
         
         #shutdown hall sensor readings
         if self.sensor is not None:
