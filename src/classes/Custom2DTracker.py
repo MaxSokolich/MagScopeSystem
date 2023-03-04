@@ -26,7 +26,7 @@ from src.classes.Velocity import Velocity
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.FPSCounter import FPSCounter
 
-import EasyPySpin
+#import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -390,7 +390,7 @@ class Tracker:
         
 
 
-    def get_fps(self, fps: FPSCounter, frame: np.ndarray, resize_scale: int, pix_2metric: float):
+    def get_fps(self, fps: FPSCounter, frame: np.ndarray, pix_2metric: float):
         """
         Compute and display average FPS up to this frame
 
@@ -404,15 +404,16 @@ class Tracker:
         """
 
         # display information to the screen
-        w = (self.width * resize_scale / 100) 
-        h = (self.height * resize_scale / 100) 
+
+        w = frame.shape[0]
+        h = frame.shape[1]
         
         #fps
         cv2.putText(frame,str(int(fps.get_fps())),
             (int(w / 40),int(h / 30)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (0, 255, 0),
+            (255, 255, 255),
             1,
         )
 
@@ -421,16 +422,18 @@ class Tracker:
             (int(w / 40),int(h / 18)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (0, 255, 0),
+            (255, 255, 255),
             1,
         )
         cv2.line(
             frame, 
             (int(w / 40),int(h / 14)),
             (int(w / 40) + int(100 * (pix_2metric)),int(h / 14)), 
-            (0, 0, 0), 
+            (255, 255, 255), 
             3
         )
+
+        
 
     def display_hud(self, frame: np.ndarray):
         """
@@ -486,16 +489,18 @@ class Tracker:
 
                 #average diamter of bot(calcuating from area of circle)
                 dia = np.sqrt(4*bot.avg_area/np.pi)
-                
+           
                 cv2.putText(
                     frame,
                     f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um. blur: {round(blur,2)}. ",
-                    (0, 150 + bot_id * 20),
+                    (0, 170 + bot_id * 20),
                     cv2.FONT_HERSHEY_COMPLEX,
                     0.5,
                     bot_color,
                     1,
                 )
+
+                
 
 
     def single_bot_thread(
@@ -593,7 +598,8 @@ class Tracker:
                
 
             # Compute and record self.fps
-            self.get_fps(fps_counter, frame, resize_scale, self.pix_2metric)
+            self.get_fps(fps_counter, frame, self.pix_2metric)
+            
         
 
             
@@ -604,15 +610,16 @@ class Tracker:
 
                 if result is None:
                     result = cv2.VideoWriter(
-                        output_name + ".mp4",
+                        output_name + str(int(time.time()-start)) + ".mp4",
                         cv2.VideoWriter_fourcc(*"mp4v"),
-                        20,
+                        20,    
                         resize_ratio
-                    )
+                    )  #int(fps.get_fps())
 
+                
                 cv2.putText(
                     frame,
-                    "time (s): " + str(np.round(time.time() - rec_start_time, 3)),
+                    "time (s): " + str(np.round(time.time() - rec_start_time, 2)),
                     (
                         int((self.width * resize_scale / 100) * (7 / 10)),
                         int((self.height * resize_scale / 100) * (9.9 / 10)),
@@ -623,8 +630,10 @@ class Tracker:
                     1,
                 )
                 result.write(frame)
+
             elif result is not None and not self.status_params["record_status"]:
                 result.release()
+                rec_start_time = None 
                 result = None
 
         

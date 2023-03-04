@@ -14,6 +14,7 @@ Bugs:
 
 
 
+
 Notes:
 - lots of continous aspects to this system. i.e functions that need to be external
 enclosed in a while loop to work properlly. This results in a large amount of 

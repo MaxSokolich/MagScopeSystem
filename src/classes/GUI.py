@@ -34,7 +34,7 @@ CONTROL_PARAMS = {
     "lower_thresh": 0,
     "upper_thresh": 104,
     "blur_thresh": 100,
-    "bounding_length": 15,       #intial size of "screenshot" cropped frame 
+    "bounding_length": 100,       #intial size of "screenshot" cropped frame 
     "area_filter": 1,            #cropped frame dimensions mulitplier
     "field_strength": 1,
     "rolling_frequency": 10,
@@ -43,7 +43,7 @@ CONTROL_PARAMS = {
 }
 
 CAMERA_PARAMS = {
-    "resize_scale": 50, 
+    "resize_scale": 100, 
     "framerate": 24, 
     "exposure": 10000, 
     "Obj": 50}
