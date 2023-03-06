@@ -707,7 +707,7 @@ class GUI:
             master=window4,
             label="Frame Rate",
             from_=1,
-            to=24,
+            to=35,
             resolution=1,
             variable=frame_rate,
             width=20,
@@ -964,6 +964,7 @@ class GUI:
         self.text_box.see("end")
 
         #self.tracker.robot_window.destroy()
+        self.arduino.send(4, 0, 0, 0)
         
         #shutdown hall sensor readings
         if self.sensor is not None:

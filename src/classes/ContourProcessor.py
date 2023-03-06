@@ -168,7 +168,7 @@ class ContourProcessor:
         # Apply preprocessing pipeline to cropped image
         # convert to grayscale
         crop_mask = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2GRAY)
-
+        #crop_mask = cropped_frame
         # get blur after grayscale is applied
         blur = self.calculate_blur(crop_mask)
 

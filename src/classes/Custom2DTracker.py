@@ -26,7 +26,7 @@ from src.classes.Velocity import Velocity
 from src.classes.ArduinoHandler import ArduinoHandler
 from src.classes.FPSCounter import FPSCounter
 
-#import EasyPySpin
+import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -613,7 +613,8 @@ class Tracker:
                         output_name + str(int(time.time()-start)) + ".mp4",
                         cv2.VideoWriter_fourcc(*"mp4v"),
                         20,    
-                        resize_ratio
+                        resize_ratio,
+                        
                     )  #int(fps.get_fps())
 
                 
@@ -627,7 +628,7 @@ class Tracker:
                     cv2.FONT_HERSHEY_COMPLEX,
                     0.5,
                     (255, 255, 255),
-                    1,
+                    1
                 )
                 result.write(frame)
 
@@ -814,8 +815,6 @@ class Tracker:
                 input3 = 0
 
 
-                
-                
             #closed loop algorithm 
             else:
                 #define target coordinate
@@ -919,20 +918,22 @@ class Tracker:
                     input1 = 0
                     input2 = 0
                     input3 = 0
-
-                if arduino.conn is not None:
-                    arduino.send(typ,input1,input2,input3)
-
+                
                 self.robot_list[-1].add_track(
-                    self.frame_num,
-                    error,
-                    [robotx, roboty],
-                    [targetx, targety],
-                    self.alpha,
-                    self.control_params["rolling_frequency"],
-                    time.time(),
-                    unique_control_param,
-                )
+                self.frame_num,
+                error,
+                [robotx, roboty],
+                [targetx, targety],
+                self.alpha,
+                self.control_params["rolling_frequency"],
+                time.time(),
+                unique_control_param,
+            )
+
+            
+            arduino.send(typ,input1,input2,input3)
+
+            
 
 
 
