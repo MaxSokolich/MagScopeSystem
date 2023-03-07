@@ -263,8 +263,7 @@ class ContourProcessor:
         else:
             crop_mask, contrast = self.apply_pipeline(cropped_frame, control_params, bot_blur_list, debug_mode)
 
-        if self.counter == 0:
-            cv2.imwrite("initialmask.png",crop_mask)
+       
         # find contours and areas of contours
         contours, _ = cv2.findContours(crop_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 

@@ -46,7 +46,7 @@ CAMERA_PARAMS = {
     "resize_scale": 100, 
     "framerate": 24, 
     "exposure": 10000, 
-    "Obj": 50}
+    "Obj": 40}
 
 STATUS_PARAMS = {
     "rolling_status": False,
