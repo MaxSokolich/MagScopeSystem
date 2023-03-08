@@ -107,4 +107,4 @@ def create_robotlist(filepath: Union[str, None]):
         cam.release()
        
 filepath = "/home/max/Documents/MagScopeSystem/videos/mickyroll1.mp4"
-create_robotlist(filepath)
+create_robotlist(None)
