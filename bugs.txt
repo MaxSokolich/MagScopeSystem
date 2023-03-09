@@ -27,3 +27,7 @@ complexity:
         4) output arduino signal array via UART/Serial
         5) output acoustic signal via RPi.GPIO
         6) TBD: output stepper motor signal via I2C
+
+
+https://pyimagesearch.com/2020/03/25/how-to-configure-your-nvidia-jetson-nano-for-computer-vision-and-deep-learning/
+
