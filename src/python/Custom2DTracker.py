@@ -1050,7 +1050,7 @@ class Tracker:
         ax[0].set_ylim([(self.height * resize_scale // 100) /self.pix2metric, 0])
         
         #VEL
-        ax[1].set_title("average velocity: {}um/s".format(round(np.mean(Vel_list),2)))
+        ax[1].set_title("average velocity: {}um/s".format(round(np.median(Vel_list),2)))
         ax[1].set_xlabel("Frame")
         ax[1].set_ylim([0,max(Vel_list)*2])
         ax[1].legend()
