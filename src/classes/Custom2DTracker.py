@@ -755,7 +755,7 @@ class Tracker:
         self.robot_window.grid(row=1,column=4, rowspan=7)
         self.create_robot_checkbox(self.robot_window)
                 
-        cv2.imwrite("initialmask.png",frame)
+        cv2.imwrite("src/imgs/initialmask.png",frame)
         cam.release()
        
 
