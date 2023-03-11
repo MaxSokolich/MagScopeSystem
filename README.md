@@ -18,7 +18,7 @@ TO ADD:
 
 
 --Example analysis plot from custom tracking algorithm. Displays selected robot trajectories, individial robot velocties and robot sizes--
-![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/videos/ExampleDataPlot.png?raw=true)
+![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/src/imgs/ExampleDataPlot.png?raw=true)
 
 
 

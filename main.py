@@ -8,9 +8,9 @@ Main script for performing microbot tracking
 import time
 from tkinter import Tk
 import asyncio
-from src.classes.GUI import GUI
-from src.classes.ArduinoHandler import ArduinoHandler
-from src.classes.HallEffect import HallEffect
+from src.python.GUI import GUI
+from src.python.ArduinoHandler import ArduinoHandler
+from src.python.HallEffect import HallEffect
 from multiprocessing import Process, Queue
 #arduino signal: [typ, input1, input2, input3]
 #typ =1 : spherical ---> Roll
