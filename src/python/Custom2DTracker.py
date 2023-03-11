@@ -1035,7 +1035,7 @@ class Tracker:
             
                 Vel = round(sum(Vmag)/len(Vmag),2)
                 Vel_list.append(Vel)
-                rolling_avg = pd.DataFrame(Vmag).rolling(20).mean()
+                rolling_avg = pd.DataFrame(Vmag).rolling(20).median()
     
                 ax[1].plot(rolling_avg,color =c, label = "{}".format(Vel))
             
