@@ -656,7 +656,7 @@ class Tracker:
             if k & 0xFF == ord("q"):
                 break
             
-        
+
         
         cam.release()
         
@@ -702,8 +702,9 @@ class Tracker:
         firstframe = cv2.resize(firstframe, resize_ratio, interpolation=cv2.INTER_AREA)
 
         crop_mask = cv2.cvtColor(firstframe, cv2.COLOR_BGR2GRAY)
-        crop_mask = cv2.GaussianBlur(crop_mask, (21,21), 0)
+        crop_mask = cv2.GaussianBlur(crop_mask, (5,5), 0)
         crop_mask = cv2.inRange(crop_mask, self.control_params["lower_thresh"], self.control_params["upper_thresh"])
+
         contours, _ = cv2.findContours(crop_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         areas = []  

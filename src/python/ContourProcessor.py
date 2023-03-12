@@ -189,7 +189,7 @@ class ContourProcessor:
         brightness, contrast = self.get_brightness_and_contrast(blur)
         crop_mask = self.apply_brightness_contrast(crop_mask, brightness, contrast)
         #cv2.imshow("mask", crop_mask)
-        self.lower_thresh = control_params["lower_thresh"]
+        self.lower_thresh =  control_params["lower_thresh"]
         self.upper_thresh = control_params["upper_thresh"]
         crop_mask = cv2.inRange(crop_mask, self.lower_thresh, (self.upper_thresh))
         
