@@ -4,7 +4,7 @@ from collections import deque
 import matplotlib.pyplot as plt
 
 
-cap = cv2.VideoCapture("/home/max/Documents/MagScopeSystem/src/videos/mickeyHEKfast.mp4")
+cap = cv2.VideoCapture("/home/max/Documents/MagScopeSystem/src/videos/mickyroll1.mp4")
 
 # Define the lower and upper bounds of the black color
 lower_black = np.array([0, 0, 0])
@@ -37,7 +37,7 @@ while True:
         break
     
     # Convert the frame to grayscale and blur it to reduce noise
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     
     # Threshold the image to find black regions
@@ -117,6 +117,8 @@ while True:
 
     # Display the frame
     cv2.imshow('frame', frame)
+    cv2.imshow("mask",gray)
+    cv2.imshow("g",mask)
     count +=1
     # Exit the loop if the 'q' key is pressed
     if cv2.waitKey(1) == ord('q'):
@@ -125,7 +127,7 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-
+'''
 fig, ax = plt.subplots()
 ax.set_xlim(0, 2448)
 ax.set_ylim(0, 2048)
@@ -146,4 +148,4 @@ ax.set_ylabel('Velocity (pixels/frame)')
 for id, velocity in velocities.items():
     ax.plot(velocity, label=f'Robot {id}')
     ax.legend()
-plt.show()
+plt.show()'''

@@ -269,8 +269,8 @@ class Tracker:
         max_width, max_height = max_dim
         x_1_new = x_1 + current_pos[0] - max_width
         y_1_new = y_1 + current_pos[1] - max_height
-        x_2_new = 2 * max_width
-        y_2_new = 2 * max_height
+        x_2_new = 2* max_width
+        y_2_new = 2* max_height
         new_crop = [int(x_1_new), int(y_1_new), int(x_2_new), int(y_2_new)]
         
        
@@ -305,15 +305,6 @@ class Tracker:
         bot.add_time(round(time.time()-self.start,2))
         
 
-        # display
-        cv2.circle(
-            cropped_frame,
-            (int(current_pos[0]), int(current_pos[1])),
-            2,
-            (1, 255, 1),
-            -1,
-        )
-
     def detect_robot(self, frame: np.ndarray, fps: FPSCounter, pix_2metric: float):
         """
         For each robot defined through clicking, crop a frame around it based on initial
@@ -327,10 +318,10 @@ class Tracker:
         Returns:
             None
         """
-        for bot in self.robot_list:
+        for bot in range(len(self.robot_list)):
 
             # crop the frame based on initial ROI dimensions
-            x_1, y_1, x_2, y_2 = bot.cropped_frame[-1]
+            x_1, y_1, x_2, y_2 = self.robot_list[bot].cropped_frame[-1]
             
             max_width = 0  # max width of the contours
             max_height = 0  # max height of the contours
@@ -341,7 +332,7 @@ class Tracker:
         
             cropped_frame = frame[y_1 : y_1 + y_2, x_1 : x_1 + x_2]
             
-            #grab original blur threshold of robot at frame 5
+         
             
             contours, blur = self.cp.get_contours(cropped_frame, self.control_params)
             
@@ -365,12 +356,14 @@ class Tracker:
                     max_width = w*self.control_params["area_filter"]
                 if h > max_height:
                     max_height = h*self.control_params["area_filter"]
-                cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
+                #cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
                 cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
+
+                
    
                 self.track_robot_position(
                     area,
-                    bot,
+                    self.robot_list[bot],
                     cropped_frame,
                     (x_1, y_1),
                     current_pos,
@@ -445,9 +438,14 @@ class Tracker:
             bot_color,
         ) in zip(range(self.num_bots), color):
 
+            x = int(self.robot_list[bot_id].cropped_frame[-1][0])
+            y = int(self.robot_list[bot_id].cropped_frame[-1][1])
+            w = int(self.robot_list[bot_id].cropped_frame[-1][2])
+            h = int(self.robot_list[bot_id].cropped_frame[-1][3])
+
             # display dragon tails
             pts = np.array(self.robot_list[bot_id].position_list, np.int32)
-            cv2.polylines(frame, [pts], False, bot_color, 2)
+            cv2.polylines(frame, [pts], False, bot_color, 1)
             
 
             #display target positions
@@ -461,7 +459,16 @@ class Tracker:
                     -1,
                 )
 
-
+            #average diamter of bot(calcuating from area of circle)
+       
+            dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
+            
+            cv2.putText(frame, "robot {}".format(bot_id), (x, y-10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
+            cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                        
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
             # if there are more than 10 velocities recorded in the robot, get
             # and display the average velocity
             if len(self.robot_list[bot_id].velocity_list) > 10:
@@ -472,17 +479,16 @@ class Tracker:
                 vmag = [v.mag for v in bot.velocity_list[-10:]]
                 vmag_avg = sum(vmag) / len(vmag)
     
-
-                area = bot.area_list[-1]
                 #Vz value calculated from blur
                 blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
                 vz = [v.z for v in bot.velocity_list[-10:]]
                 vz_avg = sum(vz)/len(vz)
 
-                #average diamter of bot(calcuating from area of circle)
-                dia = np.sqrt(4*bot.avg_area/np.pi)
-           
-                cv2.putText(
+
+                cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+
+                '''cv2.putText(
                     frame,
                     f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um. blur: {round(blur,2)}. ",
                     (0, 170 + bot_id * 20),
@@ -491,7 +497,7 @@ class Tracker:
                     bot_color,
                     1,
                 )
-
+                '''
                 
 
 

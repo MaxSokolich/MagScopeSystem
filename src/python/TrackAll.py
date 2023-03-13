@@ -191,10 +191,10 @@ class AllTracker:
                 x = robot['centroid_x'] - 20
                 y = robot['centroid_y'] - 20
                 # Draw a bounding box around the robot
-                cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 255, 0), 2)
+                cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 255, 0), 1)
 
                 # Draw the identifier for the robot
-                cv2.putText(frame, f'Robot {id}', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                cv2.putText(frame, f'Robot {id}', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
                 # Draw the trajectory of the robot
                 if len(trajectories[id]['x']) > 1:
@@ -203,12 +203,12 @@ class AllTracker:
                         y1 = trajectories[id]['y'][i-1]
                         x2 = trajectories[id]['x'][i]
                         y2 = trajectories[id]['y'][i]
-                        cv2.line(frame, (x1, y1), (x2, y2), (255, 0, 0), 2)
+                        cv2.line(frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
 
                 # Draw the velocity of the robot
                 if velocities[id]:
                     velocity = np.mean(velocities[id])
-                    cv2.putText(frame, f'Velocity: {velocity:.2f} pixels/frame', (x, y + 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+                    #cv2.putText(frame, f'Velocity: {velocity:.2f} pixels/frame', (x, y + 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
                 # Update the trajectory and velocity lists for robots that were not detected in the current frame
                 for id, trajectory in trajectories.items():

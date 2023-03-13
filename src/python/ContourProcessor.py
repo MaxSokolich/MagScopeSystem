@@ -139,7 +139,6 @@ class ContourProcessor:
         img = img * (contrast/127 + 1) - contrast + brightness
         img = np.clip(img, 0, 255)
         img = np.uint8(img)
-        #cv2.imshow("mask", img)
         return img
 
     
@@ -167,9 +166,10 @@ class ContourProcessor:
         """
         # Apply preprocessing pipeline to cropped image
         # convert to grayscale
-        crop_mask = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2GRAY)
+        crop_mask = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2GRAY)  #[hue, saturation, vlue]
         #crop_mask = cropped_frame
         # get blur after grayscale is applied
+        cv2.imshow("stop",crop_mask)
         blur = self.calculate_blur(crop_mask)
 
         # get the avg blur based on the current blur and last 5 other frames
@@ -188,11 +188,11 @@ class ContourProcessor:
         # apply brightness/contrast based on avg_blur
         brightness, contrast = self.get_brightness_and_contrast(blur)
         crop_mask = self.apply_brightness_contrast(crop_mask, brightness, contrast)
-        #cv2.imshow("mask", crop_mask)
-        self.lower_thresh =  control_params["lower_thresh"]
-        self.upper_thresh = control_params["upper_thresh"]
-        crop_mask = cv2.inRange(crop_mask, self.lower_thresh, (self.upper_thresh))
-        
+        cv2.imshow("mask", crop_mask)
+        self.lower_thresh =  control_params["lower_thresh"]#np.array([control_params["lower_thresh"], control_params["lower_thresh"], control_params["lower_thresh"]]) 
+        self.upper_thresh = control_params["upper_thresh"]#np.array([control_params["upper_thresh"],control_params["upper_thresh"],control_params["upper_thresh"]])
+        crop_mask = cv2.inRange(crop_mask, self.lower_thresh, self.upper_thresh)
+        cv2.imshow("stupid",crop_mask)
 
         # Return the preprocessed cropping and the blur value of the current frame
         return crop_mask, contrast   #switched from blur

@@ -530,7 +530,7 @@ class GUI:
         lower_thresh_slider = Scale(
             master=window3,
             label="lower_thresh",
-            from_=1,
+            from_=0,
             to=255,
             resolution=1,
             variable=lower_thresh,
@@ -542,7 +542,7 @@ class GUI:
         upper_thresh_slider = Scale(
             master=window3,
             label="upper_thresh",
-            from_=1,
+            from_=0,
             to=255,
             resolution=1,
             variable=upper_thresh,
@@ -554,7 +554,7 @@ class GUI:
         blur_thresh_slider = Scale(
             master=window3,
             label="blur_thresh",
-            from_=50,
+            from_=1,
             to=250,
             resolution=1,
             variable=blur_thresh,
