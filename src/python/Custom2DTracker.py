@@ -59,8 +59,6 @@ class Tracker:
         self.num_bots = 0  # current number of bots
         self.frame_num = 0  # current frame count
         self.elapsed_time = 0  # time elapsed while tracking
-        self.prev_frame_time = 0  # prev frame time, used for self.fps calcs
-        self.new_frame_time = 0  # time of newest frame, used for self.fps calcs
         # self.fps_list = []  # Store the self.fps at the current frame
 
         self.width = 0  # width of cv2 window
@@ -497,7 +495,7 @@ class Tracker:
                 
 
 
-    def single_bot_thread(
+    def main(
         self,
         filepath: Union[str, None],
         arduino: ArduinoHandler,

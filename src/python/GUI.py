@@ -25,7 +25,7 @@ from src.python.ArduinoHandler import ArduinoHandler
 from src.python.Brightness import Brightness
 from src.python.JoystickProcess import JoystickProcess
 from src.python.AnalysisClass import Analysis
-
+from src.python.TrackAll import AllTracker
 
 
 # from pyspin import PySpin
@@ -243,7 +243,7 @@ class GUI:
         #3 CHECKBOXES FRAME
 
         self.checkboxes_frame = Frame(master = master)
-        self.checkboxes_frame.grid(row=7,column=1,rowspan = 2)
+        self.checkboxes_frame.grid(row=6,column=1,rowspan = 2)
 
         savepickle = IntVar(master=master, name="savepickle_var")
         
@@ -271,22 +271,11 @@ class GUI:
 
         cuda_button.var = cuda_var
         
-        trackall_var = IntVar(master=master, name="trackall_var")
-
-        trackall_button = Checkbutton(
-            master=self.checkboxes_frame,
-            name="trackall_checkbox",
-            text="TRACK ALL",
-            variable=trackall_var,
-            onvalue=1,
-            offvalue=0,
-        )
-
-        trackall_button.var = trackall_var
+       
 
         savepickle_box.grid(row=0, column=0)
         cuda_button.grid(row=1, column=0)
-        trackall_button.grid(row=2,column= 0)
+       
 
 
 
@@ -338,19 +327,12 @@ class GUI:
 
 
         #3 BIG BUTTONS
-        track_button = Button(
-            master, 
-            text="Track", 
-            command=self.track, 
-            height=5, 
-            width=20,
-            bg = 'blue',
-            fg= 'white'
-        )
 
-        
+        Big_button_frame = Frame(master = master)
+        Big_button_frame.grid(row=0,column=1,rowspan = 7)
+
         status_button = Button(
-            master, 
+            Big_button_frame, 
             text="Stop:\nZero All Signals", 
             command=self.status, 
             height=5, 
@@ -358,6 +340,27 @@ class GUI:
             bg = 'red',
             fg= 'white'
         )
+
+        track_button = Button(
+            Big_button_frame, 
+            text="Track", 
+            command=self.track, 
+            height=4, 
+            width=20,
+            bg = 'blue',
+            fg= 'white'
+        )
+
+        trackall_button = Button(
+            Big_button_frame, 
+            text="Track All", 
+            command=self.trackall, 
+            height=1, 
+            width=20,
+            bg = "#40E0D0",
+            fg= 'white'
+        )
+
 
         close_button = Button(master, 
             text="Exit", 
@@ -367,9 +370,10 @@ class GUI:
             bg = 'black',
             fg= 'white')
 
-
-        track_button.grid(row=3, column=1,rowspan=3)
         status_button.grid(row=0, column=1,rowspan =3)
+        track_button.grid(row=3, column=1,rowspan=2)
+        trackall_button.grid(row=5, column=1)
+
         close_button.grid(row=7, column=0)
 
         # GUI MAINFRAME: OTHER
@@ -390,15 +394,13 @@ class GUI:
         
         
         
-
-        
        
         
 
     
         #BFIELD FRAME
         Bfield_frame = Frame(master = master)
-        Bfield_frame.grid(row=3,column=0,rowspan = 3)
+        Bfield_frame.grid(row=3,column=0,rowspan = 2)
 
         Yfield_label = Label(master=Bfield_frame, text="Y", width=10)
         Yfield_label.grid(row=0, column=0)
@@ -930,11 +932,8 @@ class GUI:
 
         output_name = str(self.get_widget(self.video_record_frame, "output_name").get())
         
-        #track all robots if the widget is checked(true)
-        if self.get_widget(self.checkboxes_frame, "trackall_checkbox").var.get():
-            tracker.create_robotlist(video_name)
 
-        robot_list = tracker.single_bot_thread(video_name, self.arduino, output_name)
+        robot_list = tracker.main(video_name, self.arduino, output_name)
 
 
         
@@ -946,7 +945,29 @@ class GUI:
         
 
 
-        
+    def trackall(self):
+        """
+        Initiates a AllTracker instance for tracking all microrobots
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
+        alltracker = AllTracker(self.main_window,
+            CONTROL_PARAMS,
+            CAMERA_PARAMS,
+            STATUS_PARAMS,
+        )
+        if (self.get_widget(self.video_option_frame, "live_checkbox").var.get()):
+            video_name = None
+        else:
+            video_name = self.external_file
+
+        alltracker.main(video_name)
+
 
     def status(self):
         """
