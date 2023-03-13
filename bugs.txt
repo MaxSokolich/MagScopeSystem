@@ -1,10 +1,15 @@
 Bugs:
-5) test 3D tracking, add Z position
-11) maybe get ps5 controller working
-13) fix acoustic digitial potentiameter mapping
-16) create seperate class for closed loop control algorithms. add checkbox for selecting algorithm
-18) fix track-all function. maybe dont use contourprocessing.py
-19) try and record video on seperate CPU
+1) test 3D tracking, add Z position, improve z tracking
+2) maybe get ps5 controller working
+3) fix acoustic digitial potentiameter mapping
+4) create seperate class for closed loop control algorithms.
+5) fix track-all function. use chatgpt code as seperate button
+6) try and record video on seperate CPU/process
+7) change gray to hsv
+8) refactor custom tracker class by seperating out methods into seperate classes
+        - convert pickle
+        - plot
+        - algorthm/ control_trajectory
 
 
 
