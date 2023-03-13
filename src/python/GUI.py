@@ -24,6 +24,7 @@ from src.python.Custom2DTracker import Tracker
 from src.python.ArduinoHandler import ArduinoHandler
 from src.python.Brightness import Brightness
 from src.python.JoystickProcess import JoystickProcess
+from src.python.AnalysisClass import Analysis
 
 
 
@@ -105,12 +106,14 @@ class GUI:
         self.arduino = arduino
         self.external_file = None
 
+       
 
         
     
         #define instance of acoustic module
         self.AcousticModule = AcousticClass()
         self.AcousticModule.dp_activate()
+
         #acoustic conditioning/logic
         self.button_state = 0
         self.last_state = 0
@@ -931,10 +934,14 @@ class GUI:
         if self.get_widget(self.checkboxes_frame, "trackall_checkbox").var.get():
             tracker.create_robotlist(video_name)
 
-        tracker.single_bot_thread(video_name, self.arduino, output_name)
+        robot_list = tracker.single_bot_thread(video_name, self.arduino, output_name)
+
+
         
         if self.get_widget(self.checkboxes_frame, "savepickle").var.get():
-            tracker.convert2pickle(output_name)
+            analyze = Analysis(CONTROL_PARAMS, CAMERA_PARAMS,STATUS_PARAMS,robot_list)
+            analyze.convert2pickle(output_name)
+            analyze.plot()
 
         
 

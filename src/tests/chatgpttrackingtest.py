@@ -4,7 +4,7 @@ from collections import deque
 import matplotlib.pyplot as plt
 
 
-cap = cv2.VideoCapture("/Users/bizzarohd/Desktop/MagScopeSystem/src/videos/mickyroll1.mp4")
+cap = cv2.VideoCapture("/home/max/Documents/MagScopeSystem/src/videos/mickeyHEKfast.mp4")
 
 # Define the lower and upper bounds of the black color
 lower_black = np.array([0, 0, 0])
@@ -14,7 +14,7 @@ upper_black = np.array([30, 30, 30])
 thresh = 50
 
 
-# Define a dictionary to store the robots and their identifiers
+# Define a dictionary to store the robots and their identifiersq
 robots = {}
 
 

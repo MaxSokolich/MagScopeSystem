@@ -6,27 +6,21 @@ Module containing the Tracker class
 @authors: Max Sokolich, Brennan Gallamoza, Luke Halko, Trea Holley,
           Alexis Mainiero, Cameron Thacker, Zoe Valladares
 """
-import pandas as pd
+
 import time
 from typing import List, Tuple, Union
-import pickle
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
-plt.style.use('dark_background')
-from tqdm import tqdm
 from tkinter import Tk
 from tkinter import *
-from mpl_toolkits import mplot3d
-
-
 from src.python.RobotClass import Robot
 from src.python.ContourProcessor import ContourProcessor
 from src.python.Velocity import Velocity
 from src.python.ArduinoHandler import ArduinoHandler
 from src.python.FPSCounter import FPSCounter
 
-#import EasyPySpin
+import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -72,7 +66,7 @@ class Tracker:
         self.width = 0  # width of cv2 window
         self.height = 0  # height of cv2 window
         
-        self.pix2metric = 1#((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
+        #self.pix2metric = 1#((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
         
         self.control_params = control_params
         self.camera_params = camera_params
@@ -666,6 +660,8 @@ class Tracker:
         self.robot_window.destroy()
         del self.robot_checklist_list[:]
         del self.robot_var_list[:]
+
+        return self.robot_list
             
             
 
@@ -759,6 +755,7 @@ class Tracker:
                 
         cv2.imwrite("src/imgs/initialmask.png",frame)
         cam.release()
+      
        
 
     def algorithm(self,arduino):
@@ -957,144 +954,3 @@ class Tracker:
 
             
 
-
-
-    def plot(self):
-        """
-        ##ADD 3D PLOT of TRAJECTORIES
-        Plot all trajectories from each robot using matplotlib
-
-        Args:
-            self: the class itself
-        Returns:
-            None
-        """
-        print(" -- PLOTTING -- ")
-        color = plt.cm.rainbow(np.linspace(0, 1, self.num_bots))
-        resize_scale = self.camera_params["resize_scale"]
-
-        _, ax = plt.subplots(3,1, figsize=(5, 8))
-        _,ax2 = plt.subplots(1,1, figsize=(8, 8))
-        ax2 = plt.axes(projection = '3d')
-        #xx, yy = np.meshgrid(range(400), range(400))
-        #zz = yy*0
-        #ax2.plot_surface(xx, yy, zz)
-
-
-        Vel_list = []
-        Size_list= []
-        max_z = 0
-        for i, c in zip(range(len(self.robot_list)), color):
-            bot = self.robot_list[i]
-            if len(bot.frame_list) > 10:
-
-                #ADD 2D PLOT
-                X = np.array(bot.position_list)[1:, 0] /self.pix2metric
-                Y = np.array(bot.position_list)[1:, 1] /self.pix2metric
-                ax[0].plot(X,Y,color =c,linewidth = 1 )
-                
-                #ADD 3D PLOT
-                
-                Z = np.array(bot.blur_list)[:]    #need to fix scal, will also need to normalize this
-                Z = Z - np.min(Z)
-
-                #Z = ((Z - np.min(Z)) / (np.max(Z) - np.min(Z))) #normalize
-                rolling_avgZ = pd.DataFrame(Z).rolling(30).mean().values
-                avgZ = [i[0] for i in rolling_avgZ]
-                
-                if max(Z) > max_z: #for plot z max limit
-                    max_z = max(Z)
-                       
-                ax2.plot3D(X,Y,avgZ,color =c,linewidth = 1)
-
-
-
-                #ADD SIZE PLOT
-                Area = round(bot.avg_area,3)
-                Size = np.sqrt(4*Area/np.pi)
-                if Area != 0:
-                    Size_list.append(Size)
-                    b = ax[2].bar(i, Size,color =c,label = "{}".format(round(Size,2)))
-                    ax[2].bar_label(b, label_type='center') 
-
-
-                #ADD VELOCITY PLOT
-                VX = np.array([v.x for v in bot.velocity_list])
-                VY = np.array([v.y for v in bot.velocity_list])
-                VZ = np.array([v.z for v in bot.velocity_list])
-                Vmag = np.array([v.mag for v in bot.velocity_list])
-                #print(Vmag)        
-                #if len(Vmag) > 0:
-                Vmax = max(Vmag)
-                #if Vmin == 0:
-                #    Vmag = Vmag[Vmag != 0]
-                #else:
-                #    pass
-
-                #filter out extreams and when the microrobot is at rest (Vmag =0)
-                Vmag = Vmag[Vmag<Vmax*1]
-            
-                Vel = round(sum(Vmag)/len(Vmag),2)
-                Vel_list.append(Vel)
-                rolling_avg = pd.DataFrame(Vmag).rolling(20).median()
-    
-                ax[1].plot(rolling_avg,color =c, label = "{}".format(Vel))
-            
-            
-        
-        #2D
-        ax[0].set_title("2D Trajectories")
-        ax[0].invert_yaxis()
-        ax[0].set_xlabel("X (um)")
-        ax[0].set_ylabel("Y (um)")
-        ax[0].set_xlim([0,(self.width * resize_scale // 100) /self.pix2metric])
-        ax[0].set_ylim([(self.height * resize_scale // 100) /self.pix2metric, 0])
-        
-        #VEL
-        ax[1].set_title("average velocity: {}um/s".format(round(np.median(Vel_list),2)))
-        ax[1].set_xlabel("Frame")
-        ax[1].set_ylim([0,max(Vel_list)*2])
-        ax[1].legend()
-        ax[1].axhline(np.mean(Vel_list), color = "w", linewidth=4)
-
-        #SIZE
-        ax[2].set_title("average size:{}um".format(round(np.mean(Size_list),2)))
-        ax[2].set_xlabel("MR")
-        ax[2].axhline(np.mean(Size_list), color = "w", linewidth = 4)
-        
-        #3D
-        ax2.set_title("3D Trajectories")
-        ax2.axes.set_xlim3d(left=0, right=(self.width * resize_scale // 100) /self.pix2metric) 
-        ax2.axes.set_ylim3d(bottom=(self.height * resize_scale // 100) /self.pix2metric, top=0) 
-        ax2.axes.set_zlim3d(bottom= 0, top=max_z*2 if max_z>0 else 1) 
-
-        ax2.set_xlabel("X (um)")
-        ax2.set_ylabel("Y (um)")
-        ax2.set_zlabel("Z (contrast units)")
-   
-        plt.show()
-
-
-    def convert2pickle(self, filename: str):
-        """
-        Converts recorded microbot tracking info into a pickle file for storage.
-
-        Args:
-            filename:   name of output file
-
-        Returns:
-            None
-        """
-        
-        pickles = []
-        print(" --- writing robots ---")
-        for bot in tqdm(self.robot_list):
-            if len(bot.area_list) > 1:
-                pickles.append(bot.as_dict())
-        filename = "src/data/"+filename
-        print(" -- writing pickle --")
-        with open(filename + ".pickle", "wb") as handle:
-            pickle.dump(pickles, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        print(" -- ({}.pickle) DONE -- ".format(filename))
-
-        self.plot()  #plot the data
