@@ -32,8 +32,8 @@ from src.python.TrackAll import AllTracker
 # import EasyPySpin
 
 CONTROL_PARAMS = {
-    "lower_thresh": 0,
-    "upper_thresh": 104,
+    "lower_thresh": np.array([0,0,0]),  #HSV
+    "upper_thresh": np.array([180,255,100]),  #HSV
     "blur_thresh": 100,
     "bounding_length": 100,       #intial size of "screenshot" cropped frame 
     "area_filter": 1,            #cropped frame dimensions mulitplier
@@ -44,7 +44,7 @@ CONTROL_PARAMS = {
 }
 
 CAMERA_PARAMS = {
-    "resize_scale": 100, 
+    "resize_scale": 50, 
     "framerate": 24, 
     "exposure": 10000, 
     "Obj": 40}
@@ -492,8 +492,62 @@ class GUI:
 
         """
         window3 = Toplevel(self.main_window)
-        window3.title("ClosedLoop Params")
+        window3.title("ControlParams")
 
+        #cretae a frame to keep track of upper and low HSV bounds
+        detection_thresh = Frame(master = window3)
+        detection_thresh.pack()
+
+        #lower
+        Label(master = detection_thresh,text= "Lower Threshold (HSV)").grid(row=0,column=0,columnspan=3)
+        Lower_H_Ent = Entry(master=detection_thresh, width=5)
+        Lower_H_Ent.grid(row=1, column=0)
+        Lower_H_Ent.delete(0,END)
+        Lower_H_Ent.insert(0,(str(CONTROL_PARAMS["lower_thresh"][0])))
+        Lower_S_Ent = Entry(master=detection_thresh, width=5)
+        Lower_S_Ent.grid(row=1, column=1)
+        Lower_S_Ent.delete(0,END)
+        Lower_S_Ent.insert(0,(str(CONTROL_PARAMS["lower_thresh"][1])))
+        Lower_V_Ent = Entry(master=detection_thresh, width=5)
+        Lower_V_Ent.grid(row=1, column=2)
+        Lower_V_Ent.delete(0,END)
+        Lower_V_Ent.insert(0,(str(CONTROL_PARAMS["lower_thresh"][2])))
+
+        #upper thresh
+        Label(master = detection_thresh,text= "Upper Threshold (HSV)").grid(row=2,column=0,columnspan=3)
+        Upper_H_Ent = Entry(master=detection_thresh, width=5)
+        Upper_H_Ent.grid(row=3, column=0)
+        Upper_H_Ent.delete(0,END)
+        Upper_H_Ent.insert(0,(str(CONTROL_PARAMS["upper_thresh"][0])))
+        Upper_S_Ent = Entry(master=detection_thresh, width=5)
+        Upper_S_Ent.grid(row=3, column=1)
+        Upper_S_Ent.delete(0,END)
+        Upper_S_Ent.insert(0,(str(CONTROL_PARAMS["upper_thresh"][1])))
+        Upper_V_Ent = Entry(master=detection_thresh, width=5)
+        Upper_V_Ent.grid(row=3, column=2)
+        Upper_V_Ent.delete(0,END)
+        Upper_V_Ent.insert(0,(str(CONTROL_PARAMS["upper_thresh"][2])))
+
+        def apply_thresh():
+            CONTROL_PARAMS["lower_thresh"] = np.array([int(Lower_H_Ent.get()),int(Lower_S_Ent.get()),int(Lower_V_Ent.get())])
+            CONTROL_PARAMS["upper_thresh"] = np.array([int(Upper_H_Ent.get()),int(Upper_S_Ent.get()),int(Upper_V_Ent.get())])
+    
+
+        #apply thresh
+        apply_thresh_but = Button(detection_thresh, 
+            text="Apply", 
+            width=10, 
+            height=1, 
+            command=apply_thresh, 
+            bg = 'black',
+            fg= 'white')
+        
+        apply_thresh_but.grid(row=4,column=0,columnspan = 3)
+
+        
+        
+        
+        #handle sliders
         def update_loop_slider_values(event):
             """
             Constantly updates control_params when the sliders are used.
@@ -505,8 +559,8 @@ class GUI:
                 None
             """
 
-            CONTROL_PARAMS["lower_thresh"] = int(lower_thresh_slider.get())
-            CONTROL_PARAMS["upper_thresh"] = int(upper_thresh_slider.get())
+            #CONTROL_PARAMS["lower_thresh"] = int(lower_thresh_slider.get())
+            #CONTROL_PARAMS["upper_thresh"] = int(upper_thresh_slider.get())
             CONTROL_PARAMS["blur_thresh"] = int(blur_thresh_slider.get())
             CONTROL_PARAMS["bounding_length"] = int(bounding_length_slider.get())
             CONTROL_PARAMS["area_filter"] = int(area_filter_slider.get())
@@ -517,8 +571,8 @@ class GUI:
 
             self.main_window.update()
 
-        lower_thresh = DoubleVar()
-        upper_thresh = DoubleVar()
+        #lower_thresh = DoubleVar()
+        #upper_thresh = DoubleVar()
         blur_thresh = DoubleVar()
         bounding_length = DoubleVar()
         area_filter = DoubleVar()
@@ -527,7 +581,7 @@ class GUI:
         gamma = DoubleVar()
         memory = DoubleVar()
 
-        lower_thresh_slider = Scale(
+        '''lower_thresh_slider = Scale(
             master=window3,
             label="lower_thresh",
             from_=0,
@@ -550,7 +604,8 @@ class GUI:
             length=200,
             orient=HORIZONTAL,
             command=update_loop_slider_values,
-        )
+        )'''
+
         blur_thresh_slider = Scale(
             master=window3,
             label="blur_thresh",
@@ -638,8 +693,8 @@ class GUI:
             command=update_loop_slider_values,
         )
 
-        lower_thresh_slider.set(CONTROL_PARAMS["lower_thresh"])
-        upper_thresh_slider.set(CONTROL_PARAMS["upper_thresh"])
+        #lower_thresh_slider.set(CONTROL_PARAMS["lower_thresh"])
+        #upper_thresh_slider.set(CONTROL_PARAMS["upper_thresh"])
         blur_thresh_slider.set(CONTROL_PARAMS["blur_thresh"])
         bounding_length_slider.set(CONTROL_PARAMS["bounding_length"])
         area_filter_slider.set(CONTROL_PARAMS["area_filter"])
@@ -648,8 +703,8 @@ class GUI:
         gamma_slider.set(CONTROL_PARAMS["gamma"])
         memory_slider.set(CONTROL_PARAMS["memory"])
 
-        lower_thresh_slider.pack()
-        upper_thresh_slider.pack()
+        #lower_thresh_slider.pack()
+        #upper_thresh_slider.pack()
         blur_thresh_slider.pack()
         bounding_length_slider.pack()
         area_filter_slider.pack()

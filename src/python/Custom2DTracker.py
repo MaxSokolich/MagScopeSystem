@@ -359,8 +359,9 @@ class Tracker:
                 #cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
                 cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
 
+                ch,cs,cv = cv2.cvtColor(cropped_frame,cv2.COLOR_BGR2HSV)[x,y]
+                print(ch,cs,cv)
                 
-   
                 self.track_robot_position(
                     area,
                     self.robot_list[bot],
@@ -463,7 +464,7 @@ class Tracker:
        
             dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
             
-            cv2.putText(frame, "robot {}".format(bot_id), (x, y-10), 
+            cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
             cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
@@ -488,16 +489,16 @@ class Tracker:
                 cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
 
-                '''cv2.putText(
+                cv2.putText(
                     frame,
-                    f"{bot_id+1} - vmag: {int(vmag_avg)}um/s. size: {round(dia, 2)}um. blur: {round(blur,2)}. ",
+                    f"{bot_id+1} - blur: {round(blur,2)}. ",
                     (0, 170 + bot_id * 20),
                     cv2.FONT_HERSHEY_COMPLEX,
                     0.5,
                     bot_color,
                     1,
                 )
-                '''
+                
                 
 
 
