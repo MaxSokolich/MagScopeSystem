@@ -90,14 +90,6 @@ class AllTracker:
         self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 
-        # Define the lower and upper bounds of the black color
-        lower_black = np.array([0, 0, 0])
-        upper_black = np.array([30, 30, 30])
-
-
-        thresh = 50
-
-
         # Define a dictionary to store the robots and their identifiersq
         robots = {}
 
@@ -121,7 +113,10 @@ class AllTracker:
             ret, frame = cam.read()
             if not ret:
                 break
-
+            
+            lower = self.control_params["lower_thresh"]
+            upper = self.control_params["upper_thresh"]
+            thresh = self.control_params["area_thresh"]*10
 
             # Set exposure of camera
             cam.set(cv2.CAP_PROP_EXPOSURE, self.camera_params["exposure"])
@@ -143,7 +138,7 @@ class AllTracker:
             blurred = cv2.GaussianBlur(gray, (5, 5), 0)
             
             # Threshold the image to find black regions
-            mask = cv2.inRange(frame, lower_black, upper_black)
+            mask = cv2.inRange(frame, lower, upper)
             
             # Find contours in the black regions
             contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
