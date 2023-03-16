@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from collections import deque
 import matplotlib.pyplot as plt
-#import EasyPySpin
+import EasyPySpin
 from typing import List, Tuple, Union
 from tkinter import Tk
 from tkinter import *
@@ -208,7 +208,7 @@ class AllTracker:
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
             #calculate pixel to metric for varying res
             #106.2 um = 1024 pixels  @ 50%  resize and 100 x
-            self.pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
+            self.pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] *2
 
             # Convert the frame to grayscale and blur it to reduce noise
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)

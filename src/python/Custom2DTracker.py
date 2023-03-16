@@ -20,7 +20,7 @@ from src.python.Velocity import Velocity
 from src.python.ArduinoHandler import ArduinoHandler
 from src.python.FPSCounter import FPSCounter
 
-#import EasyPySpin
+import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -293,7 +293,7 @@ class Tracker:
 
             velz = 0
             if len(bot.blur_list) > 0:
-                velz = (bot.blur_list[-5] - blur)    #This needs to be scaled or something (takes the past 5th blur value to get a rate)
+                velz = (bot.blur_list[-1] - blur)    #This needs to be scaled or something (takes the past 5th blur value to get a rate)
             vel = Velocity(velx, vely, 0)
             bot.add_velocity(vel)
           
@@ -578,7 +578,7 @@ class Tracker:
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
             #calculate pixel to metric for varying res
             #106.2 um = 1024 pixels  @ 50%  resize and 100 x
-            self.pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] 
+            self.pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] *2 #divide by 2 cuz did scale calc on .5x adapter
             
             self.frame_num += 1  # increment frame
 
