@@ -2,11 +2,13 @@ import cv2
 import numpy as np
 from collections import deque
 import matplotlib.pyplot as plt
-import EasyPySpin
+#import EasyPySpin
 from typing import List, Tuple, Union
 from tkinter import Tk
 from tkinter import *
 from src.python.FPSCounter import FPSCounter
+from src.python.RobotClass import Robot
+from src.python.Velocity import Velocity
 import time 
 
 class AllTracker:
@@ -27,9 +29,12 @@ class AllTracker:
 
         self.main_window = main_window
 
+        self.num_bots = 0
+        self.robot_list = []
 
 
-    def get_fps(self, fps: FPSCounter, frame: np.ndarray, pix_2metric: float):
+
+    def get_fps(self, fps: FPSCounter, frame: np.ndarray):
         """
         Compute and display average FPS up to this frame
 
@@ -67,10 +72,91 @@ class AllTracker:
         cv2.line(
             frame, 
             (int(w / 40),int(h / 14)),
-            (int(w / 40) + int(100 * (pix_2metric)),int(h / 14)), 
+            (int(w / 40) + int(100 * (self.pix_2metric)),int(h / 14)), 
             (255, 255, 255), 
             3
         )
+
+    def display_hud(self, frame: np.ndarray,fps: FPSCounter):
+        """
+        Display dragon tails (bot trajectories) and other HUD graphics
+
+        Args:
+            frame: np array representation of the current video frame read in
+        Returns:
+            None
+        """
+        self.get_fps(fps, frame)
+
+        if len(self.robot_list) > 0:
+            color = plt.cm.rainbow(np.linspace(0, 1, self.num_bots)) * 255
+            self.get_fps
+            # bot_ids = [i for i in range(self.num_bots)]
+            for (
+                bot_id,
+                bot_color,
+            ) in zip(range(self.num_bots), color):
+
+                x = int(self.robot_list[bot_id].cropped_frame[-1][0])
+                y = int(self.robot_list[bot_id].cropped_frame[-1][1])
+                w = int(self.robot_list[bot_id].cropped_frame[-1][2])
+                h = int(self.robot_list[bot_id].cropped_frame[-1][3])
+
+                # display dragon tails
+                pts = np.array(self.robot_list[bot_id].position_list, np.int32)
+                cv2.polylines(frame, [pts], False, bot_color, 2)
+                
+
+                #display target positions
+                targets = self.robot_list[bot_id].trajectory
+                if len(targets) > 0:
+                    tar = targets[-1]
+                    cv2.circle(frame,
+                        (int(tar[0]), int(tar[1])),
+                        4,
+                        (bot_color),
+                        -1,
+                    )
+
+                #average diamter of bot(calcuating from area of circle)
+        
+                dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
+                
+                cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
+                cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                            
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                # if there are more than 10 velocities recorded in the robot, get
+                # and display the average velocity
+                if len(self.robot_list[bot_id].velocity_list) > 10:
+                    # a "velocity" list is in the form of [x, y, magnitude];
+                    # get the magnitude of the 10 most recent velocities, find their
+                    # average, and display it on the tracker
+                    bot = self.robot_list[bot_id]
+                    vmag = [v.mag for v in bot.velocity_list[-10:]]
+                    vmag_avg = sum(vmag) / len(vmag)
+        
+                    #Vz value calculated from blur
+                    blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
+                    vz = [v.z for v in bot.velocity_list[-10:]]
+                    vz_avg = sum(vz)/len(vz)
+
+
+                    cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+
+                    cv2.putText(
+                        frame,
+                        f"{bot_id+1} - blur: {round(blur,2)}. ",
+                        (0, 170 + bot_id * 20),
+                        cv2.FONT_HERSHEY_COMPLEX,
+                        0.5,
+                        bot_color,
+                        1,
+                    )
+                
 
        
     def main(self,filepath: Union[str, None]):
@@ -90,17 +176,8 @@ class AllTracker:
         self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 
-        # Define a dictionary to store the robots and their identifiersq
-        robots = {}
+        
 
-
-        # Initialize the identifier counter
-        id_count = 0
-
-
-        # Define lists to store the trajectory and velocity of each robot
-        trajectories = {}
-        velocities = {}
 
         start = time.time()
         fps_counter = FPSCounter()
@@ -116,7 +193,7 @@ class AllTracker:
             
             lower = self.control_params["lower_thresh"]
             upper = self.control_params["upper_thresh"]
-            thresh = self.control_params["area_thresh"]*10
+            thresh = self.control_params["area_filter"]*10
 
             # Set exposure of camera
             cam.set(cv2.CAP_PROP_EXPOSURE, self.camera_params["exposure"])
@@ -145,76 +222,61 @@ class AllTracker:
             
             # Process each contour
             for cnt in contours:
+                cv2.drawContours(frame, cnt, -1, (0, 255, 255), 1)
                 x, y, w, h = cv2.boundingRect(cnt)
                 
                 # Calculate the centroid of the contour
                 centroid_x = x + w // 2
                 centroid_y = y + h // 2
-                
+                area = cv2.contourArea(cnt )* (1/self.pix_2metric**2)
                 # Check if the centroid is close to an existing robot
                 found = False
-                for id, robot in robots.items():
-                    if abs(robot['centroid_x'] - centroid_x) < thresh and abs(robot['centroid_y'] - centroid_y) < thresh:
-                        # Calculate the velocity of the robot
-                        vel_x = centroid_x - robot['centroid_x']
-                        vel_y = centroid_y - robot['centroid_y']
-                        velocity = np.sqrt(vel_x**2 + vel_y**2)
-                        # Update the previous position of the robot
-                        robot['prev_x'] = robot['centroid_x']
-                        robot['prev_y'] = robot['centroid_y']
-                        # Update the current position of the robot
-                        robot['centroid_x'] = centroid_x
-                        robot['centroid_y'] = centroid_y
+                for bot in range(len(self.robot_list)):
+                    if abs(self.robot_list[bot].position_list[-1][0]- centroid_x) < thresh and abs(self.robot_list[bot].position_list[-1][1] - centroid_y) < thresh:
+                        #if its close ad that bots pos
+                        self.robot_list[bot].add_position([centroid_x,centroid_y])
+                        self.robot_list[bot].add_crop([x,y,w,h])
+                        self.robot_list[bot].add_area(area)
+                        avg_global_area = sum(self.robot_list[bot].area_list) / len(self.robot_list[bot].area_list)
+                        self.robot_list[bot].set_avg_area(avg_global_area)
+
+                        if len(self.robot_list[bot].position_list) > 0:
+                            velx = (
+                                (centroid_x - self.robot_list[bot].position_list[-2][0])
+                                / (self.pix_2metric)
+                                * (fps_counter.get_fps())
+                            )
+
+                            vely = (
+                                (centroid_y  - self.robot_list[bot].position_list[-2][1])
+                                / (self.pix_2metric)
+                                * (fps_counter.get_fps())
+                                
+                            )
+
+                            vel = Velocity(velx, vely, 0)
+                            self.robot_list[bot].add_velocity(vel)
+                        
                         found = True
                         # Append the current position and velocity to the trajectory and velocity lists
-                        trajectories[id]['x'].append(centroid_x)
-                        trajectories[id]['y'].append(centroid_y)
-                        velocities[id].append(velocity)
                         break
                 
                 # If the centroid is not close to any existing robot, add a new robot
                 if not found:
             
-                    id_count += 1
-                    robots[id_count] = {'centroid_x': centroid_x, 'centroid_y': centroid_y}
-                    # Initialize the trajectory and velocity lists for the new robot
-                    trajectories[id_count] = {'x': [centroid_x], 'y': [centroid_y]}
-                    velocities[id_count] = []
+                    self.num_bots += 1
+                    robot = Robot()
+                    robot.add_position([centroid_x,centroid_y])
+                    robot.add_crop([x,y,w,h])
+                    robot.add_area(area)
+                    avg_global_area = sum(robot.area_list) / len(robot.area_list)
+                    robot.set_avg_area(avg_global_area)
+                    self.robot_list.append(robot)
+                  
+            self.display_hud(frame, fps_counter)
             
-            # Draw bounding boxes and identifiers for each robot
-            for id, robot in robots.items():
-                x = robot['centroid_x'] - 20
-                y = robot['centroid_y'] - 20
-                # Draw a bounding box around the robot
-                cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 255, 0), 1)
-
-                # Draw the identifier for the robot
-                cv2.putText(frame, f'Robot {id}', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-
-                # Draw the trajectory of the robot
-                if len(trajectories[id]['x']) > 1:
-                    for i in range(1, len(trajectories[id]['x'])):
-                        x1 = trajectories[id]['x'][i-1]
-                        y1 = trajectories[id]['y'][i-1]
-                        x2 = trajectories[id]['x'][i]
-                        y2 = trajectories[id]['y'][i]
-                        cv2.line(frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
-
-                # Draw the velocity of the robot
-                if velocities[id]:
-                    velocity = np.mean(velocities[id])
-                    #cv2.putText(frame, f'Velocity: {velocity:.2f} pixels/frame', (x, y + 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
-
-                # Update the trajectory and velocity lists for robots that were not detected in the current frame
-                for id, trajectory in trajectories.items():
-                    if id not in robots:
-                        trajectory['x'].append(trajectory['x'][-1])
-                        trajectory['y'].append(trajectory['y'][-1])
-                        velocities[id].append(0)
-
-            # Display the frame
-            self.get_fps(fps_counter,frame, self.pix_2metric)
             cv2.imshow('frame', frame)
+            
             count +=1
 
             #handle frame rate adjustment
@@ -234,25 +296,4 @@ class AllTracker:
         cam.release()
         cv2.destroyAllWindows()
 
-        ''' 
-        fig, ax = plt.subplots()
-        ax.set_xlim(0, 2448)
-        ax.set_ylim(0, 2048)
-        ax.set_title('Robot Trajectories')
-        ax.set_xlabel('X Position')
-        ax.set_ylabel('Y Position')
-        for id, trajectory in trajectories.items():
-            x = trajectory['x']
-            y = trajectory['y']
-            ax.plot(x, y, label=f'Robot {id}')
-            ax.legend()
-        plt.show()
-
-        fig, ax = plt.subplots()
-        ax.set_title('Robot Velocities')
-        ax.set_xlabel('Time (frames)')
-        ax.set_ylabel('Velocity (pixels/frame)')
-        for id, velocity in velocities.items():
-            ax.plot(velocity, label=f'Robot {id}')
-            ax.legend()
-        plt.show()'''
+       

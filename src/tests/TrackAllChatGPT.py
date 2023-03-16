@@ -2,12 +2,11 @@ import cv2
 import numpy as np
 from collections import deque
 import matplotlib.pyplot as plt
-import EasyPySpin
+#import EasyPySpin
 from typing import List, Tuple, Union
 from tkinter import Tk
 from tkinter import *
 from src.python.FPSCounter import FPSCounter
-from src.python.RobotClass import Robot
 import time 
 
 class AllTracker:
@@ -92,11 +91,16 @@ class AllTracker:
 
 
         # Define a dictionary to store the robots and their identifiersq
-        robot_list = []
+        robots = {}
 
 
         # Initialize the identifier counter
-        num_robots = 0
+        id_count = 0
+
+
+        # Define lists to store the trajectory and velocity of each robot
+        trajectories = {}
+        velocities = {}
 
         start = time.time()
         fps_counter = FPSCounter()
@@ -112,7 +116,7 @@ class AllTracker:
             
             lower = self.control_params["lower_thresh"]
             upper = self.control_params["upper_thresh"]
-            thresh = self.control_params["area_thresh"]*10
+            thresh = self.control_params["area_filter"]*10
 
             # Set exposure of camera
             cam.set(cv2.CAP_PROP_EXPOSURE, self.camera_params["exposure"])
@@ -149,55 +153,64 @@ class AllTracker:
                 
                 # Check if the centroid is close to an existing robot
                 found = False
-                for bot in range(len(robot_list)):
-                    if abs(robot_list[bot].position_list[-1][0]- centroid_x) < thresh and abs(robot_list[bot].position_list[-1][0] - centroid_y) < thresh:
-                 
+                for id, robot in robots.items():
+                    if abs(robot['centroid_x'] - centroid_x) < thresh and abs(robot['centroid_y'] - centroid_y) < thresh:
                         # Calculate the velocity of the robot
-                    
+                        vel_x = centroid_x - robot['centroid_x']
+                        vel_y = centroid_y - robot['centroid_y']
+                        velocity = np.sqrt(vel_x**2 + vel_y**2)
                         # Update the previous position of the robot
-                        robot_list[bot].add_position([centroid_x,centroid_y])
-                        #robot['prev_x'] = robot['centroid_x']
-                        #robot['prev_y'] = robot['centroid_y']
+                        robot['prev_x'] = robot['centroid_x']
+                        robot['prev_y'] = robot['centroid_y']
                         # Update the current position of the robot
-                        #robot['centroid_x'] = centroid_x
-                        #robot['centroid_y'] = centroid_y
-                        cv2.rectangle(frame, (x, y), (w, h), (0, 255, 0), 1)
+                        robot['centroid_x'] = centroid_x
+                        robot['centroid_y'] = centroid_y
                         found = True
                         # Append the current position and velocity to the trajectory and velocity lists
+                        trajectories[id]['x'].append(centroid_x)
+                        trajectories[id]['y'].append(centroid_y)
+                        velocities[id].append(velocity)
                         break
                 
                 # If the centroid is not close to any existing robot, add a new robot
                 if not found:
             
-                    num_robots += 1
-                    robot = Robot()
-                    robot.add_position([centroid_x,centroid_y])
-                    robot_list.append(robot)
-                    
-                    #robots[id_count] = {'centroid_x': centroid_x, 'centroid_y': centroid_y}
+                    id_count += 1
+                    robots[id_count] = {'centroid_x': centroid_x, 'centroid_y': centroid_y}
                     # Initialize the trajectory and velocity lists for the new robot
-                    #trajectories[id_count] = {'x': [centroid_x], 'y': [centroid_y]}
-                    #velocities[id_count] = []
+                    trajectories[id_count] = {'x': [centroid_x], 'y': [centroid_y]}
+                    velocities[id_count] = []
             
             # Draw bounding boxes and identifiers for each robot
             for id, robot in robots.items():
-                #x = robot['centroid_x'] - 20
-                #y = robot['centroid_y'] - 20
+                x = robot['centroid_x'] - 20
+                y = robot['centroid_y'] - 20
                 # Draw a bounding box around the robot
-                #cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 255, 0), 1)
+                cv2.rectangle(frame, (x, y), (x + 40, y + 40), (0, 255, 0), 1)
 
                 # Draw the identifier for the robot
-                #cv2.putText(frame, f'Robot {id}', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+                cv2.putText(frame, f'Robot {id}', (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
                 # Draw the trajectory of the robot
-                
+                if len(trajectories[id]['x']) > 1:
+                    for i in range(1, len(trajectories[id]['x'])):
+                        x1 = trajectories[id]['x'][i-1]
+                        y1 = trajectories[id]['y'][i-1]
+                        x2 = trajectories[id]['x'][i]
+                        y2 = trajectories[id]['y'][i]
+                        cv2.line(frame, (x1, y1), (x2, y2), (255, 0, 0), 1)
 
                 # Draw the velocity of the robot
-          
+                if velocities[id]:
+                    velocity = np.mean(velocities[id])
+                    #cv2.putText(frame, f'Velocity: {velocity:.2f} pixels/frame', (x, y + 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
                 # Update the trajectory and velocity lists for robots that were not detected in the current frame
-                pass
-          
+                for id, trajectory in trajectories.items():
+                    if id not in robots:
+                        trajectory['x'].append(trajectory['x'][-1])
+                        trajectory['y'].append(trajectory['y'][-1])
+                        velocities[id].append(0)
 
             # Display the frame
             self.get_fps(fps_counter,frame, self.pix_2metric)

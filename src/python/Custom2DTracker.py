@@ -20,7 +20,7 @@ from src.python.Velocity import Velocity
 from src.python.ArduinoHandler import ArduinoHandler
 from src.python.FPSCounter import FPSCounter
 
-import EasyPySpin
+#import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -277,7 +277,7 @@ class Tracker:
 
         # calculate velocity based on last position and self.fps
         #print(pix_2metric)
-        if len(bot.position_list) > 5:
+        if len(bot.position_list) > 0:
             velx = (
                 (current_pos[0] + x_1 - bot.position_list[-1][0])
                 / (pix_2metric)
@@ -332,8 +332,6 @@ class Tracker:
         
             cropped_frame = frame[y_1 : y_1 + y_2, x_1 : x_1 + x_2]
             
-         
-            
             contours, blur = self.cp.get_contours(cropped_frame, self.control_params)
             
             #area_thresh = bot.avg_area*2
@@ -376,7 +374,7 @@ class Tracker:
         
 
 
-    def get_fps(self, fps: FPSCounter, frame: np.ndarray, pix_2metric: float):
+    def get_fps(self, fps: FPSCounter, frame: np.ndarray):
         """
         Compute and display average FPS up to this frame
 
@@ -414,14 +412,14 @@ class Tracker:
         cv2.line(
             frame, 
             (int(w / 40),int(h / 14)),
-            (int(w / 40) + int(100 * (pix_2metric)),int(h / 14)), 
+            (int(w / 40) + int(100 * (self.pix_2metric)),int(h / 14)), 
             (255, 255, 255), 
             3
         )
 
         
 
-    def display_hud(self, frame: np.ndarray):
+    def display_hud(self, frame: np.ndarray,fps: FPSCounter):
         """
         Display dragon tails (bot trajectories) and other HUD graphics
 
@@ -430,74 +428,76 @@ class Tracker:
         Returns:
             None
         """
-        #convert from gray to color
-       
-        color = plt.cm.rainbow(np.linspace(0, 1, self.num_bots)) * 255
-        # bot_ids = [i for i in range(self.num_bots)]
-        for (
-            bot_id,
-            bot_color,
-        ) in zip(range(self.num_bots), color):
+        self.get_fps(fps, frame)
 
-            x = int(self.robot_list[bot_id].cropped_frame[-1][0])
-            y = int(self.robot_list[bot_id].cropped_frame[-1][1])
-            w = int(self.robot_list[bot_id].cropped_frame[-1][2])
-            h = int(self.robot_list[bot_id].cropped_frame[-1][3])
+        if len(self.robot_list) > 0:
+            color = plt.cm.rainbow(np.linspace(0, 1, self.num_bots)) * 255
+            self.get_fps
+            # bot_ids = [i for i in range(self.num_bots)]
+            for (
+                bot_id,
+                bot_color,
+            ) in zip(range(self.num_bots), color):
 
-            # display dragon tails
-            pts = np.array(self.robot_list[bot_id].position_list, np.int32)
-            cv2.polylines(frame, [pts], False, bot_color, 1)
-            
+                x = int(self.robot_list[bot_id].cropped_frame[-1][0])
+                y = int(self.robot_list[bot_id].cropped_frame[-1][1])
+                w = int(self.robot_list[bot_id].cropped_frame[-1][2])
+                h = int(self.robot_list[bot_id].cropped_frame[-1][3])
 
-            #display target positions
-            targets = self.robot_list[bot_id].trajectory
-            if len(targets) > 0:
-                tar = targets[-1]
-                cv2.circle(frame,
-                    (int(tar[0]), int(tar[1])),
-                    4,
-                    (bot_color),
-                    -1,
-                )
+                # display dragon tails
+                pts = np.array(self.robot_list[bot_id].position_list, np.int32)
+                cv2.polylines(frame, [pts], False, bot_color, 2)
+                
 
-            #average diamter of bot(calcuating from area of circle)
-       
-            dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
-            
-            cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
-            cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
-                        
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
-            # if there are more than 10 velocities recorded in the robot, get
-            # and display the average velocity
-            if len(self.robot_list[bot_id].velocity_list) > 10:
-                # a "velocity" list is in the form of [x, y, magnitude];
-                # get the magnitude of the 10 most recent velocities, find their
-                # average, and display it on the tracker
-                bot = self.robot_list[bot_id]
-                vmag = [v.mag for v in bot.velocity_list[-10:]]
-                vmag_avg = sum(vmag) / len(vmag)
-    
-                #Vz value calculated from blur
-                blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
-                vz = [v.z for v in bot.velocity_list[-10:]]
-                vz_avg = sum(vz)/len(vz)
+                #display target positions
+                targets = self.robot_list[bot_id].trajectory
+                if len(targets) > 0:
+                    tar = targets[-1]
+                    cv2.circle(frame,
+                        (int(tar[0]), int(tar[1])),
+                        4,
+                        (bot_color),
+                        -1,
+                    )
+
+                #average diamter of bot(calcuating from area of circle)
+        
+                dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
+                
+                cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
+                cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                            
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                # if there are more than 10 velocities recorded in the robot, get
+                # and display the average velocity
+                if len(self.robot_list[bot_id].velocity_list) > 10:
+                    # a "velocity" list is in the form of [x, y, magnitude];
+                    # get the magnitude of the 10 most recent velocities, find their
+                    # average, and display it on the tracker
+                    bot = self.robot_list[bot_id]
+                    vmag = [v.mag for v in bot.velocity_list[-10:]]
+                    vmag_avg = sum(vmag) / len(vmag)
+        
+                    #Vz value calculated from blur
+                    blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
+                    vz = [v.z for v in bot.velocity_list[-10:]]
+                    vz_avg = sum(vz)/len(vz)
 
 
-                cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                    cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
 
-                cv2.putText(
-                    frame,
-                    f"{bot_id+1} - blur: {round(blur,2)}. ",
-                    (0, 170 + bot_id * 20),
-                    cv2.FONT_HERSHEY_COMPLEX,
-                    0.5,
-                    bot_color,
-                    1,
-                )
+                    cv2.putText(
+                        frame,
+                        f"{bot_id+1} - blur: {round(blur,2)}. ",
+                        (0, 170 + bot_id * 20),
+                        cv2.FONT_HERSHEY_COMPLEX,
+                        0.5,
+                        bot_color,
+                        1,
+                    )
                 
                 
 
@@ -591,16 +591,8 @@ class Tracker:
                     self.control_trajectory(frame, start, arduino)
                     #self.algorithm(arduino)
 
-                # UPDATE AND DISPLAY HUD ELEMENTS
-                self.display_hud(frame)
-
-               
-
-            # Compute and record self.fps
-            self.get_fps(fps_counter, frame, self.pix_2metric)
-            
-        
-
+            # UPDATE AND DISPLAY HUD ELEMENTS
+            self.display_hud(frame, fps_counter)
             
             # add videos a seperate list to save space and write the video afterwords
             if self.status_params["record_status"]:
@@ -668,98 +660,6 @@ class Tracker:
 
         return self.robot_list
             
-            
-
-    def create_robotlist(self,filepath: Union[str, None]):
-        #
-        """
-        begin by reading single frame and generating robot instances for all
-        #detected contours
-        Args:
-            filepath: either FLIR camera or presaved video
-        Returns:
-            None
-        """
-        if filepath is None:
-            try:
-                cam = EasyPySpin.VideoCapture(0)
-            except EasyPySpin.EasyPySpinWarning:
-                print("EasyPySpin camera not found, using standard camera")
-            # cam = cv2.VideoCapture(0)
-        else:
-            # Use when reading in a video file
-            cam = cv2.VideoCapture(filepath)
-            
-        self.width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-
-        success,firstframe = cam.read()
-        resize_scale = self.camera_params["resize_scale"]
-        resize_ratio = (
-                self.width * resize_scale // 100,
-                self.height * resize_scale // 100,
-            )
-        firstframe = cv2.resize(firstframe, resize_ratio, interpolation=cv2.INTER_AREA)
-
-        crop_mask = cv2.cvtColor(firstframe, cv2.COLOR_BGR2GRAY)
-        crop_mask = cv2.GaussianBlur(crop_mask, (5,5), 0)
-        crop_mask = cv2.inRange(crop_mask, self.control_params["lower_thresh"], self.control_params["upper_thresh"])
-
-        contours, _ = cv2.findContours(crop_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-        areas = []  
-        
-        for contour in contours: #treating each contour as a robot
-            # remove small elements by calcualting arrea
-            area = cv2.contourArea(contour)
-            areas.append(area)
-
-        print(areas)
-        print(np.mean(np.array(areas)))
-
-        frame = cv2.cvtColor(crop_mask, cv2.COLOR_GRAY2BGR)
-        for contour in contours: #treating each contour as a robot
-            # remove small elements by calcualting arrea
-            area = cv2.contourArea(contour)
-
-            if area > np.mean(np.array(areas))/2:  # and area < 3000:# and area < 2000: #pixels
-
-
-                x, y, w, h = cv2.boundingRect(contour)
-                current_pos = [(x + x + w) / 2, (y + y + h) / 2]
-
-                x,y = current_pos
-
-                x_1 = int(x - self.control_params["bounding_length"] / 2)
-                y_1 = int(y - self.control_params["bounding_length"] / 2)
-                w = self.control_params["bounding_length"]
-                h = self.control_params["bounding_length"]
-
-
-                #if w > max_width:
-                #    max_width = w*self.control_params["area_filter"]
-                #if h > max_height:
-                #    max_height = h*self.control_params["area_filter"]
-
-
-                robot = Robot()  # create robot instance
-                robot.add_position(current_pos)  # add position of the robot
-                robot.add_crop([x_1, y_1, w, h])
-                self.robot_list.append(robot)
-
-                # add starting point of trajectory
-                self.num_bots += 1
-                
-                cv2.drawContours(frame, contour, -1, (0, 0, 255), 2)
-
-        #create checkboxes for each robot
-        self.robot_window = Frame(master= self.main_window)#Toplevel(self.main_window)
-        self.robot_window.grid(row=1,column=4, rowspan=7)
-        self.create_robot_checkbox(self.robot_window)
-                
-        cv2.imwrite("src/imgs/initialmask.png",frame)
-        cam.release()
       
        
 
