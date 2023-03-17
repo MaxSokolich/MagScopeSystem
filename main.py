@@ -38,5 +38,6 @@ if __name__ == "__main__":
     asyncio.run(gui.main())
  
 
- 
+ #white [0,0,200]-> [180,255,255]
+ #black [0,0,0] -> [180,255,30]
     

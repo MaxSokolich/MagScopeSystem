@@ -29,7 +29,7 @@ class ContourProcessor:
     '''
 
     def __init__(self,control_params: dict,use_cuda: bool=False, baseline_blur_img: str=DEFAULT_IMG):
-        self.kernel_size = 21
+        self.kernel_size = 3
         self.base_brightness = 0
         self.control_params = control_params
         self.baseline_blur = 0#self.calculate_blur(cv2.imread(baseline_blur_img), True)
@@ -170,7 +170,7 @@ class ContourProcessor:
         crop_mask = cv2.cvtColor(cropped_frame, cv2.COLOR_BGR2HSV)  #[hue, saturation, vlue]
         #crop_mask = cropped_frame
         # get blur after grayscale is applied
-        #cv2.imshow("1",crop_mask)
+
         blur = self.calculate_blur(crop_mask)
 
         # get the avg blur based on the current blur and last 5 other frames
@@ -189,11 +189,10 @@ class ContourProcessor:
         # apply brightness/contrast based on avg_blur
         brightness, contrast = self.get_brightness_and_contrast(blur)
         crop_mask = self.apply_brightness_contrast(crop_mask, brightness, contrast)
-        #cv2.imshow("2", crop_mask)
         self.lower_thresh =  control_params["lower_thresh"]#np.array([control_params["lower_thresh"], control_params["lower_thresh"], control_params["lower_thresh"]]) 
         self.upper_thresh = control_params["upper_thresh"]#np.array([control_params["upper_thresh"],control_params["upper_thresh"],control_params["upper_thresh"]])
         crop_mask = cv2.inRange(crop_mask, self.lower_thresh, self.upper_thresh)
-        #cv2.imshow("3",crop_mask)
+        cv2.imshow("3",crop_mask)
 
         # Return the preprocessed cropping and the blur value of the current frame
         return crop_mask, contrast   #switched from blur
@@ -216,7 +215,7 @@ class ContourProcessor:
 
         gpu_frame = cv2.cuda_GpuMat()
         gpu_frame.upload(cropped_frame)
-        gpu_frame = cv2.cuda.cvtColor(gpu_frame, cv2.COLOR_BGR2GRAY)
+        gpu_frame = cv2.cuda.cvtColor(gpu_frame, cv2.COLOR_BGR2HSV)
 
         # Gaussian and Brightness/Contrast performed on CPU; currently inefficient due to
         # overhead of uploading/downloading twice, must be optimized with CUDA Python
@@ -233,8 +232,13 @@ class ContourProcessor:
         crop_mask = self.apply_brightness_contrast(crop_mask, brightness, contrast)
 
         gpu_frame.upload(crop_mask)
-        ret, gpu_frame = cv2.cuda.threshold(gpu_frame, control_params["upper_thresh"], 255, cv2.THRESH_BINARY)
-        gpu_frame = cv2.cuda.bitwise_not(gpu_frame)
+
+        h,s,v = cv2.cuda.split(gpu_frame)
+        reth, h = cv2.cuda.threshold(h, control_params["lower_thresh"][0], control_params["upper_thresh"][0], cv2.THRESH_BINARY)
+        rets, s = cv2.cuda.threshold(s, control_params["lower_thresh"][1], control_params["upper_thresh"][1], cv2.THRESH_BINARY)
+        retv, v = cv2.cuda.threshold(v, control_params["lower_thresh"][2], control_params["upper_thresh"][2], cv2.THRESH_BINARY)
+        temp = cv2.cuda.bitwise_and(h[1],s[1])
+        gpu_frame = cv2.cuda.bitwise_and(temp,v[1])
         crop_mask = gpu_frame.download()
 
         return crop_mask, contrast  #switched from blur

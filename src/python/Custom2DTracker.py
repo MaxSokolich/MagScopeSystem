@@ -20,12 +20,10 @@ from src.python.Velocity import Velocity
 from src.python.ArduinoHandler import ArduinoHandler
 from src.python.FPSCounter import FPSCounter
 
-import EasyPySpin
+#import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
-
-
 class Tracker:
     """
     Tracker class for tracking microbots. Creates an interactable interface using OpenCV for
@@ -106,8 +104,20 @@ class Tracker:
             # click on bot and create an instance of a mcirorobt
             # CoilOn = False
             bot_loc = [x, y]
-        
 
+            #create upper and lower bounds from point click color
+            '''h_,s_,v_ = cv2.cvtColor(params["frame"],cv2.COLOR_BGR2HSV)[x,y]
+            hl = max(min(h_-20,180),0)
+            sl = max(min(s_-50,255),0)
+            vl = max(min(v_-50,255),0)
+            hu = max(min(h_+20,180),0)
+            su = max(min(s_+50,255),0)
+            vu = max(min(v_+50,255),0)
+            self.control_params["lower_thresh"] = np.array([hl,sl,vl])
+            self.control_params["upper_thresh"] = np.array([hu,su,vu])
+            print(self.control_params["lower_thresh"],self.control_params["upper_thresh"])'''
+
+            #generate original bounding box
             x_1 = int(x - self.control_params["bounding_length"] / 2)
             y_1 = int(y - self.control_params["bounding_length"] / 2)
             w = self.control_params["bounding_length"]
@@ -126,7 +136,6 @@ class Tracker:
             self.num_bots += 1
 
             #create robot checkbox in gui
-            
             self.create_robot_checkbox(self.robot_window)
 
         # Right mouse click event; allows you to draw the trajectory of the
@@ -357,8 +366,8 @@ class Tracker:
                 #cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
                 cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
 
-                ch,cs,cv = cv2.cvtColor(cropped_frame,cv2.COLOR_BGR2HSV)[x,y]
-                print(ch,cs,cv)
+                
+                #print(ch,cs,cv)
                 
                 self.track_robot_position(
                     area,
@@ -452,6 +461,10 @@ class Tracker:
                 #display target positions
                 targets = self.robot_list[bot_id].trajectory
                 if len(targets) > 0:
+                    pts = np.array(self.robot_list[bot_id].trajectory, np.int32)
+                    cv2.polylines(frame, [pts], False, (1, 1, 255), 2)
+
+
                     tar = targets[-1]
                     cv2.circle(frame,
                         (int(tar[0]), int(tar[1])),
@@ -460,44 +473,40 @@ class Tracker:
                         -1,
                     )
 
-                #average diamter of bot(calcuating from area of circle)
-        
-                dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
                 
-                cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
-                cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                blur = round(self.robot_list[bot_id].blur_list[-1],2) if len(self.robot_list[bot_id].blur_list) > 0 else 0
+                dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
+                text = "robot {}: {} um | {} blur".format(bot_id+1,dia,blur)
+                
+                #cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
+                #            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
+                #cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
+                #            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
                             
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                
                 # if there are more than 10 velocities recorded in the robot, get
                 # and display the average velocity
                 if len(self.robot_list[bot_id].velocity_list) > 10:
                     # a "velocity" list is in the form of [x, y, magnitude];
                     # get the magnitude of the 10 most recent velocities, find their
                     # average, and display it on the tracker
-                    bot = self.robot_list[bot_id]
-                    vmag = [v.mag for v in bot.velocity_list[-10:]]
-                    vmag_avg = sum(vmag) / len(vmag)
-        
-                    #Vz value calculated from blur
-                    blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
-                    vz = [v.z for v in bot.velocity_list[-10:]]
-                    vz_avg = sum(vz)/len(vz)
-
-
-                    cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
-
-                    cv2.putText(
-                        frame,
-                        f"{bot_id+1} - blur: {round(blur,2)}. ",
-                        (0, 170 + bot_id * 20),
-                        cv2.FONT_HERSHEY_COMPLEX,
-                        0.5,
-                        bot_color,
-                        1,
-                    )
+                    vmag = [v.mag for v in self.robot_list[bot_id].velocity_list[-10:]]
+                    vmag_avg = round(sum(vmag) / len(vmag),2)
+                    
+                    #cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
+                    #        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                    
+                    text = "robot {}: {} um | {} um/s | {} blur".format(bot_id+1,dia,vmag_avg,blur)
+                cv2.putText(
+                    frame,
+                    text,
+                    (0, 170 + bot_id * 20),
+                    cv2.FONT_HERSHEY_COMPLEX,
+                    0.5,
+                    bot_color,
+                    1,
+                )
                 
                 
 
@@ -543,9 +552,9 @@ class Tracker:
         cam_fps = cam.get(cv2.CAP_PROP_FPS)
         print(self.width, self.height, cam_fps)
 
-        params = {"arduino": arduino}
+        #params = {"arduino": arduino}
         cv2.namedWindow("im")  # name of CV2 window
-        cv2.setMouseCallback("im", self.mouse_points, params)  # set callback func
+        #cv2.setMouseCallback("im", self.mouse_points, params)  # set callback func
 
         # %%
         rec_start_time = None
@@ -576,6 +585,10 @@ class Tracker:
                 self.height * resize_scale // 100,
             )
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
+
+            params = {"arduino": arduino, "frame": frame}
+            cv2.setMouseCallback("im", self.mouse_points, params)
+
             #calculate pixel to metric for varying res
             #106.2 um = 1024 pixels  @ 50%  resize and 100 x
             self.pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] *2 #divide by 2 cuz did scale calc on .5x adapter
@@ -725,9 +738,6 @@ class Tracker:
             None
         """
         if len(self.robot_list[-1].trajectory) > 1:
-            #Draw trajectory
-            pts = np.array(self.robot_list[-1].trajectory, np.int32)
-            cv2.polylines(frame, [pts], False, (1, 1, 255), 2)
 
             #logic for arrival condition
             if self.node == len(self.robot_list[-1].trajectory):

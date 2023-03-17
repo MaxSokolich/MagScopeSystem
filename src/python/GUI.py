@@ -10,6 +10,7 @@ maxframerate = 130
 exptime = 10us - 30s
 iamge buffer = 240 MB
 """
+import colorsys
 from queue import Empty
 import multiprocessing
 import time as time
@@ -512,6 +513,11 @@ class GUI:
         Lower_V_Ent.grid(row=1, column=2)
         Lower_V_Ent.delete(0,END)
         Lower_V_Ent.insert(0,(str(CONTROL_PARAMS["lower_thresh"][2])))
+        
+        lrgb = tuple(round(c * 255) for c in colorsys.hsv_to_rgb(int(Lower_H_Ent.get())/180, int(Lower_S_Ent.get())/255, int(Lower_V_Ent.get())/255))
+       
+        lower_col = Canvas(master = detection_thresh,width=20,height = 20,bg ="#%02x%02x%02x"%lrgb)
+        lower_col.grid(row=1,column=3)
 
         #upper thresh
         Label(master = detection_thresh,text= "Upper Threshold (HSV)").grid(row=2,column=0,columnspan=3)
@@ -528,9 +534,22 @@ class GUI:
         Upper_V_Ent.delete(0,END)
         Upper_V_Ent.insert(0,(str(CONTROL_PARAMS["upper_thresh"][2])))
 
+        urgb = tuple(round(c * 255) for c in colorsys.hsv_to_rgb(int(Upper_H_Ent.get())/180, int(Upper_S_Ent.get())/255, int(Upper_V_Ent.get())/255))
+        upper_col = Canvas(master = detection_thresh,width=20,height = 20,bg = "#%02x%02x%02x"%urgb)
+        upper_col.grid(row=3,column=3)
+
+
         def apply_thresh():
             CONTROL_PARAMS["lower_thresh"] = np.array([int(Lower_H_Ent.get()),int(Lower_S_Ent.get()),int(Lower_V_Ent.get())])
             CONTROL_PARAMS["upper_thresh"] = np.array([int(Upper_H_Ent.get()),int(Upper_S_Ent.get()),int(Upper_V_Ent.get())])
+
+            lrgb = tuple(round(c * 255) for c in colorsys.hsv_to_rgb(int(Lower_H_Ent.get())/180, int(Lower_S_Ent.get())/255, int(Lower_V_Ent.get())/255))
+            lower_col.config(bg ="#%02x%02x%02x"%lrgb)
+
+            urgb = tuple(round(c * 255) for c in colorsys.hsv_to_rgb(int(Upper_H_Ent.get())/180, int(Upper_S_Ent.get())/255, int(Upper_V_Ent.get())/255))
+            upper_col.config(bg = "#%02x%02x%02x"%urgb)
+           
+
     
 
         #apply thresh
@@ -581,31 +600,6 @@ class GUI:
         gamma = DoubleVar()
         memory = DoubleVar()
 
-        '''lower_thresh_slider = Scale(
-            master=window3,
-            label="lower_thresh",
-            from_=0,
-            to=255,
-            resolution=1,
-            variable=lower_thresh,
-            width=20,
-            length=200,
-            orient=HORIZONTAL,
-            command=update_loop_slider_values,
-        )
-        upper_thresh_slider = Scale(
-            master=window3,
-            label="upper_thresh",
-            from_=0,
-            to=255,
-            resolution=1,
-            variable=upper_thresh,
-            width=20,
-            length=200,
-            orient=HORIZONTAL,
-            command=update_loop_slider_values,
-        )'''
-
         blur_thresh_slider = Scale(
             master=window3,
             label="blur_thresh",
@@ -620,7 +614,7 @@ class GUI:
         )
         bounding_length_slider = Scale(
             master=window3,
-            label="bounding length",
+            label="initial crop length/avg_size(um)",
             from_=10,
             to=200,
             resolution=5,
@@ -632,7 +626,7 @@ class GUI:
         )
         area_filter_slider = Scale(
             master=window3,
-            label="area filter",
+            label="size of crop/alltrack thresh",
             from_=1,
             to=5,
             resolution=1,
@@ -1015,13 +1009,21 @@ class GUI:
             CONTROL_PARAMS,
             CAMERA_PARAMS,
             STATUS_PARAMS,
+            self.get_widget(self.checkboxes_frame, "cuda_checkbox").var.get()
         )
         if (self.get_widget(self.video_option_frame, "live_checkbox").var.get()):
             video_name = None
         else:
             video_name = self.external_file
 
-        alltracker.main(video_name)
+        robot_list = alltracker.main(video_name)
+
+        output_name = str(self.get_widget(self.video_record_frame, "output_name").get())
+
+        if self.get_widget(self.checkboxes_frame, "savepickle").var.get():
+            analyze = Analysis(CONTROL_PARAMS, CAMERA_PARAMS,STATUS_PARAMS,robot_list)
+            analyze.convert2pickle(output_name)
+            analyze.plot()
 
 
     def status(self):

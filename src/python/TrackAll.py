@@ -2,13 +2,14 @@ import cv2
 import numpy as np
 from collections import deque
 import matplotlib.pyplot as plt
-import EasyPySpin
+#import EasyPySpin
 from typing import List, Tuple, Union
 from tkinter import Tk
 from tkinter import *
 from src.python.FPSCounter import FPSCounter
 from src.python.RobotClass import Robot
 from src.python.Velocity import Velocity
+from src.python.ContourProcessor import ContourProcessor
 import time 
 
 class AllTracker:
@@ -18,6 +19,7 @@ class AllTracker:
         control_params: dict,
         camera_params: dict,
         status_params: dict,
+        use_cuda: bool = False
         
     ):
         self.control_params = control_params
@@ -31,6 +33,8 @@ class AllTracker:
 
         self.num_bots = 0
         self.robot_list = []
+
+        self.cp = ContourProcessor(self.control_params,use_cuda)
 
 
 
@@ -66,14 +70,14 @@ class AllTracker:
             (int(w / 40),int(h / 18)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (255, 255, 255),
+            (255, 0, 255),
             1,
         )
         cv2.line(
             frame, 
             (int(w / 40),int(h / 14)),
             (int(w / 40) + int(100 * (self.pix_2metric)),int(h / 14)), 
-            (255, 255, 255), 
+            (255, 0, 255), 
             3
         )
 
@@ -110,6 +114,10 @@ class AllTracker:
                 #display target positions
                 targets = self.robot_list[bot_id].trajectory
                 if len(targets) > 0:
+                    pts = np.array(self.robot_list[bot_id].trajectory, np.int32)
+                    cv2.polylines(frame, [pts], False, (1, 1, 255), 2)
+
+
                     tar = targets[-1]
                     cv2.circle(frame,
                         (int(tar[0]), int(tar[1])),
@@ -118,44 +126,41 @@ class AllTracker:
                         -1,
                     )
 
-                #average diamter of bot(calcuating from area of circle)
-        
-                dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
                 
-                cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
-                cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                blur = round(self.robot_list[bot_id].blur_list[-1],2) if len(self.robot_list[bot_id].blur_list) > 0 else 0
+                dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
+                text = "robot {}: {} um | {} blur".format(bot_id+1,dia,blur)
+                
+                #cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
+                #            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
+                #cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
+                #            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
                             
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                #cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                
                 # if there are more than 10 velocities recorded in the robot, get
                 # and display the average velocity
                 if len(self.robot_list[bot_id].velocity_list) > 10:
                     # a "velocity" list is in the form of [x, y, magnitude];
                     # get the magnitude of the 10 most recent velocities, find their
                     # average, and display it on the tracker
-                    bot = self.robot_list[bot_id]
-                    vmag = [v.mag for v in bot.velocity_list[-10:]]
-                    vmag_avg = sum(vmag) / len(vmag)
-        
-                    #Vz value calculated from blur
-                    blur = bot.blur_list[-1] if len(bot.blur_list) > 0 else 0
-                    vz = [v.z for v in bot.velocity_list[-10:]]
-                    vz_avg = sum(vz)/len(vz)
-
-
-                    cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
-
-                    cv2.putText(
-                        frame,
-                        f"{bot_id+1} - blur: {round(blur,2)}. ",
-                        (0, 170 + bot_id * 20),
-                        cv2.FONT_HERSHEY_COMPLEX,
-                        0.5,
-                        bot_color,
-                        1,
-                    )
+                    vmag = [v.mag for v in self.robot_list[bot_id].velocity_list[-10:]]
+                    vmag_avg = round(sum(vmag) / len(vmag),2)
+                    
+                    #cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
+                    #        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                    
+                    text = "robot {}: {} um | {} um/s | {} blur".format(bot_id+1,dia,vmag_avg,blur)
+                
+                #cv2.putText(
+                #    frame,
+                #    text,
+                #    (0, 170 + bot_id * 20),
+                #    cv2.FONT_HERSHEY_COMPLEX,
+                #    0.5,
+                #    bot_color,
+                #    1,
+                #)
                 
 
        
@@ -183,6 +188,7 @@ class AllTracker:
         fps_counter = FPSCounter()
 
         count = 0
+        cv2.namedWindow("im")  # name of CV2 window
         while True:
             fps_counter.update()
             
@@ -191,9 +197,7 @@ class AllTracker:
             if not ret:
                 break
             
-            lower = self.control_params["lower_thresh"]
-            upper = self.control_params["upper_thresh"]
-            thresh = self.control_params["area_filter"]*10
+           
 
             # Set exposure of camera
             cam.set(cv2.CAP_PROP_EXPOSURE, self.camera_params["exposure"])
@@ -206,76 +210,93 @@ class AllTracker:
             )
 
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
-            #calculate pixel to metric for varying res
-            #106.2 um = 1024 pixels  @ 50%  resize and 100 x
+        
             self.pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] *2
 
+            lower = self.control_params["lower_thresh"]
+            upper = self.control_params["upper_thresh"]
+            thresh = self.control_params["area_filter"]* 10
+            area_thresh = self.control_params["bounding_length"] * (1/self.pix_2metric**2)
+            print(lower,upper)
+
+            #calculate pixel to metric for varying res
+            #106.2 um = 1024 pixels  @ 50%  resize and 100 x
+            
+
             # Convert the frame to grayscale and blur it to reduce noise
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+            #hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            #cv2.imshow("s",hsv)
+            #blurred = cv2.GaussianBlur(hsv, (5, 5), 0)
             
             # Threshold the image to find black regions
-            mask = cv2.inRange(frame, lower, upper)
+            #mask = cv2.inRange(hsv, lower, upper)
+            #cv2.imshow("mask",mask)
             
             # Find contours in the black regions
-            contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            
+            #contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            contours, blur = self.cp.get_contours(frame, self.control_params)
+            #blur =1
             # Process each contour
-            for cnt in contours:
-                cv2.drawContours(frame, cnt, -1, (0, 255, 255), 1)
-                x, y, w, h = cv2.boundingRect(cnt)
-                
-                # Calculate the centroid of the contour
-                centroid_x = x + w // 2
-                centroid_y = y + h // 2
-                area = cv2.contourArea(cnt )* (1/self.pix_2metric**2)
-                # Check if the centroid is close to an existing robot
-                found = False
-                for bot in range(len(self.robot_list)):
-                    if abs(self.robot_list[bot].position_list[-1][0]- centroid_x) < thresh and abs(self.robot_list[bot].position_list[-1][1] - centroid_y) < thresh:
-                        #if its close ad that bots pos
-                        self.robot_list[bot].add_position([centroid_x,centroid_y])
-                        self.robot_list[bot].add_crop([x,y,w,h])
-                        self.robot_list[bot].add_area(area)
-                        avg_global_area = sum(self.robot_list[bot].area_list) / len(self.robot_list[bot].area_list)
-                        self.robot_list[bot].set_avg_area(avg_global_area)
-
-                        if len(self.robot_list[bot].position_list) > 0:
-                            velx = (
-                                (centroid_x - self.robot_list[bot].position_list[-2][0])
-                                / (self.pix_2metric)
-                                * (fps_counter.get_fps())
-                            )
-
-                            vely = (
-                                (centroid_y  - self.robot_list[bot].position_list[-2][1])
-                                / (self.pix_2metric)
-                                * (fps_counter.get_fps())
-                                
-                            )
-
-                            vel = Velocity(velx, vely, 0)
-                            self.robot_list[bot].add_velocity(vel)
-                        
-                        found = True
-                        # Append the current position and velocity to the trajectory and velocity lists
-                        break
-                
-                # If the centroid is not close to any existing robot, add a new robot
-                if not found:
             
-                    self.num_bots += 1
-                    robot = Robot()
-                    robot.add_position([centroid_x,centroid_y])
-                    robot.add_crop([x,y,w,h])
-                    robot.add_area(area)
-                    avg_global_area = sum(robot.area_list) / len(robot.area_list)
-                    robot.set_avg_area(avg_global_area)
-                    self.robot_list.append(robot)
+            for cnt in contours:
+                area = cv2.contourArea(cnt )* (1/self.pix_2metric**2)
+                if area > area_thresh:
+                    cv2.drawContours(frame, cnt, -1, (0, 255, 255), 1)
+                    x, y, w, h = cv2.boundingRect(cnt)
+                    
+                    # Calculate the centroid of the contour
+                    centroid_x = x + w // 2
+                    centroid_y = y + h // 2
+                
+                    # Check if the centroid is close to an existing robot
+                    found = False
+                    for bot in range(len(self.robot_list)):
+                        if abs(self.robot_list[bot].position_list[-1][0]- centroid_x) < thresh and abs(self.robot_list[bot].position_list[-1][1] - centroid_y) < thresh:
+                            #if its close ad that bots pos
+                            self.robot_list[bot].add_position([centroid_x,centroid_y])
+                            self.robot_list[bot].add_crop([x,y,w,h])
+                            self.robot_list[bot].add_area(area)
+                            avg_global_area = sum(self.robot_list[bot].area_list) / len(self.robot_list[bot].area_list)
+                            self.robot_list[bot].set_avg_area(avg_global_area)
+                            self.robot_list[bot].add_blur(blur)
+
+                            if len(self.robot_list[bot].position_list) > 0:
+                                velx = (
+                                    (centroid_x - self.robot_list[bot].position_list[-2][0])
+                                    / (self.pix_2metric)
+                                    * (fps_counter.get_fps())
+                                )
+
+                                vely = (
+                                    (centroid_y  - self.robot_list[bot].position_list[-2][1])
+                                    / (self.pix_2metric)
+                                    * (fps_counter.get_fps())
+                                    
+                                )
+
+                                vel = Velocity(velx, vely, 0)
+                                self.robot_list[bot].add_velocity(vel)
+                            
+                            found = True
+                            # Append the current position and velocity to the trajectory and velocity lists
+                            break
+                
+                    # If the centroid is not close to any existing robot, add a new robot
+                    if not found:
+                
+                        self.num_bots += 1
+                        robot = Robot()
+                        robot.add_position([centroid_x,centroid_y])
+                        robot.add_crop([x,y,w,h])
+                        robot.add_area(area)
+                        avg_global_area = sum(robot.area_list) / len(robot.area_list)
+                        robot.set_avg_area(avg_global_area)
+                        robot.add_blur(blur)
+                        self.robot_list.append(robot)
                   
             self.display_hud(frame, fps_counter)
             
-            cv2.imshow('frame', frame)
+            cv2.imshow('im', frame)
             
             count +=1
 
@@ -295,5 +316,7 @@ class AllTracker:
 
         cam.release()
         cv2.destroyAllWindows()
+
+        return self.robot_list
 
        
