@@ -18,6 +18,14 @@ from multiprocessing import Process, Queue
 #typ =3 : tweezer --> [+y,+x,-y,-x]
 
 #NOTE: VELZ SET AS 0
+#NOTE: must change easypyspin videocatpure.py to handle color cam
+
+
+#INSTRUCTIONS
+"""
+idea is to use single tracker to get basically params from single robot (avg size)
+then use track all to track all the bots with that approximatly that size (within *2)
+"""
 
 PORT = "/dev/ttyACM0"
 

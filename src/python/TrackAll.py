@@ -61,7 +61,7 @@ class AllTracker:
             (int(w / 40),int(h / 30)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (255, 255, 255),
+            (255, 0, 0),
             1,
         )
 
@@ -70,14 +70,14 @@ class AllTracker:
             (int(w / 40),int(h / 18)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (255, 0, 255),
+            (255, 0, 0),
             1,
         )
         cv2.line(
             frame, 
             (int(w / 40),int(h / 14)),
             (int(w / 40) + int(100 * (self.pix_2metric)),int(h / 14)), 
-            (255, 0, 255), 
+            (255, 0, 0), 
             3
         )
 
@@ -187,7 +187,7 @@ class AllTracker:
         start = time.time()
         fps_counter = FPSCounter()
 
-        count = 0
+        frame_count = 0
         cv2.namedWindow("im")  # name of CV2 window
         while True:
             fps_counter.update()
@@ -215,33 +215,17 @@ class AllTracker:
 
             lower = self.control_params["lower_thresh"]
             upper = self.control_params["upper_thresh"]
-            thresh = self.control_params["area_filter"]* 10
-            area_thresh = self.control_params["bounding_length"] * (1/self.pix_2metric**2)
-            print(lower,upper)
-
-            #calculate pixel to metric for varying res
-            #106.2 um = 1024 pixels  @ 50%  resize and 100 x
+            thresh = self.control_params["tracking_frame"]* 10
+            
             
 
-            # Convert the frame to grayscale and blur it to reduce noise
-            #hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            #cv2.imshow("s",hsv)
-            #blurred = cv2.GaussianBlur(hsv, (5, 5), 0)
-            
-            # Threshold the image to find black regions
-            #mask = cv2.inRange(hsv, lower, upper)
-            #cv2.imshow("mask",mask)
-            
-            # Find contours in the black regions
-            #contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             contours, blur = self.cp.get_contours(frame, self.control_params)
-            #blur =1
-            # Process each contour
             
             for cnt in contours:
-                area = cv2.contourArea(cnt )* (1/self.pix_2metric**2)
-                if area > area_thresh:
-                    cv2.drawContours(frame, cnt, -1, (0, 255, 255), 1)
+                area = cv2.contourArea(cnt)* (1/self.pix_2metric**2)
+                dia = round(np.sqrt(4*area/np.pi),1)
+                if dia > self.control_params["avg_bot_size"] /2   and   dia < self.control_params["avg_bot_size"] * 2  :
+                    cv2.drawContours(frame, [cnt], -1, (0, 255, 255),1)
                     x, y, w, h = cv2.boundingRect(cnt)
                     
                     # Calculate the centroid of the contour
@@ -259,6 +243,7 @@ class AllTracker:
                             avg_global_area = sum(self.robot_list[bot].area_list) / len(self.robot_list[bot].area_list)
                             self.robot_list[bot].set_avg_area(avg_global_area)
                             self.robot_list[bot].add_blur(blur)
+                            self.robot_list[bot].add_frame(frame_count)
 
                             if len(self.robot_list[bot].position_list) > 0:
                                 velx = (
@@ -291,14 +276,14 @@ class AllTracker:
                         robot.add_area(area)
                         avg_global_area = sum(robot.area_list) / len(robot.area_list)
                         robot.set_avg_area(avg_global_area)
-                        robot.add_blur(blur)
+                        #robot.add_blur(blur)
                         self.robot_list.append(robot)
                   
             self.display_hud(frame, fps_counter)
             
             cv2.imshow('im', frame)
             
-            count +=1
+            frame_count +=1
 
             #handle frame rate adjustment
             if filepath is None:

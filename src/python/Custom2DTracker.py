@@ -118,10 +118,10 @@ class Tracker:
             print(self.control_params["lower_thresh"],self.control_params["upper_thresh"])'''
 
             #generate original bounding box
-            x_1 = int(x - self.control_params["bounding_length"] / 2)
-            y_1 = int(y - self.control_params["bounding_length"] / 2)
-            w = self.control_params["bounding_length"]
-            h = self.control_params["bounding_length"]
+            x_1 = int(x - self.control_params["initial_crop"] / 2)
+            y_1 = int(y - self.control_params["initial_crop"] / 2)
+            w = self.control_params["initial_crop"]
+            h = self.control_params["initial_crop"]
 
 
 
@@ -343,7 +343,7 @@ class Tracker:
             
             contours, blur = self.cp.get_contours(cropped_frame, self.control_params)
             
-            #area_thresh = bot.avg_area*2
+    
             if len(contours) !=0:
                
                 max_cnt = contours[0]
@@ -360,9 +360,9 @@ class Tracker:
                 current_pos = [(x + x + w) / 2, (y + y + h) / 2]
                 # track the maximum width and height of the contours
                 if w > max_width:
-                    max_width = w*self.control_params["area_filter"]
+                    max_width = w*self.control_params["tracking_frame"]
                 if h > max_height:
-                    max_height = h*self.control_params["area_filter"]
+                    max_height = h*self.control_params["tracking_frame"]
                 #cv2.rectangle(cropped_frame, (x, y), (x + w, y + h), (255, 0, 0), 1)
                 cv2.drawContours(cropped_frame, [max_cnt], -1, (0, 255, 255), 1)
 
@@ -406,7 +406,7 @@ class Tracker:
             (int(w / 40),int(h / 30)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (255, 255, 255),
+            (255, 0, 0),
             1,
         )
 
@@ -415,16 +415,17 @@ class Tracker:
             (int(w / 40),int(h / 18)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (255, 255, 255),
+            (255, 0, 0),
             1,
         )
         cv2.line(
             frame, 
             (int(w / 40),int(h / 14)),
             (int(w / 40) + int(100 * (self.pix_2metric)),int(h / 14)), 
-            (255, 255, 255), 
+            (255, 0, 0), 
             3
         )
+
 
         
 
@@ -478,10 +479,10 @@ class Tracker:
                 dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
                 text = "robot {}: {} um | {} blur".format(bot_id+1,dia,blur)
                 
-                #cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
-                #            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
-                #cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
-                #            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
+                cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
                             
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
                 
@@ -494,8 +495,8 @@ class Tracker:
                     vmag = [v.mag for v in self.robot_list[bot_id].velocity_list[-10:]]
                     vmag_avg = round(sum(vmag) / len(vmag),2)
                     
-                    #cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
-                    #        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                    cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
                     
                     text = "robot {}: {} um | {} um/s | {} blur".format(bot_id+1,dia,vmag_avg,blur)
                 cv2.putText(

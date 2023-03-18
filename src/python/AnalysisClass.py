@@ -78,6 +78,7 @@ class Analysis:
             Vel_list = []
             Size_list= []
             max_z = 0
+            global_max_vel = 0
             for i, c in zip(range(len(self.robot_list)), color):
                 bot = self.robot_list[i]
                 if len(bot.frame_list) > 10:
@@ -104,11 +105,15 @@ class Analysis:
 
 
                     #ADD SIZE PLOT
-                    Area = round(bot.avg_area,3)
-                    Size = np.sqrt(4*Area/np.pi)
-                    if Area != 0:
-                        Size_list.append(Size)
-                        b = ax[2].bar(i, Size,color =c,label = "{}".format(round(Size,2)))
+                    Area_list = np.array(bot.area_list)
+                    areas_rolling = pd.DataFrame(Area_list).rolling(30).mean().values
+                    dia_list = [np.sqrt(4*j[0] /np.pi) for j in areas_rolling]
+                   
+                    avg_area = round(bot.avg_area,3)
+                    avg_dia = np.sqrt(4*avg_area/np.pi)
+                    if avg_area != 0:
+                        Size_list.append(avg_dia)
+                        b = ax[2].bar(avg_dia,color =c,label = "{}um".format(round(avg_dia,2)))
                         ax[2].bar_label(b, label_type='center') 
 
 
@@ -120,6 +125,8 @@ class Analysis:
                     #print(Vmag)        
                     #if len(Vmag) > 0:
                     Vmax = max(Vmag)
+                    if Vmax > global_max_vel:
+                         global_max_vel = Vmax
                     #if Vmin == 0:
                     #    Vmag = Vmag[Vmag != 0]
                     #else:
@@ -132,7 +139,7 @@ class Analysis:
                     Vel_list.append(Vel)
                     rolling_avg = pd.DataFrame(Vmag).rolling(20).median()
         
-                    ax[1].plot(rolling_avg,color =c, label = "{}".format(Vel))
+                    ax[1].plot(rolling_avg,color =c, label = "{}um/s".format(Vel))
                 
                 
             
@@ -147,7 +154,7 @@ class Analysis:
             #VEL
             ax[1].set_title("average velocity: {}um/s".format(round(np.median(Vel_list),2)))
             ax[1].set_xlabel("Frame")
-            ax[1].set_ylim([0,max(Vel_list)*2])
+            ax[1].set_ylim([0, max(Vel_list)*2]) #([0,global_max_vel*2])
             ax[1].legend()
             ax[1].axhline(np.mean(Vel_list), color = "w", linewidth=4)
 
@@ -155,6 +162,7 @@ class Analysis:
             ax[2].set_title("average size:{}um".format(round(np.mean(Size_list),2)))
             ax[2].set_xlabel("MR")
             ax[2].axhline(np.mean(Size_list), color = "w", linewidth = 4)
+            ax[2].legend()
             
             #3D
             ax2.set_title("3D Trajectories")

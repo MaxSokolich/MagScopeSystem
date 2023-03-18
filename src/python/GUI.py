@@ -36,8 +36,9 @@ CONTROL_PARAMS = {
     "lower_thresh": np.array([0,0,0]),  #HSV
     "upper_thresh": np.array([180,255,100]),  #HSV
     "blur_thresh": 100,
-    "bounding_length": 100,       #intial size of "screenshot" cropped frame 
-    "area_filter": 1,            #cropped frame dimensions mulitplier
+    "initial_crop": 100,       #intial size of "screenshot" cropped frame 
+    "tracking_frame": 1,            #cropped frame dimensions mulitplier
+    "avg_bot_size": 0,
     "field_strength": 1,
     "rolling_frequency": 10,
     "gamma": 90,
@@ -581,8 +582,9 @@ class GUI:
             #CONTROL_PARAMS["lower_thresh"] = int(lower_thresh_slider.get())
             #CONTROL_PARAMS["upper_thresh"] = int(upper_thresh_slider.get())
             CONTROL_PARAMS["blur_thresh"] = int(blur_thresh_slider.get())
-            CONTROL_PARAMS["bounding_length"] = int(bounding_length_slider.get())
-            CONTROL_PARAMS["area_filter"] = int(area_filter_slider.get())
+            CONTROL_PARAMS["initial_crop"] = int(initial_crop_slider.get())
+            CONTROL_PARAMS["tracking_frame"] = int(tracking_frame_slider.get())
+            CONTROL_PARAMS["avg_bot_size"] = int(avg_bot_size_slider.get())
             CONTROL_PARAMS["field_strength"] = float(field_strength_slider.get())
             CONTROL_PARAMS["rolling_frequency"] = int(rolling_freq_slider.get())
             CONTROL_PARAMS["gamma"] = int(gamma_slider.get())
@@ -593,8 +595,9 @@ class GUI:
         #lower_thresh = DoubleVar()
         #upper_thresh = DoubleVar()
         blur_thresh = DoubleVar()
-        bounding_length = DoubleVar()
-        area_filter = DoubleVar()
+        initial_crop = DoubleVar()
+        avg_bot_size = DoubleVar()
+        tracking_frame = DoubleVar()
         field_strength = DoubleVar()
         rolling_frequency = DoubleVar()
         gamma = DoubleVar()
@@ -612,25 +615,37 @@ class GUI:
             orient=HORIZONTAL,
             command=update_loop_slider_values,
         )
-        bounding_length_slider = Scale(
+        initial_crop_slider = Scale(
             master=window3,
-            label="initial crop length/avg_size(um)",
+            label="initial crop length",
             from_=10,
             to=200,
             resolution=5,
-            variable=bounding_length,
+            variable=initial_crop,
             width=20,
             length=200,
             orient=HORIZONTAL,
             command=update_loop_slider_values,
         )
-        area_filter_slider = Scale(
+        tracking_frame_slider = Scale(
             master=window3,
-            label="size of crop/alltrack thresh",
+            label="tracking frame size",
             from_=1,
             to=5,
             resolution=1,
-            variable=area_filter,
+            variable=tracking_frame,
+            width=20,
+            length=200,
+            orient=HORIZONTAL,
+            command=update_loop_slider_values,
+        )
+        avg_bot_size_slider = Scale(
+            master=window3,
+            label="~ avg size (um)",
+            from_=1,
+            to=200,
+            resolution=1,
+            variable=avg_bot_size,
             width=20,
             length=200,
             orient=HORIZONTAL,
@@ -690,8 +705,9 @@ class GUI:
         #lower_thresh_slider.set(CONTROL_PARAMS["lower_thresh"])
         #upper_thresh_slider.set(CONTROL_PARAMS["upper_thresh"])
         blur_thresh_slider.set(CONTROL_PARAMS["blur_thresh"])
-        bounding_length_slider.set(CONTROL_PARAMS["bounding_length"])
-        area_filter_slider.set(CONTROL_PARAMS["area_filter"])
+        initial_crop_slider.set(CONTROL_PARAMS["initial_crop"])
+        tracking_frame_slider.set(CONTROL_PARAMS["tracking_frame"])
+        avg_bot_size_slider.set(CONTROL_PARAMS["avg_bot_size"])
         field_strength_slider.set(CONTROL_PARAMS["field_strength"])
         rolling_freq_slider.set(CONTROL_PARAMS["rolling_frequency"])
         gamma_slider.set(CONTROL_PARAMS["gamma"])
@@ -700,8 +716,9 @@ class GUI:
         #lower_thresh_slider.pack()
         #upper_thresh_slider.pack()
         blur_thresh_slider.pack()
-        bounding_length_slider.pack()
-        area_filter_slider.pack()
+        initial_crop_slider.pack()
+        tracking_frame_slider.pack()
+        avg_bot_size_slider.pack()
         field_strength_slider.pack()
         rolling_freq_slider.pack()
         gamma_slider.pack()

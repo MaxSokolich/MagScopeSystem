@@ -5,13 +5,9 @@ Bugs:
 4) try and record video on seperate CPU/process
 5) refactor custom tracker class by seperating out methods into seperate classes
         - algorthm/ control_trajectory
-6) add color box next to hv thresholds
-7)
+6) fix trackall plot feature
 
-sat:
-- continue testing other videos and other hsv thresholds.
-- make seperate slider for average size of microrobot
-- nice job
+
 
 
 
