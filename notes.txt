@@ -1,20 +1,14 @@
 Bugs:
-1) test 3D tracking, add Z position, improve z tracking, figure out blur
+1) memory leak issue causes crash with single tracker on mac
+
+To do:
+
+1) test 3D tracking, add Z position, improve z tracking, figure out blur with new hsv 
 2) maybe get ps5 controller working
 3) fix acoustic digitial potentiameter mapping
 4) try and record video on seperate CPU/process
 5) refactor custom tracker class by seperating out methods into seperate classes
         - algorthm/ control_trajectory
-6) fix trackall plot feature
-
-
-
-
-
-
-
-
-
 
 
 Notes:
