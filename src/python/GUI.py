@@ -96,14 +96,17 @@ class GUI:
         self.sensor = None
         self.sense_q = multiprocessing.Queue()
         self.sense_q.cancel_join_thread()
-        self.main_window.after(10, self.CheckSensorPoll, self.sense_q)
+        self.checksensor = None
+        #self.main_window.after(10, self.CheckSensorPoll, self.sense_q)
 
         #update joystick process/queue
         self.joystick = None
         self.joystick_q =  multiprocessing.Queue()
         self.joystick_q.cancel_join_thread()
-        self.main_window.after(10, self.CheckJoystickPoll, self.joystick_q)
-
+        self.checkjoy = None
+        #self.main_window.after(10, self.CheckJoystickPoll, self.joystick_q)
+          
+          
         # Tracker-related attributes
         self.arduino = arduino
         self.external_file = None
@@ -1071,9 +1074,13 @@ class GUI:
         #shutdown hall sensor readings
         if self.sensor is not None:
             self.sensor.shutdown()
+            self.main_window.after_cancel(self.checksensor)
+            print(" -- Sensor OFF -- ")
         
         if self.joystick is not None:
             self.joystick.shutdown()
+            self.main_window.after_cancel(self.checkjoy)
+            print(" -- Joystick OFF -- ")
             
 
     
@@ -1108,6 +1115,7 @@ class GUI:
         """
         self.joystick = JoystickProcess()
         self.joystick.start(self.joystick_q)
+        self.checkjoy = self.main_window.after(10, self.CheckJoystickPoll, self.joystick_q)
 
     
     def CheckJoystickPoll(self,j_queue):
@@ -1173,6 +1181,7 @@ class GUI:
         """
         self.sensor = HallEffect()
         self.sensor.start(self.sense_q)
+        self.checksensor = self.main_window.after(10, self.CheckSensorPoll, self.sense_q)
     
     def CheckSensorPoll(self,s_queue):
         """
