@@ -20,7 +20,7 @@ from src.python.Velocity import Velocity
 from src.python.ArduinoHandler import ArduinoHandler
 from src.python.FPSCounter import FPSCounter
 
-#import EasyPySpin
+import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")

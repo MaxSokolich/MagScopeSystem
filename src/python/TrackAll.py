@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from collections import deque
 import matplotlib.pyplot as plt
-#import EasyPySpin
+import EasyPySpin
 from typing import List, Tuple, Union
 from tkinter import Tk
 from tkinter import *
