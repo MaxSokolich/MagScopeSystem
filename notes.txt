@@ -1,5 +1,6 @@
 Bugs:
-1) memory leak issue causes crash with single tracker on mac
+- None
+
 
 To do:
 
