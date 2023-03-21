@@ -13,7 +13,7 @@ from src.python.ArduinoHandler import ArduinoHandler
 from src.python.HallEffect import HallEffect
 from multiprocessing import Process, Queue
 #arduino signal: [typ, input1, input2, input3]
-#typ =1 : spherical ---> Roll
+#typ =1 : spherical ---> Roll 
 #typ =2 : cartesian --> Orient
 #typ =3 : tweezer --> [+y,+x,-y,-x]
 
@@ -48,4 +48,5 @@ if __name__ == "__main__":
 
  #white [0,0,200]-> [180,255,255]
  #black [0,0,0] -> [180,255,30]
+ #hematite [0,0,90] -> [180,25,180] 
     

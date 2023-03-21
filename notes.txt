@@ -1,5 +1,5 @@
 Bugs:
-- None
+- no such cv2.cuda.inRange function for hsv thresholding. thus cuda does not work rn
 
 
 To do:

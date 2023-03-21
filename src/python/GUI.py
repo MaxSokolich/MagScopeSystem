@@ -34,11 +34,11 @@ from src.python.TrackAll import AllTracker
 
 CONTROL_PARAMS = {
     "lower_thresh": np.array([0,0,0]),  #HSV
-    "upper_thresh": np.array([180,255,100]),  #HSV
+    "upper_thresh": np.array([180,255,130]),  #HSV
     "blur_thresh": 100,
     "initial_crop": 100,       #intial size of "screenshot" cropped frame 
     "tracking_frame": 1,            #cropped frame dimensions mulitplier
-    "avg_bot_size": 0,
+    "avg_bot_size": 5,
     "field_strength": 1,
     "rolling_frequency": 10,
     "gamma": 90,
@@ -46,10 +46,10 @@ CONTROL_PARAMS = {
 }
 
 CAMERA_PARAMS = {
-    "resize_scale": 50, 
+    "resize_scale": 100, 
     "framerate": 24, 
     "exposure": 10000, 
-    "Obj": 40}
+    "Obj": 20}
 
 STATUS_PARAMS = {
     "rolling_status": False,
@@ -440,7 +440,8 @@ class GUI:
             None
         """
         filename = filedialog.askopenfilename()
-        print("Loaded:",filename)
+        self.text_box.insert(END,"Loaded: {}\n".format(filename))
+        self.text_box.see("end")
         self.external_file = filename
 
     def coil_roll(self):
@@ -844,15 +845,18 @@ class GUI:
         
         def apply_freq():
             self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"],ACOUSTIC_PARAMS["acoustic_amplitude"])
-            print(" -- waveform ON --")
+            self.text_box.insert(END," -- waveform ON -- \n")
+            self.text_box.see("end")
         
         def stop_freq():
             self.AcousticModule.stop()
-            print(" -- waveform OFF --")
+            self.text_box.insert(END," -- waveform OFF -- \n")
+            self.text_box.see("end")
         
         def test_freq():
             self.AcousticModule.start(int(10000),ACOUSTIC_PARAMS["acoustic_amplitude"])
-            print(" -- waveform TEST --")
+            self.text_box.insert(END," -- 10kHz Test -- \n")
+            self.text_box.see("end")
         
         def update_loop_slider_values(event):
             """
@@ -985,8 +989,7 @@ class GUI:
 
 
         
-        tracker = Tracker(
-            self.main_window,
+        tracker = Tracker(self.main_window, self.text_box,
             CONTROL_PARAMS,
             CAMERA_PARAMS,
             STATUS_PARAMS,
@@ -1025,7 +1028,7 @@ class GUI:
             None
         """
 
-        alltracker = AllTracker(self.main_window,
+        alltracker = AllTracker(self.main_window, self.text_box,
             CONTROL_PARAMS,
             CAMERA_PARAMS,
             STATUS_PARAMS,
@@ -1061,11 +1064,8 @@ class GUI:
         STATUS_PARAMS["rolling_status"] = False
         STATUS_PARAMS["orient_status"] = False
         STATUS_PARAMS["algorithm_status"] = False
-        print(" -- Orient OFF -- ")
-        print(" -- Roll OFF -- ")
-        print(" -- Algorithm OFF --")
         
-        self.text_box.insert(END, "Zeroed\n")
+        self.text_box.insert(END, "____ZEROED ____\n")
         self.text_box.see("end")
 
         #self.tracker.robot_window.destroy()
@@ -1075,12 +1075,12 @@ class GUI:
         if self.sensor is not None:
             self.sensor.shutdown()
             self.main_window.after_cancel(self.checksensor)
-            print(" -- Sensor OFF -- ")
+          
         
         if self.joystick is not None:
             self.joystick.shutdown()
             self.main_window.after_cancel(self.checkjoy)
-            print(" -- Joystick OFF -- ")
+       
             
 
     
@@ -1155,13 +1155,13 @@ class GUI:
             if self.counter %2 != 0 and self.switch_state !=0:
                 self.switch_state = 0
                 self.AcousticModule.start(ACOUSTIC_PARAMS["acoustic_freq"],ACOUSTIC_PARAMS["acoustic_amplitude"])
-                self.text_box.insert(END, "acoustic on\n")
+                self.text_box.insert(END, " -- waveform ON -- \n")
                 self.text_box.see("end")
                 #print("acoustic: on")
             elif self.counter %2 == 0 and self.switch_state !=1:
                 self.switch_state = 1
                 self.AcousticModule.stop()
-                self.text_box.insert(END, "acoustic off\n")
+                self.text_box.insert(END, " -- waveform OFF -- \n")
                 self.text_box.see("end")
 
         except Empty:

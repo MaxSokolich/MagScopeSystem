@@ -16,6 +16,7 @@ class AllTracker:
     def __init__(
         self,
         main_window: Tk,
+        textbox: Tk,
         control_params: dict,
         camera_params: dict,
         status_params: dict,
@@ -30,6 +31,7 @@ class AllTracker:
         self.height = 0  # height of cv2 window
 
         self.main_window = main_window
+        self.textbox = textbox
 
         self.num_bots = 0
         self.robot_list = []
@@ -171,7 +173,8 @@ class AllTracker:
             try:
                 cam = EasyPySpin.VideoCapture(0)
             except EasyPySpin.EasyPySpinWarning:
-                print("EasyPySpin camera not found, using standard camera")
+                self.textbox.insert(END,"EasyPySpin camera not found, using standard camera\n")
+                self.textbox.see("end")
             # cam = cv2.VideoCapture(0)
         else:
             # Use when reading in a video file
@@ -289,7 +292,7 @@ class AllTracker:
             if filepath is None:
                 delay = 1
             else:
-                delay = int((1/self.camera_params["framerate"])*1000)
+                delay = int(((1/self.camera_params["framerate"])-(1/75))*1000)
             k = cv2.waitKey(delay)
 
 

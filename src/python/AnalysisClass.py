@@ -113,7 +113,7 @@ class Analysis:
                     avg_dia = np.sqrt(4*avg_area/np.pi)
                     if avg_area != 0:
                         Size_list.append(avg_dia)
-                        b = ax[2].bar(avg_dia,color =c,label = "{}um".format(round(avg_dia,2)))
+                        b = ax[2].bar(i,avg_dia, color =c,label = "{}um".format(round(avg_dia,2)))
                         ax[2].bar_label(b, label_type='center') 
 
 

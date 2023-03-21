@@ -39,6 +39,7 @@ class Tracker:
     def __init__(
         self,
         main_window: Tk,
+        textbox: Tk,
         control_params: dict,
         camera_params: dict,
         status_params: dict,
@@ -72,6 +73,7 @@ class Tracker:
         self.cp = ContourProcessor(self.control_params,use_cuda)
 
         self.main_window = main_window
+        self.textbox = textbox
         self.robot_window = None
         self.robot_var_list = []
         self.robot_checklist_list = []
@@ -106,7 +108,12 @@ class Tracker:
             bot_loc = [x, y]
 
             #create upper and lower bounds from point click color
-            '''h_,s_,v_ = cv2.cvtColor(params["frame"],cv2.COLOR_BGR2HSV)[x,y]
+            pixel_color = cv2.cvtColor(params["frame"],cv2.COLOR_BGR2HSV)[y,x]
+            self.textbox.insert(END,"pixel color: {}\n".format(pixel_color))
+            self.textbox.see("end")
+            
+            #print([x,y])
+            '''
             hl = max(min(h_-20,180),0)
             sl = max(min(s_-50,255),0)
             vl = max(min(v_-50,255),0)
@@ -540,7 +547,9 @@ class Tracker:
             try:
                 cam = EasyPySpin.VideoCapture(0)
             except EasyPySpin.EasyPySpinWarning:
-                print("EasyPySpin camera not found, using standard camera")
+                self.textbox.insert(END,"EasyPySpin camera not found, using standard camera\n")
+                self.textbox.see("end")
+               
             # cam = cv2.VideoCapture(0)
         else:
             # Use when reading in a video file
@@ -551,7 +560,9 @@ class Tracker:
         self.height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
      
         cam_fps = cam.get(cv2.CAP_PROP_FPS)
-        print(self.width, self.height, cam_fps)
+        self.textbox.insert(END,"w,h,fps: {},{},{}\n".format(self.width,self.height,cam_fps))
+        self.textbox.see("end")
+
 
         #params = {"arduino": arduino}
         cv2.namedWindow("im")  # name of CV2 window
@@ -570,10 +581,14 @@ class Tracker:
         while True:
             fps_counter.update()
             success, frame = cam.read()
+            params = {"arduino": arduino, "frame":frame}
+            cv2.setMouseCallback("im", self.mouse_points, params)
+
        
             self.curr_frame = frame
             if not success or frame is None:
-                print("Game Over")
+                self.textbox.insert(END,"No more frames...\n")
+                self.textbox.see("end")
                 break
 
             # Set exposure of camera
@@ -586,9 +601,6 @@ class Tracker:
                 self.height * resize_scale // 100,
             )
             frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
-
-            params = {"arduino": arduino, "frame": frame}
-            cv2.setMouseCallback("im", self.mouse_points, params)
 
             #calculate pixel to metric for varying res
             #106.2 um = 1024 pixels  @ 50%  resize and 100 x
@@ -622,6 +634,9 @@ class Tracker:
                         resize_ratio,
                         
                     )  #int(fps.get_fps())
+                    self.textbox.insert(END, "Begin Record\n")
+                    self.textbox.see("end")
+                    
 
                 
                 cv2.putText(
@@ -642,6 +657,8 @@ class Tracker:
                 result.release()
                 rec_start_time = None 
                 result = None
+                self.textbox.insert(END, "End Record\n")
+                self.textbox.see("end")
 
         
             
@@ -652,7 +669,7 @@ class Tracker:
             if filepath is None:
                 delay = 1
             else:
-                delay = int((1/self.camera_params["framerate"])*1000)
+                delay = int(((1/self.camera_params["framerate"])  -(1/75) )*1000)
             k = cv2.waitKey(delay)
                 
             
@@ -742,7 +759,6 @@ class Tracker:
 
             #logic for arrival condition
             if self.node == len(self.robot_list[-1].trajectory):
-                print("arrived")
                 unique_control_param = None
                 typ = 4
                 input1 = 0

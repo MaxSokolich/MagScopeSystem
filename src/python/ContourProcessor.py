@@ -192,7 +192,7 @@ class ContourProcessor:
         self.lower_thresh =  control_params["lower_thresh"]#np.array([control_params["lower_thresh"], control_params["lower_thresh"], control_params["lower_thresh"]]) 
         self.upper_thresh = control_params["upper_thresh"]#np.array([control_params["upper_thresh"],control_params["upper_thresh"],control_params["upper_thresh"]])
         crop_mask = cv2.inRange(crop_mask, self.lower_thresh, self.upper_thresh)
-        cv2.imshow("3",crop_mask)
+        #cv2.imshow("3",crop_mask)
 
         # Return the preprocessed cropping and the blur value of the current frame
         return crop_mask, contrast   #switched from blur
@@ -237,8 +237,8 @@ class ContourProcessor:
         reth, h = cv2.cuda.threshold(h, control_params["lower_thresh"][0], control_params["upper_thresh"][0], cv2.THRESH_BINARY)
         rets, s = cv2.cuda.threshold(s, control_params["lower_thresh"][1], control_params["upper_thresh"][1], cv2.THRESH_BINARY)
         retv, v = cv2.cuda.threshold(v, control_params["lower_thresh"][2], control_params["upper_thresh"][2], cv2.THRESH_BINARY)
-        temp = cv2.cuda.bitwise_and(h[1],s[1])
-        gpu_frame = cv2.cuda.bitwise_and(temp,v[1])
+        temp = cv2.cuda.bitwise_and(h,s)
+        gpu_frame = cv2.cuda.bitwise_and(temp,v)
         crop_mask = gpu_frame.download()
 
         return crop_mask, contrast  #switched from blur

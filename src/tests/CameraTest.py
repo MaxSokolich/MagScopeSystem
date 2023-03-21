@@ -37,7 +37,7 @@ def mouse_points(event,x,y,flags,params):
             
 b = [0,0]
 fps = count_fps()       
-cam = cv2.VideoCapture(0)
+cam = cv2.VideoCapture("/home/max/Documents/MagScopeSystem/src/videos/mickyroll1.mp4")
 width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
 cam.set(cv2.CAP_PROP_FPS,24)
@@ -67,6 +67,21 @@ while True:
     frame = cv2.resize(frame, resize_ratio, interpolation=cv2.INTER_AREA)
     cv2.circle(frame,(x,y),10, (255,255,0),-1)
 
+
+    gpu_frame = cv2.cuda_GpuMat()
+    gpu_frame.upload(frame)
+    gpu_frame = cv2.cuda.cvtColor(gpu_frame, cv2.COLOR_BGR2HSV)
+    h,s,v = cv2.cuda.split(gpu_frame)
+    reth, ht = cv2.cuda.threshold(h, 100, 180, cv2.THRESH_BINARY)
+    rets, st = cv2.cuda.threshold(s, 100, 255, cv2.THRESH_BINARY)
+    rets, vt = cv2.cuda.threshold(v, 100, 180, cv2.THRESH_BINARY)
+
+    temp = cv2.cuda.bitwise_and(h,s)
+    gpu_frame = cv2.cuda.bitwise_and(temp,v)
+    
+    frame = gpu_frame.download()
+   
+   
 
     
     cv2.putText(
@@ -101,7 +116,8 @@ while True:
 
     
     
-    cv2.imshow("img",frame)
+    cv2.imshow("imgh",frame)
+
   
 
     fps.get_fps()

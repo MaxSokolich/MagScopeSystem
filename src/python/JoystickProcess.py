@@ -49,6 +49,7 @@ class JoystickProcess():
                 angle = np.arctan2(Byr,Bxr)
                 self.typ = 1
                 self.input1 = angle+np.pi/2
+                self.input2 = int(np.sqrt(Bxr**2 + Byr**2)*20)
                 self.input3 = 90
                 
                 
