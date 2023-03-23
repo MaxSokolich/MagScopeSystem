@@ -37,10 +37,11 @@ def mouse_points(event,x,y,flags,params):
             
 b = [0,0]
 fps = count_fps()       
-cam = cv2.VideoCapture("/home/max/Documents/MagScopeSystem/src/videos/mickyroll1.mp4")
+#cam = cv2.VideoCapture("/home/max/Documents/MagScopeSystem/src/videos/mickyroll1.mp4")q
+cam = EasyPySpin.VideoCapture(0)
 width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
-cam.set(cv2.CAP_PROP_FPS,24)
+cam.set(cv2.CAP_PROP_FPS,35)
 print(cam.get(cv2.CAP_PROP_FPS))
 
 
@@ -57,7 +58,7 @@ while True:
     #do contouring based on full res img
 
 
-    resize_scale =50
+    resize_scale =100
     resize_ratio = (
                 width * resize_scale // 100,
                 height * resize_scale // 100,
@@ -68,19 +69,7 @@ while True:
     cv2.circle(frame,(x,y),10, (255,255,0),-1)
 
 
-    gpu_frame = cv2.cuda_GpuMat()
-    gpu_frame.upload(frame)
-    gpu_frame = cv2.cuda.cvtColor(gpu_frame, cv2.COLOR_BGR2HSV)
-    h,s,v = cv2.cuda.split(gpu_frame)
-    reth, ht = cv2.cuda.threshold(h, 100, 180, cv2.THRESH_BINARY)
-    rets, st = cv2.cuda.threshold(s, 100, 255, cv2.THRESH_BINARY)
-    rets, vt = cv2.cuda.threshold(v, 100, 180, cv2.THRESH_BINARY)
 
-    temp = cv2.cuda.bitwise_and(h,s)
-    gpu_frame = cv2.cuda.bitwise_and(temp,v)
-    
-    frame = gpu_frame.download()
-   
    
 
     
@@ -116,7 +105,7 @@ while True:
 
     
     
-    cv2.imshow("imgh",frame)
+    cv2.imshow("img",frame)
 
   
 
@@ -128,3 +117,11 @@ while True:
 
 cv2.destroyAllWindows()
 cam.release()
+
+
+"""
+
+
+DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+
+"""

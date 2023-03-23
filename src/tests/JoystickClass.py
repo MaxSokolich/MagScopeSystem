@@ -254,7 +254,7 @@ class Joystick:
 
 
 
-'''if __name__ == "__main__":
+if __name__ == "__main__":
     joy = Joystick()         #Initialize joystick
     while not joy.B():
         if joy.A():                   #Test state of the A button (1=pressed, 0=not pressed)
@@ -265,4 +265,4 @@ class Joystick:
         print(x_axis)
         time.sleep(.05)
     joy.close()               
-    '''
+    

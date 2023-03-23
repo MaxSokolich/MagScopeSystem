@@ -15,7 +15,12 @@ TO ADD:
 - Updated Reqs.txt
 - Continue on Bugs.
 
-
+- need to add permissions to the arduino port: $ sudo chmod 666 /dev/ttyACM0
+- need to add "cam.PixelFormat.SetValue(PySpin.PixelFormat_BGR8)" above self.cam.BeginAcquistion() line in Easypyspin videocapture
+- need to install Spinnaker FLIR camera SDK and python API: https://flir.app.boxcn.net/v/SpinnakerSDK/file/1093743440079
+- need to install xboxdrv and jstest-gtk for joystick implimentation $ sudo apt-get install -y xboxdrv         "https://github.com/FRC4564/Xbox"
+               also needed for jstest-gtk $ sudo apt-get install libcanberra-gtk-module
+- need sudo apt-mark manual qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools for spinview 
 
 --Example analysis plot from custom tracking algorithm. Displays selected robot trajectories, individial robot velocties and robot sizes--
 ![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/src/imgs/ExampleDataPlot.png?raw=true)

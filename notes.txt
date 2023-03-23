@@ -4,6 +4,9 @@ Bugs:
 
 To do:
 
+- add ads1115 libraries for halleffect.py
+- figure out how to run joystick without sudo
+
 1) test 3D tracking, add Z position, improve z tracking, figure out blur with new hsv 
 2) maybe get ps5 controller working
 3) fix acoustic digitial potentiameter mapping
