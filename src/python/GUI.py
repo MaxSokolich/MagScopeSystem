@@ -29,8 +29,7 @@ from src.python.AnalysisClass import Analysis
 from src.python.TrackAll import AllTracker
 
 
-# from pyspin import PySpin
-# import EasyPySpin
+# with jetson orin, cam can get up to 35 fps
 
 CONTROL_PARAMS = {
     "lower_thresh": np.array([0,0,0]),  #HSV

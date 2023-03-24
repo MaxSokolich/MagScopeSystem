@@ -7,6 +7,7 @@ in python3.8/site-packages/adafruit_blinka/microcontroller/tegra/t194/pin.py
 to:
 
 Jetson.GPIO.setmode(GPIO.BOARD)
+check which address using $ sudo i2cdetect -y -r 
 """
 
 import board

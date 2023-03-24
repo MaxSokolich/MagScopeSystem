@@ -108,9 +108,9 @@ class JoystickProcess():
             actions = [self.typ, self.input1, self.input2, self.input3, self.acoustic_status]
             joystick_q.put(actions)
             #print(actions)
-            time.sleep(50/1000)  #need some sort of delay to not flood queue
+            time.sleep(40/1000)  #need some sort of delay to not flood queue
         
-        self.joy.close()
+        #self.joy.close()
         print(" -- Joystick Process Terminated -- ")
     
         
@@ -119,7 +119,13 @@ class JoystickProcess():
         joystick_process.start()
 
     def shutdown(self):
+
+        self.joy.close()
         self.exit.set()
+
+        
+        
+         
         
 
       

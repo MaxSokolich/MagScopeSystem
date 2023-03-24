@@ -2,18 +2,16 @@ Bugs:
 - no such cv2.cuda.inRange function for hsv thresholding. thus cuda does not work rn
 
 
+
 To do:
 
-- add ads1115 libraries for halleffect.py
-- figure out how to run joystick without sudo
-
 1) test 3D tracking, add Z position, improve z tracking, figure out blur with new hsv 
-2) maybe get ps5 controller working
+2) maybe get ps5 controller working. need to figure out how to read it from usb
 3) fix acoustic digitial potentiameter mapping
-4) try and record video on seperate CPU/process
+4) try and record video on seperate CPU/process using file in tests folder
 5) refactor custom tracker class by seperating out methods into seperate classes
         - algorthm/ control_trajectory
-
+6) build jetson orin system
 
 Notes:
 - lots of continous aspects to this system. i.e functions that need to be external

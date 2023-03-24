@@ -7,7 +7,6 @@ These setups include:
 4) 2D/3D Magnetic Tweezers
 
 TO ADD:
-
 - Electrical Schematic
 - CAD Models and Figures
 - Code Flowcharts
@@ -15,8 +14,9 @@ TO ADD:
 - Updated Reqs.txt
 - Continue on Bugs.
 
-- need to add permissions to the arduino port: $ sudo chmod 666 /dev/ttyACM0
-- need to add "cam.PixelFormat.SetValue(PySpin.PixelFormat_BGR8)" above self.cam.BeginAcquistion() line in Easypyspin videocapture
+Instructions for initial installation of all modules:
+- need to add permissions to the arduino port. add this to /etc/rc.local to execute on boot: $ chmod 666 /dev/ttyACM0
+- need to add "self.cam.PixelFormat.SetValue(PySpin.PixelFormat_BGR8)" above self.cam.BeginAcquistion() line in $ .local/lib/python3.8/site-packages/EasyPySpin.videocapture.py
 - need to install Spinnaker FLIR camera SDK and python API: https://flir.app.boxcn.net/v/SpinnakerSDK/file/1093743440079
 - need to install xboxdrv and jstest-gtk for joystick implimentation $ sudo apt-get install -y xboxdrv         "https://github.com/FRC4564/Xbox"
                also needed for jstest-gtk $ sudo apt-get install libcanberra-gtk-module
@@ -27,4 +27,5 @@ TO ADD:
 
 
 
-max sokolich
+
+Max Sokolich

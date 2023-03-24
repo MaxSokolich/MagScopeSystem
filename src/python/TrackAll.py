@@ -63,7 +63,7 @@ class AllTracker:
             (int(w / 40),int(h / 30)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (255, 0, 0),
+            (255, 255, 255),
             1,
         )
 
@@ -72,14 +72,14 @@ class AllTracker:
             (int(w / 40),int(h / 18)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (255, 0, 0),
+            (255, 255, 255),
             1,
         )
         cv2.line(
             frame, 
             (int(w / 40),int(h / 14)),
             (int(w / 40) + int(100 * (self.pix_2metric)),int(h / 14)), 
-            (255, 0, 0), 
+            (255, 255, 255), 
             3
         )
 

@@ -413,7 +413,7 @@ class Tracker:
             (int(w / 40),int(h / 30)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (255, 0, 0),
+            (255, 255, 255),
             1,
         )
 
@@ -422,14 +422,14 @@ class Tracker:
             (int(w / 40),int(h / 18)),
             cv2.FONT_HERSHEY_COMPLEX,
             0.5,
-            (255, 0, 0),
+            (255, 255, 255),
             1,
         )
         cv2.line(
             frame, 
             (int(w / 40),int(h / 14)),
             (int(w / 40) + int(100 * (self.pix_2metric)),int(h / 14)), 
-            (255, 0, 0), 
+            (255, 255, 255), 
             3
         )
 
@@ -630,10 +630,10 @@ class Tracker:
                     result = cv2.VideoWriter(
                         output_name + ".mp4",
                         cv2.VideoWriter_fourcc(*"mp4v"),
-                        20,    
+                        self.camera_params["framerate"],    
                         resize_ratio,
                         
-                    )  #int(fps.get_fps())
+                    )  #int(fps.get_fps()) False for gray
                     self.textbox.insert(END, "Begin Record\n")
                     self.textbox.see("end")
                     

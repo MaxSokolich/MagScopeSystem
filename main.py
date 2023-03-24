@@ -21,6 +21,7 @@ from multiprocessing import Process, Queue
 #NOTE: must change easypyspin videocatpure.py to handle color cam
 
 
+
 #INSTRUCTIONS
 """
 idea is to use single tracker to get basically params from single robot (avg size)
