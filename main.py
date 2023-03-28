@@ -5,6 +5,7 @@ Main script for performing microbot tracking
           Alexis Mainiero, Cameron Thacker, Zoe Valladares
 """
 
+
 import time
 from tkinter import Tk
 import asyncio
@@ -19,8 +20,6 @@ from multiprocessing import Process, Queue
 
 #NOTE: VELZ SET AS 0
 #NOTE: must change easypyspin videocatpure.py to handle color cam
-
-
 
 #INSTRUCTIONS
 """

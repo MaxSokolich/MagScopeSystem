@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 from collections import deque
 import matplotlib.pyplot as plt
-import EasyPySpin
 from typing import List, Tuple, Union
 from tkinter import Tk
 from tkinter import *
@@ -11,6 +10,8 @@ from src.python.RobotClass import Robot
 from src.python.Velocity import Velocity
 from src.python.ContourProcessor import ContourProcessor
 import time 
+
+#import EasyPySpin
 
 class AllTracker:
     def __init__(

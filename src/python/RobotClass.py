@@ -137,7 +137,6 @@ class Robot:
 
     def add_track(
         self,
-        frame: int,
         error: float,
         actual_tracks: List[int],
         desired_tracks: List[int],
@@ -163,7 +162,7 @@ class Robot:
             None
         """
         self.tracks.append(
-            [frame, error, actual_tracks, desired_tracks, alpha,freq, time, control_param]
+            [error, actual_tracks, desired_tracks, alpha,freq, time, control_param]
         )
 
     def add_time(self, time):

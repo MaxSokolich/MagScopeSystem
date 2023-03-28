@@ -86,10 +86,15 @@ class Analysis:
                     #ADD 2D PLOT
                     X = np.array(bot.position_list)[1:, 0] /self.pix2metric
                     Y = np.array(bot.position_list)[1:, 1] /self.pix2metric
+                    if len(bot.trajectory) > 1:
+                        GoalX = np.array(bot.trajectory)[:,0]/self.pix2metric
+                        GoalY = np.array(bot.trajectory)[:,1]/self.pix2metric
+                        ax[0].plot(GoalX, GoalY, color =c * .7,linewidth = 1 )
                     ax[0].plot(X,Y,color =c,linewidth = 1 )
                     
+
+
                     #ADD 3D PLOT
-                    
                     Z = np.array(bot.blur_list)[:]    #need to fix scal, will also need to normalize this
                     Z = Z - np.min(Z)
 

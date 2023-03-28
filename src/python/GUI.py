@@ -51,8 +51,9 @@ CAMERA_PARAMS = {
     "Obj": 20}
 
 STATUS_PARAMS = {
-    "rolling_status": False,
-    "orient_status": False,
+    "rolling_status": 0,
+    "orient_status": 0,
+    "multi_agent_status": 0,
     "algorithm_status": False,
     "record_status": False,
 }
@@ -110,8 +111,6 @@ class GUI:
         self.arduino = arduino
         self.external_file = None
 
-       
-
         
     
         #define instance of acoustic module
@@ -134,27 +133,6 @@ class GUI:
         self.text_box.configure(yscrollcommand=self.scroll_bar.set)
         self.text_box.grid(row=7, column=2, columnspan =2,sticky="nwse")
 
-        
-
-        coil_roll_button = Button(
-            master, 
-            text="Rotate On", 
-            command=self.coil_roll, 
-            height=1, 
-            width=18,
-            bg = 'green2',
-            fg= 'black'
-        )
-
-        coil_orient_button = Button(
-            master, 
-            text="Orient On", 
-            command=self.coil_orient, 
-            height=1, 
-            width=18,
-            bg = 'green4',
-            fg= 'white'
-        )
 
         coil_joystick_button = Button(
             master, 
@@ -242,10 +220,55 @@ class GUI:
         
 
         
-       
+        #2 ALGORITHM FRAME
+        self.algorithm_frame = Frame(master = master)
+        self.algorithm_frame.grid(row=0,column=2,rowspan = 2)
+        
+        AlgoRoll = IntVar(master=master, name="roll")
+        AlgoRoll_box = Checkbutton(
+            master=self.algorithm_frame, 
+            name = "roll",
+            text="Roll", 
+            command = self.coil_roll,
+            variable=AlgoRoll, 
+            onvalue=1, 
+            offvalue=0
+        )
+        AlgoRoll_box.var = AlgoRoll
+
+        AlgoOrient = IntVar(master=master, name="orient")
+        AlgoOrient_box = Checkbutton(
+            master=self.algorithm_frame, 
+            name = "orient",
+            text="Orient", 
+            command = self.coil_orient,
+            variable=AlgoOrient, 
+            onvalue=1, 
+            offvalue=0
+        )
+        AlgoOrient_box.var = AlgoOrient
+
+        AlgoMulti = IntVar(master=master, name="multi")
+        AlgoMulti_box = Checkbutton(
+            master=self.algorithm_frame, 
+            name = "multi",
+            text="Multi-Agent", 
+            command = self.coil_multi_agent,
+            variable=AlgoMulti, 
+            onvalue=1, 
+            offvalue=0
+        )
+        AlgoMulti_box.var = AlgoMulti
+
+
+        AlgoRoll_box.grid(row=0, column=0)
+        AlgoOrient_box.grid(row=1, column=0)
+        AlgoMulti_box.grid(row=2, column=0)
+
+
+
 
         #3 CHECKBOXES FRAME
-
         self.checkboxes_frame = Frame(master = master)
         self.checkboxes_frame.grid(row=6,column=1,rowspan = 2)
 
@@ -285,7 +308,7 @@ class GUI:
 
 
         
-        #CHOOSE VIDEO FRAME
+        #4 CHOOSE VIDEO FRAME
         self.video_option_frame = Frame(master = master)
         self.video_option_frame.grid(row=3,column=2,rowspan = 2)
 
@@ -308,7 +331,7 @@ class GUI:
             command=self.upload_vid,
             height=1,
             width=10,
-            bg = 'white',
+            bg = 'red',
             fg= 'black'
         )
         
@@ -330,7 +353,7 @@ class GUI:
 
 
 
-        #3 BIG BUTTONS
+        #5 BIG BUTTONS
 
         Big_button_frame = Frame(master = master)
         Big_button_frame.grid(row=0,column=1,rowspan = 7)
@@ -380,7 +403,7 @@ class GUI:
 
         close_button.grid(row=7, column=0)
 
-        # GUI MAINFRAME: OTHER
+        #6 GUI MAINFRAME: OTHER
         Label(master, text="---Robot List---").grid(row=0, column=4)
         
         
@@ -389,9 +412,6 @@ class GUI:
         acoustic_params_button.grid(row=2, column=0)
 
         
-        
-        coil_roll_button.grid(row=0, column=2)
-        coil_orient_button.grid(row=1, column=2)
         coil_joystick_button.grid(row=0, column=3,rowspan =1)
         sensor_button.grid(row=1, column=3,rowspan =1)
         
@@ -452,8 +472,8 @@ class GUI:
         Returns:
             None
         """
-        STATUS_PARAMS["rolling_status"] = True
-
+        STATUS_PARAMS["rolling_status"] = self.get_widget(self.algorithm_frame, "roll").var.get()
+        
     def coil_orient(self):
         """
         Flips the state of Orient_Status to True when "Orient On" is clicked
@@ -463,7 +483,19 @@ class GUI:
         Returns:
             None
         """
-        STATUS_PARAMS["orient_status"] = True
+        STATUS_PARAMS["orient_status"] = self.get_widget(self.algorithm_frame, "orient").var.get()
+
+    def coil_multi_agent(self):
+        """
+        Flips the state of "multi_agent_status" to True when "Orient On" is clicked
+
+        Args:
+            None
+        Returns:
+            None
+        """
+        STATUS_PARAMS["multi_agent_status"] = self.get_widget(self.algorithm_frame, "multi").var.get()
+
 
     def run_algo(self):
         """
@@ -975,7 +1007,7 @@ class GUI:
 
         STATUS_PARAMS["record_status"] = False
 
-    def track(self, enable_tracking: bool = True):
+    def track(self):
         """
         Initiates a Tracker instance for microbot tracking
 
@@ -1060,8 +1092,6 @@ class GUI:
         """
        
 
-        STATUS_PARAMS["rolling_status"] = False
-        STATUS_PARAMS["orient_status"] = False
         STATUS_PARAMS["algorithm_status"] = False
         
         self.text_box.insert(END, "____ZEROED ____\n")

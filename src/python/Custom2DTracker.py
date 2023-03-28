@@ -19,8 +19,9 @@ from src.python.ContourProcessor import ContourProcessor
 from src.python.Velocity import Velocity
 from src.python.ArduinoHandler import ArduinoHandler
 from src.python.FPSCounter import FPSCounter
+from src.python.AlgorithmHandler  import AlgorithmHandler 
 
-import EasyPySpin
+#import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -54,7 +55,6 @@ class Tracker:
         # self.bot_loc = None
         # self.target = None
         self.curr_frame = np.array([])
-        self.node = None  # index of node having their trajectory manually influenced
         self.num_bots = 0  # current number of bots
         self.frame_num = 0  # current frame count
         self.elapsed_time = 0  # time elapsed while tracking
@@ -71,15 +71,13 @@ class Tracker:
         self.use_cuda = use_cuda
 
         self.cp = ContourProcessor(self.control_params,use_cuda)
+        self.Algorithm = AlgorithmHandler()
 
         self.main_window = main_window
         self.textbox = textbox
         self.robot_window = None
         self.robot_var_list = []
         self.robot_checklist_list = []
-
-        self.B_vec = np.array([1,0])
-        self.T_R = 1
 
     
 
@@ -138,7 +136,6 @@ class Tracker:
             self.robot_list.append(robot)
 
             # add starting point of trajectory
-            self.node = 1
             self.robot_list[-1].add_trajectory(bot_loc)
             self.num_bots += 1
 
@@ -167,8 +164,10 @@ class Tracker:
 
         # Middle mouse; CLEAR EVERYTHING AND RESTART ANALYSIS
         elif event == cv2.EVENT_MBUTTONDOWN:
+            #reset algorothms i.e. set node back to 0
+            self.Algorithm = AlgorithmHandler()
+            #other
             self.num_bots = 0
-            self.node = 0
             self.robot_window.destroy()
             for w in self.robot_checklist_list: w.destroy()
             del self.robot_checklist_list[:]
@@ -584,7 +583,7 @@ class Tracker:
             params = {"arduino": arduino, "frame":frame}
             cv2.setMouseCallback("im", self.mouse_points, params)
 
-       
+        
             self.curr_frame = frame
             if not success or frame is None:
                 self.textbox.insert(END,"No more frames...\n")
@@ -612,11 +611,17 @@ class Tracker:
                 # DETECT ROBOTS AND UPDATE TRAJECTORY
                 self.detect_robot(frame, fps_counter,self.pix_2metric)
 
-                # CONTROL LOOP FOR MANUALLY INFLUENCING TRAJECTORY OF MOST RECENT BOT
+                # APPLY SELECTED CONTROL ALGORITHM
                 if self.status_params["algorithm_status"] == True:
-                    self.control_trajectory(frame, start, arduino)
-                    #self.algorithm(arduino)
+                    self.Algorithm.run(self.robot_list, 
+                                       self.control_params, 
+                                       self.camera_params,
+                                       self.status_params, 
+                                       arduino, 
+                                       frame)
+                #print(self.robot_list[-1].tracks)
 
+              
             # UPDATE AND DISPLAY HUD ELEMENTS
             self.display_hud(frame, fps_counter)
             
@@ -693,196 +698,3 @@ class Tracker:
             
       
        
-
-    def algorithm(self,arduino):
-        """
-        apply an algorithm
-        Args:
-            None
-        Returns:
-            action commands to be sent to arduino
-        """
-
-        frequencies = [1,10,30] #frequency
-        current_positions = []
-        goal_positions = []
-        for bot in range(len(self.robot_list)):
-            pos = self.robot_list[bot].position_list[-1]
-            goal= self.robot_list[bot].trajectory[-1]
-
-            
-            current_positions.append(pos)
-            goal_positions.append(goal)
-
-        
-        #generate the action
-        for f in frequencies:
-            t1 = -1 * np.sum((np.array([position[0] for position in current_positions]) - np.array([position[0] for position in goal_positions])) *np.array(f))
-            t2 = -1 * np.sum((np.array([position[1] for position in current_positions]) - np.array([position[1] for position in goal_positions])) *np.array(f))
-            
-            norm_f = np.linalg.norm(f)
-            t1 /= (norm_f **2)
-            t1 /= (norm_f **2)
-
-
-            alpha = np.arctan2(t2,t1)
-            application_time = np.sqrt(t1**2+t2**2)  #best way to apply 
-            frequency = f        
-            gamma = 90
-        
-            #apply the action
-            if arduino.conn is not None:            
-                arduino.send(1,alpha,frequency,gamma)
-        
-        
-
-    def control_trajectory(
-        self, frame: np.ndarray, start: float, arduino: ArduinoHandler
-    ):
-        """
-        Used for real time closed loop feedback on the jetson nano to steer a microrobot along a
-        desired trajctory created with the right mouse button. Does so by:
-            -defining a target position
-            -displaying the target position
-            -if a target position is defined, look at most recently clicked bot and display its trajectory
-
-        In summary, moves the robot to each node in the trajectory array.
-        If the error is less than a certain amount, move on to the next node
-
-        Args:
-            frame: np array representation of the current video frame read in
-            start: start time of the tracking
-        Return:
-            None
-        """
-        if len(self.robot_list[-1].trajectory) > 1:
-
-            #logic for arrival condition
-            if self.node == len(self.robot_list[-1].trajectory):
-                unique_control_param = None
-                typ = 4
-                input1 = 0
-                input2 = 0
-                input3 = 0
-
-
-            #closed loop algorithm 
-            else:
-                #define target coordinate
-                targetx = self.robot_list[-1].trajectory[self.node][0]
-                targety = self.robot_list[-1].trajectory[self.node][1]
-
-                #define robots current position
-                robotx = self.robot_list[-1].position_list[-1][0]
-                roboty = self.robot_list[-1].position_list[-1][1]
-                
-                #calculate error between node and robot
-                direction_vec = [targetx - robotx, targety - roboty]
-                error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
-                self.alpha = np.arctan2(-direction_vec[1], direction_vec[0])
-
-           
-
-                #draw trajectory
-                pts = np.array(self.robot_list[-1].trajectory, np.int32)
-                cv2.polylines(frame, [pts], False, (1, 1, 255), 3)
-
-                #draw error arrow
-                cv2.arrowedLine(
-                    frame,
-                    (int(robotx), int(roboty)),
-                    (int(targetx), int(targety)),
-                    [0, 0, 0],
-                    3,
-                )
-                if error < 10:
-                    self.node += 1
-
-                ##ROLLING
-                if (
-                    self.status_params["rolling_status"]
-                    and not self.status_params["orient_status"]
-                ):
-                    #OUTPUT SIGNAL
-                    my_alpha = self.alpha + np.pi/2
-                    typ = 1
-                    input1 = my_alpha
-                    input2 = self.control_params["rolling_frequency"]
-                    input3 = self.control_params["gamma"]
-                        
-                    unique_control_param = "Roll"
-                ##ORIENTING
-                elif (
-                    self.status_params["orient_status"]
-                    and not self.status_params["rolling_status"]
-                    and len(self.robot_list[-1].velocity_list) > self.control_params["memory"] - 1
-                ):  
-
-                    bot = self.robot_list[-1]
-                    if len(bot.velocity_list) % self.control_params["memory"] == 0:
-                        # only update every memory frames
-
-
-                        vx = np.mean(np.array([v.x for v in bot.velocity_list[-self.control_params["memory"]:]]))
-                        vy = np.mean(np.array([v.y for v in bot.velocity_list[-self.control_params["memory"]:]]))
-                           
-                        
-                        
-                        vel_bot = np.array([vx, vy])  # current velocity of self propelled robot
-                        vd = np.linalg.norm(vel_bot)
-                        bd = np.linalg.norm(self.B_vec)
-
-                        costheta = np.dot(vel_bot, self.B_vec) / (vd * bd)
-                        sintheta = (vel_bot[0] * self.B_vec[1] - vel_bot[1] * self.B_vec[0]) / (vd * bd)
-                      
-
-                        if not np.isnan(vd):
-                            self.T_R = np.array([[costheta, -sintheta], [sintheta, costheta]])
-
-                    self.B_vec = np.dot(self.T_R, direction_vec)
-
-                    #OUTPUT SIGNAL      
-                    unique_control_param = "Orient"
-                    Bx = self.B_vec[0] / np.sqrt(self.B_vec[0] ** 2 + self.B_vec[1] ** 2)
-                    By = self.B_vec[1] / np.sqrt(self.B_vec[0] ** 2 + self.B_vec[1] ** 2)
-                    Bz = 0
-                    self.alpha = np.arctan2(By, Bx)
-                    
-                    typ = 2
-                    input1 = Bx
-                    input2 = By
-                    input3 = Bz
-                    try:
-                        start_arrow = (100, 150 + (self.num_bots - 1) * 20)
-                        end_arrow = (
-                            int(start_arrow[0] + Bx * 15),
-                            int(start_arrow[1] + By * 15),
-                        )
-                        cv2.arrowedLine(
-                            frame, start_arrow, end_arrow, [255, 255, 255], 2
-                        )
-                    except:
-                        pass
-                else:
-                    unique_control_param = None
-                    typ = 4
-                    input1 = 0
-                    input2 = 0
-                    input3 = 0
-                
-                self.robot_list[-1].add_track(
-                self.frame_num,
-                error,
-                [robotx, roboty],
-                [targetx, targety],
-                self.alpha,
-                self.control_params["rolling_frequency"],
-                time.time(),
-                unique_control_param,
-            )
-
-            
-            arduino.send(typ,input1,input2,input3)
-
-            
-
