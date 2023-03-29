@@ -6,12 +6,13 @@ These setups include:
 3) Acoustic Piezoelectric Transducers
 4) 2D/3D Magnetic Tweezers
 
-# TO ADD:
+# To Add:
 Overall:
 - Electrical Schematic
 - CAD Models and Figures
 - Bill of Materials.
 - Continue on Bugs.
+- Custom Microscope and Coil Files
 
 
 Code Specific:
@@ -47,11 +48,11 @@ Code Specific:
         "https://github.com/FRC4564/Xbox"
     
 
-# Example
+**Example**
 --Example analysis plot from custom tracking algorithm. Displays selected robot trajectories, individial robot velocties and robot sizes--
 ![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/src/imgs/ExampleDataPlot.png?raw=true)
 
 
-
-
+**MagScope Electrical System** 
+![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/src/imgs/MagScopeBox.png?raw=true)
 Max Sokolich
