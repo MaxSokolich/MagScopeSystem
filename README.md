@@ -49,7 +49,7 @@ Code Specific:
 
 
 **MagScope Electrical System Components** 
-![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/src/imgs/MagScopeBox.png?raw=true)
+![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/src/imgs/MagScopeBox2.png?raw=true)
 
 **Example Analysis**
 --Example analysis plot from custom tracking algorithm. Displays selected robot trajectories, individial robot velocties and robot sizes--
