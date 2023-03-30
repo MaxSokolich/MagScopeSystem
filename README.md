@@ -35,7 +35,7 @@ Code Specific:
 
 4) need to install Spinnaker FLIR camera SDK and python API: 
     - https://flir.app.boxcn.net/v/SpinnakerSDK/file/1093743440079
-    -may need: sudo apt-mark manual qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools for spinview 
+    - may need: sudo apt-mark manual qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools for spinview 
 
 5) need to install all python dependencies
     - python3.8 -m pip install -r JetsonOrinReqs.txt
