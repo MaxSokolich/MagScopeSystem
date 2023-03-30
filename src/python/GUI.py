@@ -222,8 +222,10 @@ class GUI:
         
         #2 ALGORITHM FRAME
         self.algorithm_frame = Frame(master = master)
-        self.algorithm_frame.grid(row=0,column=2,rowspan = 2)
+        self.algorithm_frame.grid(row=0,column=2,rowspan = 3)
         
+        Label(master = self.algorithm_frame, text="--Algorithm List--").grid(row=0, column=0)
+
         AlgoRoll = IntVar(master=master, name="roll")
         AlgoRoll_box = Checkbutton(
             master=self.algorithm_frame, 
@@ -261,9 +263,9 @@ class GUI:
         AlgoMulti_box.var = AlgoMulti
 
 
-        AlgoRoll_box.grid(row=0, column=0)
-        AlgoOrient_box.grid(row=1, column=0)
-        AlgoMulti_box.grid(row=2, column=0)
+        AlgoRoll_box.grid(row=1, column=0)
+        AlgoOrient_box.grid(row=2, column=0)
+        AlgoMulti_box.grid(row=3, column=0)
 
 
 
