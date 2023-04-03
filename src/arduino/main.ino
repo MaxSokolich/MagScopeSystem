@@ -22,41 +22,41 @@ float alpha;
 float amplitude;
 float direct;
 
-//Coil 1 : +Y
+//Coil 1 : +Y Brown
 const int Coil1_PWMR = 2;
 const int Coil1_PWML = 3;
-const int Coil1_ENR = 28; //26
-const int Coil1_ENL = 29; //27                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            333
+const int Coil1_ENR = 26; //26
+const int Coil1_ENL = 27; //27                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            333
 
-//Coil 2 : +X
+//Coil 2 : +X Purple
 const int Coil2_PWMR = 4;
 const int Coil2_PWML = 5;
-const int Coil2_ENR = 30;
-const int Coil2_ENL = 31;
+const int Coil2_ENR = 24; //24
+const int Coil2_ENL = 25; //25
 
-//Coil 3 : -Y
+//Coil 3 : -Y Green
 const int Coil3_PWMR = 6;
 const int Coil3_PWML = 7;
-const int Coil3_ENR = 32;
-const int Coil3_ENL = 33;
+const int Coil3_ENR = 22;
+const int Coil3_ENL = 23;
 
-//Coil 4: -X
+//Coil 4: -X Blue
 const int Coil4_PWMR = 8;
 const int Coil4_PWML = 9;
-const int Coil4_ENR = 22;
-const int Coil4_ENL = 23;
+const int Coil4_ENR = 32;
+const int Coil4_ENL = 33;
 
-//Coil 5 : +Z
+//Coil 5 : +Z  Yellow
 const int Coil5_PWMR = 10;
 const int Coil5_PWML = 11;
-const int Coil5_ENR = 24;
-const int Coil5_ENL = 25;
+const int Coil5_ENR = 30;
+const int Coil5_ENL = 31;
 
-//Coil 6 : -Z
+//Coil 6 : -Z Orange
 const int Coil6_PWMR = 12;
 const int Coil6_PWML = 13;
-const int Coil6_ENR = 26;
-const int Coil6_ENL = 27;
+const int Coil6_ENR = 28;
+const int Coil6_ENL = 29;
 
 
 
