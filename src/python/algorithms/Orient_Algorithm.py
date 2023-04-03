@@ -1,4 +1,8 @@
 
+#I changed the code so that instead of re-calculating the mapped angle, it saves all of them and takes an average. This
+#should allow for a lower memory to be used while not having to worry as much about noise. Also it means that it can 
+#update the magnetic field angle on every frame, once it initially captures memory number of frames, so it should be more
+#responsive. 
 import cv2
 import numpy as np
 import time
@@ -14,6 +18,9 @@ class Orient_Algorithm:
 
         self.B_vec = np.array([1,0])
         self.T_R = 1
+        
+        self.costheta_maps = np.array([])#added this so that we store the mapped angles
+        self.sintheta_maps = np.array([])#added this so that we store the mapped angles
 
 
     def control_trajectory(self, frame: np.ndarray, arduino: ArduinoHandler, robot_list, control_params):
@@ -76,14 +83,11 @@ class Orient_Algorithm:
     
                 # OUTPUT SIGNAL
                 bot = self.robot_list[-1]
-                if len(bot.velocity_list) % self.control_params["memory"] == 0:
-                    # only update every memory frames
-
-
+                if len(bot.velocity_list) >= self.control_params["memory"]:
+                    
+                    #find the velocity avearge over the last memory number of frames to mitigate noise: 
                     vx = np.mean(np.array([v.x for v in bot.velocity_list[-self.control_params["memory"]:]]))
                     vy = np.mean(np.array([v.y for v in bot.velocity_list[-self.control_params["memory"]:]]))
-                    
-                    
                     
                     vel_bot = np.array([vx, vy])  # current velocity of self propelled robot
                     vd = np.linalg.norm(vel_bot)
@@ -94,7 +98,16 @@ class Orient_Algorithm:
                 
 
                     if not np.isnan(vd):
-                        self.T_R = np.array([[costheta, -sintheta], [sintheta, costheta]])
+                        np.append(self.costheta_maps,costheta)
+                        np.append(self.sintheta_maps,sintheta)
+            
+                        costhetaNew = np.mean(self.costheta_maps)#take the average so that the mapped angle is robust to noise
+                        sinthetaNew = np.mean(self.sintheta_maps)
+                        normFactor = costhetaNew**2 + sinthetaNew**2
+                        costhetaNew = costhetaNew/normFactor
+                        sinthetaNew = sinthetaNew/normFactor #this makes sure that the sin**2+cos**2 = 1 while not changing the angle itself
+                        
+                        self.T_R = np.array([[costhetaNew, -sinthetaNew], [sinthetaNew, costhetaNew]])
 
                 self.B_vec = np.dot(self.T_R, direction_vec)
 
