@@ -116,6 +116,8 @@ class Orient_Algorithm:
 #                         sinthetaNew = sinthetaNew/normFactor #this makes sure that the sin**2+cos**2 = 1 while not changing the angle itself
 
                         np.append(self.theta_maps,theta)
+                        if len(self.theta_maps) > 150:
+                            self.theta_maps = self.theta_maps[-150:len(theta_maps)]#this makes sure that we only look at the latest 150 frames of data to keep it adaptable. It should be bigger if there's a lot of noise (slow bot) and smaller if its traj is well defined (fast bot) 
                         thetaNew = np.median(self.theta_maps)#take the average, or median, so that the mapped angle is robust to noise                        
                         self.T_R = np.array([[np.cos(thetaNew), -np.sin(thetaNew)], [np.sin(thetaNew), np.cos(thetaNew)]])
                      
