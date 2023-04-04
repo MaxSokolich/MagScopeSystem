@@ -21,7 +21,7 @@ from src.python.ArduinoHandler import ArduinoHandler
 from src.python.FPSCounter import FPSCounter
 from src.python.AlgorithmHandler  import AlgorithmHandler 
 
-#import EasyPySpin
+import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")

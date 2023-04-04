@@ -124,9 +124,9 @@ class Orient_Algorithm:
                 self.alpha = np.arctan2(By, Bx)
                 
                 typ = 2
-                input1 = Bx
-                input2 = By
-                input3 = Bz
+                input1 = round(Bx,2)
+                input2 = round(By,2)
+                input3 = round(Bz,2)
                 try:
                     start_arrow = (100, 150 + (self.num_bots - 1) * 20)
                     end_arrow = (
@@ -148,7 +148,6 @@ class Orient_Algorithm:
                 time.time()-self.start,
                 "Orient",
             )
-            print([typ,input1,input2,input3])
             arduino.send(typ,input1,input2,input3)
 
             

@@ -74,18 +74,18 @@ class Roll_Algorithm:
                     3,
                 )
         
-                if error < 100:
+                if error < 10:
                     self.node += 1
 
                 
                 #OUTPUT SIGNAL
                 my_alpha = self.alpha + np.pi/2
                 typ = 1
-                input1 = my_alpha
+                input1 = round(my_alpha,2)
                 input2 = self.control_params["rolling_frequency"]
                 input3 = self.control_params["gamma"]
                 
-                print([typ, input1, input2, input3])
+        
             
                 
                 self.robot_list[-1].add_track(
