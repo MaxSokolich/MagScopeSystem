@@ -48,6 +48,8 @@ Code Specific:
 8) need to install xboxdrv and jstest-gtk for joystick implimentation 
         $ sudo apt-get install -y xboxdrv         
         "https://github.com/FRC4564/Xbox"
+        
+9) VSCode: https://github.com/JetsonHacksNano/installVSCode.git
     
 
 
