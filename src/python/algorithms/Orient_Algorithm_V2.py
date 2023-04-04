@@ -117,7 +117,7 @@ class Orient_Algorithm:
 
                         np.append(self.theta_maps,theta)
                         thetaNew = np.median(self.theta_maps)#take the average, or median, so that the mapped angle is robust to noise                        
-                        self.T_R = np.array([[np.cos(thetaNew, -np.sin(thetaNew)], [np.sin(thetaNew), np.cos(thetaNew)]])
+                        self.T_R = np.array([[np.cos(thetaNew), -np.sin(thetaNew)], [np.sin(thetaNew), np.cos(thetaNew)]])
                      
                         #self.T_R = np.array([[costhetaNew, -sinthetaNew], [sinthetaNew, costhetaNew]])
 
