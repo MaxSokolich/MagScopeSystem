@@ -32,19 +32,19 @@ Code Specific:
 3) need to add permissions in order to read and write to the arduino port: 
     - add this to /etc/rc.local to execute on boot: $ chmod 666 /dev/ttyACM0
 
-3.5)  need to install qt5
+4)  need to install qt5
     - sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools  
 
-4) need to install Spinnaker FLIR camera SDK and python API: 
+5) need to install Spinnaker FLIR camera SDK and python API: 
     - https://flir.app.boxcn.net/v/SpinnakerSDK/file/1093743440079
     - may need: sudo apt-mark manual qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools for spinview 
 
-5) need to install all python dependencies
+6) need to install all python dependencies
     - python3.8 -m pip install -r JetsonOrinReqs.txt
 
-6) need to add "self.cam.PixelFormat.SetValue(PySpin.PixelFormat_BGR8)" above self.cam.BeginAcquistion() line in $ .local/lib/python3.8/site-packages/EasyPySpin.videocapture.py
+7) need to add "self.cam.PixelFormat.SetValue(PySpin.PixelFormat_BGR8)" above self.cam.BeginAcquistion() line in $ .local/lib/python3.8/site-packages/EasyPySpin.videocapture.py
 
-7) need to install xboxdrv and jstest-gtk for joystick implimentation 
+8) need to install xboxdrv and jstest-gtk for joystick implimentation 
         $ sudo apt-get install -y xboxdrv         
         "https://github.com/FRC4564/Xbox"
     
