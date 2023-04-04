@@ -34,6 +34,7 @@ Code Specific:
 
 4)  need to install qt5
     - sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools  
+    - sudo apt install qt5-default
 
 5) need to install Spinnaker FLIR camera SDK and python API: 
     - https://flir.app.boxcn.net/v/SpinnakerSDK/file/1093743440079
