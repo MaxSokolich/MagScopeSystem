@@ -31,7 +31,8 @@ Code Specific:
 
 3) need to add permissions in order to read and write to the arduino port: 
     - add this to /etc/rc.local to execute on boot: $ chmod 666 /dev/ttyACM0
-
+3.5)  need to install qt5
+    - sudo apt install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools  
 
 4) need to install Spinnaker FLIR camera SDK and python API: 
     - https://flir.app.boxcn.net/v/SpinnakerSDK/file/1093743440079
