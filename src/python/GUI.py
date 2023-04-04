@@ -46,7 +46,7 @@ CONTROL_PARAMS = {
     "field_strength": 1,
     "rolling_frequency": 10,
     "gamma": 90,
-    "memory": 50,
+    "memory": 15,
 }
 
 CAMERA_PARAMS = {
