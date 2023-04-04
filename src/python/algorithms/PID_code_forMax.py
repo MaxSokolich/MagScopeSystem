@@ -46,7 +46,7 @@ class PID_Algorithm:
 
     def control_trajectory(self, frame: np.ndarray, arduino: ArduinoHandler, robot_list, control_params):
         """
-        Used for real time closed loop feedback on the jetson nano to steer a microrobot along a
+        Used for real time closed loop feedback on the jetson  to steer a microrobot along a
         desired trajctory created with the right mouse button. Does so by:
             -defining a target position
             -displaying the target position
@@ -119,19 +119,19 @@ class PID_Algorithm:
                 
                 thetas = np.append(thetas,theta)#append theta to a list which we might want to limit to some number of entries
                 
-                if len(thetas) < Iframes:
+                if len(thetas) < self.Iframes:
                     #if we don't have Iframes frames yet, just sum up what we do have...
                     Itheta = np.sum(thetas)/len(thetas)##I think dividing by the length makes more sense since it's more
                     #like an average value rather than a sum, which should make it more consistent over time
                     Ithetas = np.append(Ithetas,Itheta)
                 else:
-                    Itheta = np.sum(thetas[-Iframes:len(thetas)])/Iframes
+                    Itheta = np.sum(thetas[-self.Iframes:len(thetas)])/self.Iframes
                     Ithetas = np.append(Ithetas,Itheta)
                 
-                if len(thetas) >= Dframes:
+                if len(thetas) >= self.Dframes:
                     #Dtheta = (thetas[-1]-thetas[-Dframes])/Dframes #I decided to removal the denominator so that all of 
                     #the Ks will be unitless and should be closer in magnitude to each other
-                    Dtheta = (thetas[-1]-thetas[-Dframes])
+                    Dtheta = (thetas[-1]-thetas[-self.Dframes])
                     Dthetas = np.append(Dthetas,Dtheta)
                 elif len(thetas)>1:
                     #if we don't yet have Dframes number of data points then
@@ -142,7 +142,7 @@ class PID_Algorithm:
                     Dtheta = 0#if we don't have enough frames to take the derivative
                     Dthetas = np.append(Dthetas,Dtheta)
 
-                deltaTheta = Kp*theta + Kd*Dtheta + Ki*Itheta #how much to change the angle of the B-field (whether this 
+                deltaTheta = self.Kp*theta + self.Kd*Dtheta + self.Ki*Itheta #how much to change the angle of the B-field (whether this 
                 #should be negated or not is unclear)
 
                 xfield_new2 = (self.B_vec[0]*np.cos(deltaTheta)-self.B_vec[1]*np.sin(deltaTheta))

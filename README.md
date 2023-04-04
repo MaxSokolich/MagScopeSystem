@@ -50,6 +50,8 @@ Code Specific:
         "https://github.com/FRC4564/Xbox"
         
 9) VSCode: https://github.com/JetsonHacksNano/installVSCode.git
+
+10) install arduino using jetsonhacks github and upload main.ino from src/arduino
     
 
 

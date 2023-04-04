@@ -5,10 +5,15 @@ Module containing the GUI class
 
 @authors: Max Sokolich, Brennan Gallamoza, Luke Halko, Trea Holley,
           Alexis Mainiero, Cameron Thacker, Zoe Valladares
-pix = 1936 x 1464
-maxframerate = 130
+pix = 1936 x 1464 mono
+maxframerate = 130 (actually ~60)
 exptime = 10us - 30s
 iamge buffer = 240 MB
+
+or 
+
+pix - 2448 x 2048 color
+maxframerate = 35 (actually 24)
 """
 import colorsys
 from queue import Empty

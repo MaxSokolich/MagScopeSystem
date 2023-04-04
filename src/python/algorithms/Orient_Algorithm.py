@@ -18,7 +18,7 @@ class Orient_Algorithm:
 
     def control_trajectory(self, frame: np.ndarray, arduino: ArduinoHandler, robot_list, control_params):
         """
-        Used for real time closed loop feedback on the jetson nano to steer a microrobot along a
+        Used for real time closed loop feedback on the jetson to steer a microrobot along a
         desired trajctory created with the right mouse button. Does so by:
             -defining a target position
             -displaying the target position
