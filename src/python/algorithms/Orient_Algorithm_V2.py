@@ -106,8 +106,8 @@ class Orient_Algorithm:
                         np.append(self.costheta_maps,costheta)
                         np.append(self.sintheta_maps,sintheta)
             
-                        costhetaNew = np.mean(self.costheta_maps)#take the average so that the mapped angle is robust to noise
-                        sinthetaNew = np.mean(self.sintheta_maps)
+                        costhetaNew = np.median(self.costheta_maps)#take the average, or median, so that the mapped angle is robust to noise
+                        sinthetaNew = np.median(self.sintheta_maps)
                         normFactor = costhetaNew**2 + sinthetaNew**2
                         costhetaNew = costhetaNew/normFactor
                         sinthetaNew = sinthetaNew/normFactor #this makes sure that the sin**2+cos**2 = 1 while not changing the angle itself
