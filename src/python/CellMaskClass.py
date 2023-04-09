@@ -128,7 +128,7 @@ class MAXS_SAM:
         cv2.destroyAllWindows()
 
 
-        cv2.imshow("final",self.final_mask)
+        cv2.imshow("final",cv2.vconcat([self.final_mask, cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)]))
 
         if cv2.waitKey(0) & 0xFF == ord('q'):
             cv2.imwrite("cellmask.png", self.final_mask)
