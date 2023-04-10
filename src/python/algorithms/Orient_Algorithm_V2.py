@@ -7,7 +7,14 @@
 #I changed the code so that instead of re-calculating the mapped angle, it saves all of them and takes an average. This
 #should allow for a lower memory to be used while not having to worry as much about noise. Also it means that it can 
 #update the magnetic field angle on every frame, once it initially captures memory number of frames, so it should be more
-#responsive. 
+#responsive. Although there is one tricky bit to this, and that's that since the velocity is an average over the last memory
+#number of frames, once a new target is chosen and a new B field is applied, it will think that the velcity has not responded
+#to the new field until memory number of frames has passed. This is why we only updated the rotation matrix every memory
+#number of frames, otherwise it will overcompensate. Since we are now averaging theta_map over a bunch of frames, it 
+#should average out this error. So long as memory is kept sufficiently small so that it's just large enough to overcome
+#the noise, then this shouldn't be an issue. I would guess that a rule of thumb would be to set memory to be about the 
+#number of frames required for the bot to move it's own size. If the stage is shaking or something like that, then it
+# needs to be larger obviously so that an accurate estimate of the true velocity can be found
 import cv2
 import numpy as np
 import time
