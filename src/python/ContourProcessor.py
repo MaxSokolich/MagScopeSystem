@@ -29,7 +29,7 @@ class ContourProcessor:
     '''
 
     def __init__(self,control_params: dict,use_cuda: bool=False, baseline_blur_img: str=DEFAULT_IMG):
-        self.kernel_size = 3
+        self.kernel_size = 21
         self.base_brightness = 0
         self.control_params = control_params
         self.baseline_blur = 0#self.calculate_blur(cv2.imread(baseline_blur_img), True)

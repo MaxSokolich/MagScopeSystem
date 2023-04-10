@@ -70,7 +70,7 @@ class Orient_Algorithm:
                     [0, 0, 0],
                     3,
                 )
-                if error < 10:
+                if error < self.control_params["arrival_thresh"]:
                     self.node += 1
 
     

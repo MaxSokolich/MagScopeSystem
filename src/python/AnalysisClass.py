@@ -76,7 +76,7 @@ class Analysis:
 
 
             Vel_list = []
-            Size_list= []
+            Size_list= [1]
             max_z = 0
             global_max_vel = 0
             for i, c in zip(range(len(self.robot_list)), color):
@@ -116,10 +116,10 @@ class Analysis:
                    
                     avg_area = round(bot.avg_area,3)
                     avg_dia = np.sqrt(4*avg_area/np.pi)
-                    if avg_area != 0:
-                        Size_list.append(avg_dia)
-                        b = ax[2].bar(i,avg_dia, color =c,label = "{}um".format(round(avg_dia,2)))
-                        ax[2].bar_label(b, label_type='center') 
+                    #if avg_area != 0:
+                    #    Size_list.append(avg_dia)
+                    #    b = ax[2].bar(i,avg_dia, color =c,label = "{}um".format(round(avg_dia,2)))
+                    #    ax[2].bar_label(b, label_type='center') 
 
 
                     #ADD VELOCITY PLOT

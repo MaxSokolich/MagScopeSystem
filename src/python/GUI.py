@@ -45,6 +45,7 @@ CONTROL_PARAMS = {
     "avg_bot_size": 5,
     "field_strength": 1,
     "rolling_frequency": 10,
+    "arrival_thresh": 50,
     "gamma": 90,
     "memory": 50,
 }
