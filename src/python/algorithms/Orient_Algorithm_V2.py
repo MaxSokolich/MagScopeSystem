@@ -90,7 +90,7 @@ class Orient_Algorithm:
                     [0, 0, 0],
                     3,
                 )
-                if error < 10:
+                if error < self.control_params["arrival_thresh"]:
                     self.node += 1
 
     
@@ -106,11 +106,12 @@ class Orient_Algorithm:
                     vd = np.linalg.norm(vel_bot)
                     bd = np.linalg.norm(self.B_vec)
 
-                    costheta = np.dot(vel_bot, self.B_vec) / (vd * bd)
-                    sintheta = (vel_bot[0] * self.B_vec[1] - vel_bot[1] * self.B_vec[0]) / (vd * bd)
-                    theta = np.arctan2(sintheta,costheta)
+                    if vd != 0 and bd != 0:
+                        costheta = np.dot(vel_bot, self.B_vec) / (vd * bd)
+                        sintheta = (vel_bot[0] * self.B_vec[1] - vel_bot[1] * self.B_vec[0]) / (vd * bd)
+                        theta = np.arctan2(sintheta,costheta)
                 
-
+                    
                     if not np.isnan(vd):
                         #this takes the average of cosine and sine, but I changed it to just average theta since that might make more sense
 #                         np.append(self.costheta_maps,costheta)
@@ -122,9 +123,10 @@ class Orient_Algorithm:
 #                         costhetaNew = costhetaNew/normFactor
 #                         sinthetaNew = sinthetaNew/normFactor #this makes sure that the sin**2+cos**2 = 1 while not changing the angle itself
 
-                        np.append(self.theta_maps,theta)
+                        self.theta_maps = np.append(self.theta_maps,theta)
+                
                         if len(self.theta_maps) > 150:
-                            self.theta_maps = self.theta_maps[-150:len(theta_maps)]#this makes sure that we only look at the latest 150 frames of data to keep it adaptable. It should be bigger if there's a lot of noise (slow bot) and smaller if its traj is well defined (fast bot) 
+                            self.theta_maps = self.theta_maps[-150:len(self.theta_maps)]#this makes sure that we only look at the latest 150 frames of data to keep it adaptable. It should be bigger if there's a lot of noise (slow bot) and smaller if its traj is well defined (fast bot) 
                         thetaNew = np.median(self.theta_maps)#take the average, or median, so that the mapped angle is robust to noise                        
                         self.T_R = np.array([[np.cos(thetaNew), -np.sin(thetaNew)], [np.sin(thetaNew), np.cos(thetaNew)]])
                      

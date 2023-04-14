@@ -5,7 +5,9 @@ reads all algoritgms from algorothm folder and assigns each one to the checkbox 
 import numpy as np
 from src.python.ArduinoHandler import ArduinoHandler
 from src.python.algorithms.Roll_Algorithm import Roll_Algorithm
-from src.python.algorithms.Orient_Algorithm import Orient_Algorithm
+from src.python.algorithms.Orient_Algorithm_V2 import Orient_Algorithm
+
+from src.python.algorithms.PID_code_forMax import PID_Algorithm
 from src.python.algorithms.MultiAgent_Algorithm import Multi_Agent_Algorithm
 
 
@@ -52,7 +54,7 @@ class AlgorithmHandler:
     def __init__(self):
         #every time middle mouse button is pressed, it will reinitiate the following classes
         self.Roll_Robot = Roll_Algorithm()
-        self.Orient_Robot = Orient_Algorithm()
+        self.Orient_Robot = PID_Algorithm()#Orient_Algorithm()
         self.Multi_Agent_Robot = Multi_Agent_Algorithm()
         
 

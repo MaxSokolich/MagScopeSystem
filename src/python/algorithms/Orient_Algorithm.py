@@ -70,6 +70,7 @@ class Orient_Algorithm:
                     [0, 0, 0],
                     3,
                 )
+                
                 if error < self.control_params["arrival_thresh"]:
                     self.node += 1
 
@@ -78,12 +79,8 @@ class Orient_Algorithm:
                 bot = self.robot_list[-1]
                 if len(bot.velocity_list) % self.control_params["memory"] == 0:
                     # only update every memory frames
-
-
                     vx = np.mean(np.array([v.x for v in bot.velocity_list[-self.control_params["memory"]:]]))
                     vy = np.mean(np.array([v.y for v in bot.velocity_list[-self.control_params["memory"]:]]))
-                    
-                    
                     
                     vel_bot = np.array([vx, vy])  # current velocity of self propelled robot
                     vd = np.linalg.norm(vel_bot)
@@ -130,6 +127,7 @@ class Orient_Algorithm:
                 time.time()-self.start,
                 "Orient",
             )
+                
             arduino.send(typ,input1,input2,input3)
 
             

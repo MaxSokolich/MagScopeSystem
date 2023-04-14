@@ -117,30 +117,30 @@ class PID_Algorithm:
                 sintheta = (vel_bot[0] * target_vecNorm[1] - vel_bot[1] * target_vecNorm[0]) / (vd)
                 theta = np.arctan2(sintheta,costheta) #the angle between the bot's traj and the target vector
                 
-                thetas = np.append(thetas,theta)#append theta to a list which we might want to limit to some number of entries
+                self.thetas = np.append(self.thetas,theta)#append theta to a list which we might want to limit to some number of entries
                 
-                if len(thetas) < self.Iframes:
+                if len(self.thetas) < self.Iframes:
                     #if we don't have Iframes frames yet, just sum up what we do have...
-                    Itheta = np.sum(thetas)/len(thetas)##I think dividing by the length makes more sense since it's more
+                    Itheta = np.sum(self.thetas)/len(self.thetas)##I think dividing by the length makes more sense since it's more
                     #like an average value rather than a sum, which should make it more consistent over time
-                    Ithetas = np.append(Ithetas,Itheta)
+                    self.Ithetas = np.append(self.Ithetas,Itheta)
                 else:
-                    Itheta = np.sum(thetas[-self.Iframes:len(thetas)])/self.Iframes
-                    Ithetas = np.append(Ithetas,Itheta)
+                    Itheta = np.sum(self.thetas[-self.Iframes:len(self.thetas)])/self.Iframes
+                    self.Ithetas = np.append(self.Ithetas,Itheta)
                 
-                if len(thetas) >= self.Dframes:
+                if len(self.thetas) >= self.Dframes:
                     #Dtheta = (thetas[-1]-thetas[-Dframes])/Dframes #I decided to removal the denominator so that all of 
                     #the Ks will be unitless and should be closer in magnitude to each other
-                    Dtheta = (thetas[-1]-thetas[-self.Dframes])
-                    Dthetas = np.append(Dthetas,Dtheta)
-                elif len(thetas)>1:
+                    Dtheta = (self.thetas[-1]-self.thetas[-self.Dframes])
+                    self.Dthetas = np.append(self.Dthetas,Dtheta)
+                elif len(self.thetas)>1:
                     #if we don't yet have Dframes number of data points then
                     #just compute the difference between the first and last 
-                    Dtheta = (thetas[-1]-thetas[0])
-                    Dthetas = np.append(Dthetas,Dtheta)
+                    Dtheta = (self.thetas[-1]-self.thetas[0])
+                    self.Dthetas = np.append(self.Dthetas,Dtheta)
                 else:
                     Dtheta = 0#if we don't have enough frames to take the derivative
-                    Dthetas = np.append(Dthetas,Dtheta)
+                    self.Dthetas = np.append(self.Dthetas,Dtheta)
 
                 deltaTheta = self.Kp*theta + self.Kd*Dtheta + self.Ki*Itheta #how much to change the angle of the B-field (whether this 
                 #should be negated or not is unclear)
@@ -186,7 +186,7 @@ class PID_Algorithm:
                 time.time()-self.start,
                 "Orient",
             )
-            print([typ,input1,input2,input3])
+           
             arduino.send(typ,input1,input2,input3)
 
             

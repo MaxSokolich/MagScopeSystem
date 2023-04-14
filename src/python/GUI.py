@@ -38,23 +38,23 @@ from src.python.TrackAll import AllTracker
 
 CONTROL_PARAMS = {
     "lower_thresh": np.array([0,0,0]),  #HSV
-    "upper_thresh": np.array([180,255,130]),  #HSV
+    "upper_thresh": np.array([180,255,95]),  #HSV
     "blur_thresh": 100,
     "initial_crop": 100,       #intial size of "screenshot" cropped frame 
     "tracking_frame": 1,            #cropped frame dimensions mulitplier
     "avg_bot_size": 5,
     "field_strength": 1,
     "rolling_frequency": 10,
-    "arrival_thresh": 50,
+    "arrival_thresh": 10,
     "gamma": 90,
     "memory": 15,
 }
 
 CAMERA_PARAMS = {
-    "resize_scale": 100, 
+    "resize_scale": 50, 
     "framerate": 24, 
-    "exposure": 10000, 
-    "Obj": 20}
+    "exposure": 32000, 
+    "Obj": 50}
 
 STATUS_PARAMS = {
     "rolling_status": 0,
