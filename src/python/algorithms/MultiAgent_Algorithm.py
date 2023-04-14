@@ -15,7 +15,7 @@ class Multi_Agent_Algorithm:
         self.alpha=None
     
     def control_trajectory(self, frame: np.ndarray, arduino: ArduinoHandler, robot_list, control_params):
-        """
+        """_
         apply mutli agent algorithm from paper. 
         The idea is you click on a robot with left mouse button. 
         Then you click on a goal position with right mouse button.
@@ -25,14 +25,42 @@ class Multi_Agent_Algorithm:
 
         execution tree:
                     Custom2DTracker.main()  --->  AlgorithmHandler.run()  --->  Multi_Agent_Algorithm.control_trajectory()
-                
         Args:
             None
         Returns:
             action commands to be sent to arduino. these will be typ 1 commands
+
+            step1: loop through freqencies 1-20 (5 seconds for each) and calculate speeds for each frequency
+            step2: choose 3 frequencies (2,10,28 say). construct matrix A
+            step3: apply algorithm / find t vector
         """
         self.robot_list = robot_list
         self.control_params = control_params
+
+        #step1
+        
+        for i in range(1,20):
+            
+            typ = 1
+            input1 = 0 #alpha angle
+            input2 = i #rolling frequency
+            input3 = self.control_params["gamma"] #should be 90
+
+            robot1_pos0 = self.robot_list.position_list[0]
+            robot2_pos0 = self.robot_list.position_list[1]
+            robot3_pos0 = self.robot_list.position_list[2]
+        
+            arduino.send(typ,input1,input2,input3)
+
+            velocity = 0
+            time.sleep(5) 
+
+            robot1_pos1 = self.robot_list.position_list[0]
+            robot2_pos1 = self.robot_list.position_list[1]
+            robot3_pos1 = self.robot_list.position_list[2]
+
+            
+           
 
 
         current_positions = []  #create a list of every selected bots current position
@@ -44,9 +72,7 @@ class Multi_Agent_Algorithm:
             current_positions.append(pos)
             goal_positions.append(goal)
 
-           
-
-        
+    
         #generate the action
         for f in self.frequencies:
             t1 = -1 * np.sum((np.array([position[0] for position in current_positions]) - np.array([position[0] for position in goal_positions])) *np.array(f))
@@ -60,9 +86,7 @@ class Multi_Agent_Algorithm:
             self.alpha = np.arctan2(t2,t1)
             application_time = np.sqrt(t1**2+t2**2)  #best way to apply?
             frequency = f        
-          
-
-        
+           
             #apply the action 
             typ = 1
             input1 = self.alpha

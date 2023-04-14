@@ -12,9 +12,9 @@ class MAXS_SAM:
         #create SAM object
         print("Loading SAM ...")
         
-        sam_checkpoint = "/Users/bizzarohd/Desktop/segment-anything/sam_vit_h_4b8939.pth"
+        sam_checkpoint = "/home/max/Desktop/sam_vit_h_4b8939.pth"
         model_type = "vit_h"
-        device = "cpu"
+        device = "cuda" #cpu
         sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
         sam.to(device=device)
 
@@ -137,6 +137,6 @@ class MAXS_SAM:
 
 
 if __name__ == "__main__":
-    file = "/Users/bizzarohd/Desktop/Screen Shot 2023-04-08 at 2.28.23 PM.png"
+    file = "/home/max/Desktop/MagScopeSystem/src/imgs/First_Frame.jpg"
     detector = MAXS_SAM()
     detector.main(file)
