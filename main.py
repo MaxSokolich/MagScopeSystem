@@ -44,9 +44,11 @@ if __name__ == "__main__":
    
     #start gui mainwindow
     asyncio.run(gui.main())
+    #gui.main()
  
 
  #white [0,0,200]-> [180,255,255]
  #black [0,0,0] -> [180,255,30]
  #hematite [0,0,90] -> [180,25,180] 
+ #gfp [35, 100, 100] -> [75, 255, 255]
     

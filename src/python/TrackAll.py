@@ -219,11 +219,17 @@ class AllTracker:
 
             lower = self.control_params["lower_thresh"]
             upper = self.control_params["upper_thresh"]
-            thresh = self.control_params["tracking_frame"]* 10
+            thresh = self.control_params["tracking_frame"] * 10
             
             
+           
+            #contours, blur = self.cp.get_contours(frame, self.control_params)
 
-            contours, blur = self.cp.get_contours(frame, self.control_params)
+            blur = 0
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            mask = cv2.inRange(hsv, lower, upper)
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
             
             for cnt in contours:
                 area = cv2.contourArea(cnt)* (1/self.pix_2metric**2)

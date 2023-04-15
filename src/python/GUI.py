@@ -112,14 +112,14 @@ class GUI:
 
         #update sensor process/queue
         self.sensor = None
-        self.sense_q = multiprocessing.Queue()
+        self.sense_q = multiprocessing.Queue(100)
         self.sense_q.cancel_join_thread()
         self.checksensor = None
         #self.main_window.after(10, self.CheckSensorPoll, self.sense_q)
 
         #update joystick process/queue
         self.joystick = None
-        self.joystick_q =  multiprocessing.Queue()
+        self.joystick_q =  multiprocessing.Queue(100)
         self.joystick_q.cancel_join_thread()
         self.checkjoy = None
         #self.main_window.after(10, self.CheckJoystickPoll, self.joystick_q)
