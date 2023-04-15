@@ -21,7 +21,7 @@ from src.python.ArduinoHandler import ArduinoHandler
 from src.python.FPSCounter import FPSCounter
 from src.python.AlgorithmHandler  import AlgorithmHandler 
 
-import EasyPySpin
+#import EasyPySpin
 import warnings
 
 warnings.filterwarnings("error")
@@ -583,7 +583,8 @@ class Tracker:
             params = {"arduino": arduino, "frame":frame}
             cv2.setMouseCallback("im", self.mouse_points, params)
 
-        
+
+
             self.curr_frame = frame
             if not success or frame is None:
                 self.textbox.insert(END,"No more frames...\n")

@@ -36,6 +36,14 @@ from src.python.TrackAll import AllTracker
 
 # with jetson orin, cam can get up to 35 fps
 
+PID_PARAMS = {
+    "Iframes": 100,
+    "Dframes": 10,
+    "Kp": 0.1,
+    "Ki": 0.01,
+    "Kd": 0.01,
+}
+
 CONTROL_PARAMS = {
     "lower_thresh": np.array([0,0,0]),  #HSV
     "upper_thresh": np.array([180,255,95]),  #HSV
@@ -48,6 +56,7 @@ CONTROL_PARAMS = {
     "arrival_thresh": 10,
     "gamma": 90,
     "memory": 15,
+    "PID_params": PID_PARAMS,
 }
 
 CAMERA_PARAMS = {
@@ -60,6 +69,7 @@ STATUS_PARAMS = {
     "rolling_status": 0,
     "orient_status": 0,
     "multi_agent_status": 0,
+    "PID_status": 0,
     "algorithm_status": False,
     "record_status": False,
 }
@@ -75,6 +85,8 @@ MAGNETIC_FIELD_PARAMS = {
     "NegativeY": 0,
     "NegativeX": 0,
 }
+
+
 
 class GUI:
     """
@@ -160,7 +172,6 @@ class GUI:
             fg= 'white'
         )
 
-        
         closed_loop_params_button = Button(
             master,
             text="Edit Control Params",
@@ -190,6 +201,22 @@ class GUI:
             bg = 'cyan',
             fg= 'black'
         )
+
+        pid_params_button = Button(
+            master,
+            text="Edit PID Params",
+            command=self.edit_pid_params,
+            height=1,
+            width=18,
+            bg = 'black',
+            fg= 'white'
+        )
+
+        closed_loop_params_button.grid(row=0, column=0)
+        cam_params_button.grid(row=1, column=0)
+        acoustic_params_button.grid(row=2, column=0)
+        pid_params_button.grid(row=2,column=3)
+
 
         #VIDEO RECORD FRAME
         self.video_record_frame = Frame(master = master)
@@ -305,9 +332,7 @@ class GUI:
         )
 
         cuda_button.var = cuda_var
-        
-       
-
+    
         savepickle_box.grid(row=0, column=0)
         cuda_button.grid(row=1, column=0)
        
@@ -414,10 +439,6 @@ class GUI:
         #6 GUI MAINFRAME: OTHER
         Label(master, text="---Robot List---").grid(row=0, column=4)
         
-        
-        closed_loop_params_button.grid(row=0, column=0)
-        cam_params_button.grid(row=1, column=0)
-        acoustic_params_button.grid(row=2, column=0)
 
         
         coil_joystick_button.grid(row=0, column=3,rowspan =1)
@@ -630,6 +651,7 @@ class GUI:
             CONTROL_PARAMS["avg_bot_size"] = int(avg_bot_size_slider.get())
             CONTROL_PARAMS["field_strength"] = float(field_strength_slider.get())
             CONTROL_PARAMS["rolling_frequency"] = int(rolling_freq_slider.get())
+            CONTROL_PARAMS["arrival_thresh"] = int(arrival_thresh_slider.get())
             CONTROL_PARAMS["gamma"] = int(gamma_slider.get())
             CONTROL_PARAMS["memory"] = int(memory_slider.get())
 
@@ -643,6 +665,7 @@ class GUI:
         tracking_frame = DoubleVar()
         field_strength = DoubleVar()
         rolling_frequency = DoubleVar()
+        arrival_thresh = DoubleVar()
         gamma = DoubleVar()
         memory = DoubleVar()
 
@@ -720,6 +743,19 @@ class GUI:
             orient=HORIZONTAL,
             command=update_loop_slider_values,
         )
+        arrival_thresh_slider = Scale(
+            master=window3,
+            label="Arrival Threshold",
+            from_=1,
+            to=50,
+            digits=1,
+            resolution=1,
+            variable=arrival_thresh,
+            width=20,
+            length=200,
+            orient=HORIZONTAL,
+            command=update_loop_slider_values,
+        )
         gamma_slider = Scale(
             master=window3,
             label="gamma",
@@ -753,6 +789,7 @@ class GUI:
         avg_bot_size_slider.set(CONTROL_PARAMS["avg_bot_size"])
         field_strength_slider.set(CONTROL_PARAMS["field_strength"])
         rolling_freq_slider.set(CONTROL_PARAMS["rolling_frequency"])
+        arrival_thresh_slider.set(CONTROL_PARAMS["arrival_thresh"])
         gamma_slider.set(CONTROL_PARAMS["gamma"])
         memory_slider.set(CONTROL_PARAMS["memory"])
 
@@ -764,6 +801,7 @@ class GUI:
         avg_bot_size_slider.pack()
         field_strength_slider.pack()
         rolling_freq_slider.pack()
+        arrival_thresh_slider.pack()
         gamma_slider.pack()
         memory_slider.pack()
 
@@ -864,7 +902,8 @@ class GUI:
         exposure_slider.pack()
         obj_slider.pack()
 
-    
+
+
     
     def edit_acoustic_params(self):
         """
@@ -987,7 +1026,118 @@ class GUI:
         window5.protocol("WM_DELETE_WINDOW",EXIT)
     
 
+    def edit_pid_params(self):
+        """
+        Creates a new window for Window Size, Frame Rate, exposure, and
+        (Whatever Object slider does) The new window is defined, initialized,
+        and opened when cam_params_button button is clicked
 
+        Args:
+            None
+
+        Returns:
+            None
+        """
+        window6 = Toplevel(self.main_window)
+        window6.title("PID Params")
+
+        def update_pid_slider_values(event):
+            """
+            Constantly updates camera_params when the sliders are used.
+
+            Params:
+                event
+
+            Returns:
+                None
+            """
+
+            PID_PARAMS["Iframes"] = int(Iframes_slider.get())
+            PID_PARAMS["Dframes"] = int(Dframes_slider.get())
+            PID_PARAMS["Kp"] = int(Kp_slider.get())
+            PID_PARAMS["Ki"] = int(Ki_slider.get())
+            PID_PARAMS["Kd"] = int(Kd_slider.get())
+
+            self.main_window.update()
+
+        Iframes = DoubleVar()
+        Dframes = DoubleVar()
+        Kp = DoubleVar()
+        Ki = DoubleVar()
+        Kd = DoubleVar()
+
+        Iframes_slider = Scale(
+            master=window6,
+            label="Iframes",
+            from_=1,
+            to=100,
+            resolution=1,
+            variable=Iframes,
+            width=20,
+            length=200,
+            orient=HORIZONTAL,
+            command=update_pid_slider_values,
+        )
+        Dframes_slider = Scale(
+            master=window6,
+            label="Dframes",
+            from_=1,
+            to=100,
+            resolution=1,
+            variable=Dframes,
+            width=20,
+            length=200,
+            orient=HORIZONTAL,
+            command=update_pid_slider_values,
+        )
+        Kp_slider = Scale(
+            master=window6,
+            label="Kp",
+            from_=1,
+            to=100,
+            resolution=1,
+            variable=Kp,
+            width=20,
+            length=200,
+            orient=HORIZONTAL,
+            command=update_pid_slider_values,
+        )
+        Ki_slider = Scale(
+            master=window6,
+            label="Ki",
+            from_=1,
+            to=100,
+            resolution=1,
+            variable=Ki,
+            width=20,
+            length=200,
+            orient=HORIZONTAL,
+            command=update_pid_slider_values,
+        )
+        Kd_slider = Scale(
+            master=window6,
+            label="Kd",
+            from_=1,
+            to=100,
+            resolution=1,
+            variable=Kd,
+            width=20,
+            length=200,
+            orient=HORIZONTAL,
+            command=update_pid_slider_values,
+        )
+
+        Iframes_slider.set(PID_PARAMS["Iframes"])
+        Dframes_slider.set(PID_PARAMS["Dframes"])
+        Kp_slider.set(PID_PARAMS["Kp"])
+        Ki_slider.set(PID_PARAMS["Ki"])
+        Kd_slider.set(PID_PARAMS["Kd"])
+
+        Iframes_slider.pack()
+        Dframes_slider.pack()
+        Kp_slider.pack()
+        Ki_slider.pack()
+        Kd_slider.pack()
 
 
     def record(self):

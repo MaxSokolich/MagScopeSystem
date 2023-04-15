@@ -31,13 +31,13 @@ class PID_Algorithm:
 
         self.B_vec = np.array([1,0])
         self.T_R = 1
-        
-        self.Iframes = 100 #add slider adjustment
-        self.Dframes = 10 #add slider adjustment
-        
+
         self.thetas=np.array([])
         self.Ithetas=np.array([])
         self.Dthetas=np.array([])
+        
+        self.Iframes = 100 #add slider adjustment
+        self.Dframes = 10 #add slider adjustment
         
         self.Kp = 0.1 #add slider adjustment
         self.Ki = 0.01 #add slider adjustment
@@ -63,6 +63,14 @@ class PID_Algorithm:
         """
         self.robot_list = robot_list
         self.control_params = control_params
+        
+        self.pid_params = self.control_params["PID_params"]
+        self.Iframes = self.pid_params["Iframes"]
+        self.Dframes = self.pid_params["Dframes"]
+        self.Kp = self.pid_params["Kp"]
+        self.Ki = self.pid_params["Ki"]
+        self.Kd = self.pid_params["Kd"]
+
 
         if len(self.robot_list[-1].trajectory) > 1:
             #logic for arrival condition
