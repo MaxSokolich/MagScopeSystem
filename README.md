@@ -8,6 +8,7 @@ These setups include:
 2) 3D UV LED array
 3) Acoustic Piezoelectric Transducers
 4) 2D/3D Magnetic Tweezers
+5) Electro-Osmotic Pumps using Copper Tape
 
 # To Add:
 Overall:
@@ -17,6 +18,11 @@ Overall:
 - Continue on Bugs.
 - Custom Microscope and Coil Files
 
+**MagScope Electrical System Components** 
+![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/src/imgs/MagScopeBox2.png?raw=true)
+
+**MagScope Control GUI**
+![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/src/imgs/MicrorobotTrackingGui.png?raw=true)
 
 Code Specific:
 -test 3D tracking, add Z position, improve z tracking, figure out blur with new hsv 
@@ -58,8 +64,7 @@ Code Specific:
     
 
 
-**MagScope Electrical System Components** 
-![alt text](https://github.com/MaxSokolich/MagScopeSystem/blob/main/src/imgs/MagScopeBox2.png?raw=true)
+
 
 **Example Analysis**
 --Example analysis plot from custom tracking algorithm. Displays selected robot trajectories, individial robot velocties and robot sizes--

@@ -11,7 +11,7 @@ from src.python.Velocity import Velocity
 from src.python.ContourProcessor import ContourProcessor
 import time 
 
-#import EasyPySpin
+import EasyPySpin
 
 class AllTracker:
     def __init__(
