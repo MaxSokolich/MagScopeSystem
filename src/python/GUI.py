@@ -295,10 +295,23 @@ class GUI:
         )
         AlgoMulti_box.var = AlgoMulti
 
+        AlgoPID = IntVar(master=master, name="pid")
+        AlgoPID_box = Checkbutton(
+            master=self.algorithm_frame, 
+            name = "pid",
+            text="PID", 
+            command = self.coil_PID,
+            variable=AlgoPID, 
+            onvalue=1, 
+            offvalue=0
+        )
+        AlgoPID_box.var = AlgoPID
+
 
         AlgoRoll_box.grid(row=1, column=0)
         AlgoOrient_box.grid(row=2, column=0)
         AlgoMulti_box.grid(row=3, column=0)
+        AlgoPID_box.grid(row=4, column=0)
 
 
 
@@ -494,7 +507,7 @@ class GUI:
 
     def coil_roll(self):
         """
-        Flips the state of Rolling_Status to True when "Rotate On" is clicked
+        Flips the state of Rolling_Status to True when "Roll" is clicked
 
         Args:
             None
@@ -505,7 +518,7 @@ class GUI:
         
     def coil_orient(self):
         """
-        Flips the state of Orient_Status to True when "Orient On" is clicked
+        Flips the state of Orient_Status to True when "Orient" is clicked
 
         Args:
             None
@@ -516,7 +529,7 @@ class GUI:
 
     def coil_multi_agent(self):
         """
-        Flips the state of "multi_agent_status" to True when "Orient On" is clicked
+        Flips the state of "multi_agent_status" to True when "Multi-Agent" is clicked
 
         Args:
             None
@@ -524,6 +537,17 @@ class GUI:
             None
         """
         STATUS_PARAMS["multi_agent_status"] = self.get_widget(self.algorithm_frame, "multi").var.get()
+
+    def coil_PID(self):
+        """
+        Flips the state of "pid_status" to True when "PID is clicked
+
+        Args:
+            None
+        Returns:
+            None
+        """
+        STATUS_PARAMS["PID_status"] = self.get_widget(self.algorithm_frame, "pid").var.get()
 
 
     def run_algo(self):
