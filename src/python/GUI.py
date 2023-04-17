@@ -24,6 +24,7 @@ from typing import Union
 from tkinter import *
 from tkinter import Tk
 from tkinter import filedialog
+
 from src.python.AcousticClass import AcousticClass
 from src.python.HallEffect import HallEffect
 from src.python.Custom2DTracker import Tracker
@@ -112,15 +113,15 @@ class GUI:
 
         #update sensor process/queue
         self.sensor = None
-        self.sense_q = multiprocessing.Queue(100)
-        self.sense_q.cancel_join_thread()
+        self.sense_q = multiprocessing.Queue(1)
+        #self.sense_q.cancel_join_thread()
         self.checksensor = None
         #self.main_window.after(10, self.CheckSensorPoll, self.sense_q)
 
         #update joystick process/queue
         self.joystick = None
-        self.joystick_q =  multiprocessing.Queue(100)
-        self.joystick_q.cancel_join_thread()
+        self.joystick_q =  multiprocessing.Queue(1)
+        #self.joystick_q.cancel_join_thread()
         self.checkjoy = None
         #self.main_window.after(10, self.CheckJoystickPoll, self.joystick_q)
           
@@ -130,7 +131,6 @@ class GUI:
         self.external_file = None
 
         
-    
         #define instance of acoustic module
         self.AcousticModule = AcousticClass()
         self.AcousticModule.dp_activate()
@@ -1345,7 +1345,6 @@ class GUI:
         try:
             joy_array = j_queue.get(0) # [typ,input1,input2,input3]
             typ = joy_array[0]
-            
             
             #Send arduino signal
             if typ == 1:

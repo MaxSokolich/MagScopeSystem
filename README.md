@@ -54,13 +54,18 @@ Code Specific:
 
 7) need to add "self.cam.PixelFormat.SetValue(PySpin.PixelFormat_BGR8)" above self.cam.BeginAcquistion() line in $ .local/lib/python3.8/site-packages/EasyPySpin.videocapture.py
 
-8) need to install xboxdrv and jstest-gtk for joystick implimentation 
+8) need to change in lib/python3.8/site-packages/adafruit_blinka/microcontroller/tegra/t234/pin.py from "GPIO.setmode(GPIO.TEGRA_SOC)" to GPIO.setmode(GPIO.BOARD)
+    - otherwise the acoustic class and hall effect class will clash
+
+9) need to install xboxdrv and jstest-gtk for joystick implimentation 
         $ sudo apt-get install -y xboxdrv         
         "https://github.com/FRC4564/Xbox"
         
-9) VSCode: https://github.com/JetsonHacksNano/installVSCode.git
+10) VSCode: https://github.com/JetsonHacksNano/installVSCode.git
 
-10) install arduino using jetsonhacks github and upload main.ino from src/arduino
+11) optional: install arduino using jetsonhacks github and upload main.ino from src/arduino
+
+
     
 
 
