@@ -69,7 +69,7 @@ try:
                 bound[0] = VAL
             elif VAL > bound[1]:
                 bound[1] = VAL
-            
+               
             m = interp1d([bound[0],bound[1]],[-100,100])
             mapped_field = int(m(VAL))
             return mapped_field
@@ -88,10 +88,6 @@ try:
             negX = self.createBounds() #create bounds for negative X EM sensor
             while not self.exit.is_set():
                 
-                #print("\nsensor1:", self.readFIELD(self.chanPosY, posY))
-                #print("sensor2: ",self.readFIELD(self.chanPosX, posX))
-                #print("sensor3: ",self.readFIELD(self.chanNegY, negY))
-                #print("sensor4: ",self.readFIELD(self.chanNegX, negX))
 
                 s1 = self.readFIELD(self.chanPosY, posY)
                 s2 = self.readFIELD(self.chanPosX, posX)
@@ -101,8 +97,7 @@ try:
                 #print(s1,s2,s3,s4)
                 sense_q.put([s1,s2,s3,s4])
 
-                #value_array = sense_q.get(0)
-                #print(value_array)
+    
 
             print(" -- Sensor Process Terminated -- ")
 
@@ -132,18 +127,11 @@ except Exception:
 """
 if __name__ == "__main__":
     Sense = HallEffect()
-    sense_q = Queue()
-    sense_q.cancel_join_thread()
-    sense_q.put([3,6])
-    time.sleep(2)
-    sense_q.put([1])
-    time.sleep(2)
-    value_array = sense_q.get(0)
-    print(value_array)
+   
 
     
-    #
-    #Sense.showFIELD(sense_q)
+    
+    Sense.showFIELD(None)
 
 
 """
