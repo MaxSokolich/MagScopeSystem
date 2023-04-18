@@ -1,6 +1,10 @@
 import numpy as np
 import time as time
 from src.python.ArduinoHandler import ArduinoHandler
+from src.python.RobotClass import Robot
+from src.python.Velocity import Velocity
+
+
 
 
 class Multi_Agent_Algorithm:
@@ -13,11 +17,19 @@ class Multi_Agent_Algorithm:
 
         self.alpha=None
         
-        self.A_MATRIX = []
+        self.A_MATRIX = []  #matrix list to store velocites at each freqiencu. it contains sublists of the average velocity of each microbot at freqnecy n. 
+                            # example for 3 robots and 4 frequencies:   
+                            #             [ [robot1_v@freq1, robot2_v@freq1, robot3_v@freq1]
+                            #               [robot1_v@freq2, robot2_v@freq2, robot3_v@freq2]
+                            #               [robot1_v@freq3, robot2_v@freq3, robot3_v@freq3]
+                            #               [robot1_v@freq4, robot2_v@freq4, robot3_v@freq4]
+                            #                                                               ]
 
         self.freq = 1    #initlize the first freq at 1
         self.count = 0   #initilze frame counter at 0
         self.N = 50      #number of frames to calulate velocities at each frequencies
+        self.max_freq = 20   #maximum frequency to find velcoities to
+        self.step1 = True
 
     
     
@@ -45,7 +57,7 @@ class Multi_Agent_Algorithm:
         #step1: loop through frequencies and get velocities at each frequency
         #apply output action
         typ = 1
-        input1 = 0
+        input1 = (self.freq*90) *0.017 #angle radians
         input2  = self.freq
         input3 = self.control_params["gamma"] #should be 90
         arduino.send(typ,input1,input2,input3)
@@ -54,28 +66,37 @@ class Multi_Agent_Algorithm:
         self.count += 1 
         
         
-        if self.count == self.N:  
-            print(self.count)
+        if self.count == self.N and self.freq <= self.max_freq and self.step1 == True:  
             """
             once N frames have passed, create vels list to store the new vels for each robot.
             then, append this list to a global list and increment the frequency.
             """
+            print("added velcoites from each bot at {} Hz".format(self.freq))
             vels_list = []
             for bot in range(len(self.robot_list)):
+                
                 
                     bot_vel  = np.array([v.mag for v in self.robot_list[bot].velocity_list[-self.N:]])   # grab the past 50 frames worth instant velcoties
                     bot_vel_avg = round(sum(bot_vel) / len(bot_vel),2)                               # take the avg of these
 
-                    vels_list = bot_vel_avg
+                    vels_list.append(bot_vel_avg)
+          
             
             self.A_MATRIX.append(vels_list) #add this iterations of velocities to new list
             
             self.freq += 1  #increase frequency and redo
             self.count = 0  #reset frame count for the next iteration of frequencies.
-
-
         
+        if self.freq == self.max_freq:
+            self.step1 = False
+            print(self.A_MATRIX, "\n")
+            self.freq = 0
+            self.alpha = 0
+
         #step 2: optimize or choose A_MATRIX PRIME
+
+        #print(self.count, self.A_MATRIX, "\n")
+
 
         #setp 3: find t (below...)
 
@@ -115,3 +136,72 @@ class Multi_Agent_Algorithm:
             input3 = self.control_params["gamma"] #should be 90
         
             arduino.send(typ,input1,input2,input3)'''
+
+
+
+
+"""
+
+import sys
+sys.path.insert(1, "/home/max/Desktop/MagScopeSystem/src/python")
+from ArduinoHandler import ArduinoHandler
+from Velocity import Velocity
+from typing import List, Tuple, Union
+
+
+class Robot:
+    def __init__(self):
+        self.velocity_list = []  # stores bot velocities per frame
+
+    def add_velocity(self, velocity: Velocity):
+        self.velocity_list.append(velocity)
+
+
+if __name__ == "__main__":
+
+    
+    control_params = {
+        "lower_thresh": np.array([0,0,0]),  #HSV
+        "upper_thresh": np.array([180,255,95]),  #HSV
+        "blur_thresh": 100,
+        "initial_crop": 100,       #intial size of "screenshot" cropped frame 
+        "tracking_frame": 1,            #cropped frame dimensions mulitplier
+        "avg_bot_size": 5,
+        "field_strength": 1,
+        "rolling_frequency": 10,
+        "arrival_thresh": 10,
+        "gamma": 90,
+        "memory": 15,
+        "PID_params": None,
+    }
+
+
+
+    Multi_Agent_Robot = Multi_Agent_Algorithm()
+    arduino = ArduinoHandler()
+    arduino.connect("/dev/ttyACM0")
+
+    frame = 0
+    robot_list = []
+
+    robot1 = Robot()
+    robot2 = Robot()
+
+    robot_list.append(robot1)
+    robot_list.append(robot2)
+    while True: #simulate 200 frames
+
+        #update each robot with random velocity
+        for i in range(len(robot_list)):
+            bot = robot_list[i]
+            velx = np.random.randint(5)
+            vely = np.random.randint(5)
+            vel = Velocity(velx, vely, 0)
+            bot.add_velocity(vel)
+
+
+        Multi_Agent_Robot.control_trajectory(frame, arduino, robot_list, control_params)
+        
+        frame+=1
+
+        time.sleep(1)"""
