@@ -1,14 +1,18 @@
 https://github.com/facebookresearch/segment-anything/blob/main/notebooks/automatic_mask_generator_example.ipynb
 
 
-# MagScopeSystem
-a repository consisting of all scripts neccesary to use the mag scope system. The magscope system is an edge computing platform and custom device capable of a variety of microrobotic manipulation operations. The device consists of a single board computer (Jetson Xavier NX) with a python GUI used to control various manipulation setups. 
-These setups include:
+# MagScope System
+a repository consisting of all scripts neccesary to use the mag scope system. The magscope system is an edge computing platform and custom device capable of a variety of microrobotic manipulation operations. The device consists of a single board computer (Jetson AGX Orin) with a python GUI used to control various manipulation setups. The system is named MagScope which combines the words magnetic and microscope. 
+
+These manipulation setups include:
 1) 3D Helmholtz Coils
 2) 3D UV LED array
 3) Acoustic Piezoelectric Transducers
 4) 2D/3D Magnetic Tweezers
 5) Electro-Osmotic Pumps using Copper Tape
+
+The overall cost of the system excluding a manipulation setup is around $6000 (see CAD_MODELS/Bill_of_Materials.txt) as opposed to $28,000 from a company named MangetobotIx out of Switzerland. Including their magnetic manipulation setup, the total cost for there system is $60,228. This number still excludes a microscope. 
+
 
 # To Add:
 Overall:
