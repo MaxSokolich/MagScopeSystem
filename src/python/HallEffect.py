@@ -50,8 +50,8 @@ try:
                 list of min max bounds
             """
             #call this in readField maybe
-            neg_max = float("inf")
-            pos_max = -float("inf")
+            neg_max = float(100000001)
+            pos_max = -float(100000000)
             return [neg_max, pos_max]
         
         def readFIELD(self, channel,bound):

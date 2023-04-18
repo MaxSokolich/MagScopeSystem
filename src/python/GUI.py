@@ -47,7 +47,7 @@ PID_PARAMS = {
 
 CONTROL_PARAMS = {
     "lower_thresh": np.array([0,0,0]),  #HSV
-    "upper_thresh": np.array([180,255,95]),  #HSV
+    "upper_thresh": np.array([180,255,140]),  #HSV
     "blur_thresh": 100,
     "initial_crop": 100,       #intial size of "screenshot" cropped frame 
     "tracking_frame": 1,            #cropped frame dimensions mulitplier
@@ -63,7 +63,7 @@ CONTROL_PARAMS = {
 CAMERA_PARAMS = {
     "resize_scale": 50, 
     "framerate": 24, 
-    "exposure": 32000, 
+    "exposure": 2000, 
     "Obj": 50}
 
 STATUS_PARAMS = {

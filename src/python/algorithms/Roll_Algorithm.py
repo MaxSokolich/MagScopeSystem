@@ -87,7 +87,6 @@ class Roll_Algorithm:
                 
         
             
-                
                 self.robot_list[-1].add_track(
                 error,
                 [robotx, roboty],
@@ -98,6 +97,6 @@ class Roll_Algorithm:
                 "rolling")
 
             
-            arduino.send(typ,input1,input2,input3)
+            #arduino.send(typ,input1,input2,input3)
 
             
