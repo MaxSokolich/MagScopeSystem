@@ -71,7 +71,7 @@ class AlgorithmHandler:
         if status_params["rolling_status"] == 1:
             self.Roll_Robot.control_trajectory(frame, arduino, robot_list, control_params)
         
-        if status_params["PID_status"] == 1:
+        elif status_params["PID_status"] == 1:
             self.PID_Robot.control_trajectory(frame, arduino, robot_list, control_params)
         
         elif status_params["orient_status"] == 1:
