@@ -1,5 +1,4 @@
-https://github.com/facebookresearch/segment-anything/blob/main/notebooks/automatic_mask_generator_example.ipynb
-
+private repository: https://github.com/MaxSokolich/MagScopeSystem/
 
 # MagScope System
 a repository consisting of all scripts neccesary to use the mag scope system. The magscope system is an edge computing platform and custom device capable of a variety of microrobotic manipulation operations. The device consists of a single board computer (Jetson AGX Orin) with a python GUI used to control various manipulation setups. The system is named MagScope which combines the words magnetic and microscope. 
