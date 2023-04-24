@@ -27,13 +27,13 @@ class Multi_Agent_Algorithm:
 
         self.freq = 1    #initlize the first freq at 1
         self.count = 0   #initilze frame counter at 0
-        self.N = 50      #number of frames to calulate velocities at each frequencies
-        self.max_freq = 20   #maximum frequency to find velcoities to
-        self.step1 = True
+        self.N = 5      #number of frames to calulate velocities at each frequencies
+        self.max_freq = 2   #maximum frequency to find velcoities to
+        self.step1 = True   # boolean to define when we are in step1 or not (constructing A matrix)
 
     
     
-    def control_trajectory(self, frame: np.ndarray, arduino: ArduinoHandler, robot_list, control_params):
+    def control_trajectory(self, frame, arduino, robot_list, control_params):
         """
         apply mutli agent algorithm from paper. 
         The idea is you click on a robot with left mouse button. 
@@ -56,48 +56,66 @@ class Multi_Agent_Algorithm:
 
         #step1: loop through frequencies and get velocities at each frequency
         #apply output action
-        typ = 1
-        input1 = (self.freq*90) *0.017 #angle radians
-        input2  = self.freq
-        input3 = self.control_params["gamma"] #should be 90
-        arduino.send(typ,input1,input2,input3)
+        if self.step1 == True:
+            typ = 1
+            input1 = (self.freq*90) *0.017 #angle radians
+            input2  = self.freq
+            input3 = self.control_params["gamma"] #should be 90
+            arduino.send(typ,input1,input2,input3)
 
-        #incremient frame counter
-        self.count += 1 
+            #incremient frame counter
+            self.count += 1 
         
+            if self.count == self.N:  
+                """
+                once N frames have passed, create vels list to store the new vels for each robot.
+                then, append this list to a global list and increment the frequency.
+                """
+                print("added velcoites from each bot at {} Hz".format(self.freq))
+                vels_list = []
+                for bot in range(len(self.robot_list)):
+                        bot_vel  = np.array([v.mag for v in self.robot_list[bot].velocity_list[-self.N:]])   # grab the past 50 frames worth instant velcoties
+                        bot_vel_avg = round(sum(bot_vel) / len(bot_vel),2)                               # take the avg of these
+                        vels_list.append(bot_vel_avg)
+            
+                self.A_MATRIX.append(vels_list) #add this iterations of velocities to new list
+                
+                self.freq += 1  #increase frequency and redo
+                self.count = 0  #reset frame count for the next iteration of frequencies.
         
-        if self.count == self.N and self.freq <= self.max_freq and self.step1 == True:  
-            """
-            once N frames have passed, create vels list to store the new vels for each robot.
-            then, append this list to a global list and increment the frequency.
-            """
-            print("added velcoites from each bot at {} Hz".format(self.freq))
-            vels_list = []
-            for bot in range(len(self.robot_list)):
+            elif self.freq == self.max_freq+1: # stop training after max freq has been achieved
                 
-                
-                    bot_vel  = np.array([v.mag for v in self.robot_list[bot].velocity_list[-self.N:]])   # grab the past 50 frames worth instant velcoties
-                    bot_vel_avg = round(sum(bot_vel) / len(bot_vel),2)                               # take the avg of these
+                self.step1 = False
+                print(self.A_MATRIX, "\n")
+                self.freq = 0
+                self.alpha = 0
 
-                    vels_list.append(bot_vel_avg)
-          
-            
-            self.A_MATRIX.append(vels_list) #add this iterations of velocities to new list
-            
-            self.freq += 1  #increase frequency and redo
-            self.count = 0  #reset frame count for the next iteration of frequencies.
-        
-        if self.freq == self.max_freq:
-            self.step1 = False
-            print(self.A_MATRIX, "\n")
-            self.freq = 0
-            self.alpha = 0
+
+        print([typ, input1, input2, input3])
 
         #step 2: optimize or choose A_MATRIX PRIME
+        """
+        A in the form:
+        A =  [[v1(f1), v2(f1)], [v1(f2), v2(f2)]] 
+        A =  [[v1(f1), vj(f1)], [v1(fi), vj(fi)]] 
+        """
+        A_PRIME = []
+        for i in range(len(self.A_MATRIX)):
+            for j in range(len(self.A_MATRIX)):
+                ej = self.A_MATRIX[j]
+        
 
-        #print(self.count, self.A_MATRIX, "\n")
 
-
+        
+    
+        
+        """A_PRIME = [v1(f1), 0, v1(f2), 0, v1(f3), 0; 
+                    0   v1(f1), 0, v1(f2), 0, v1(f3); 
+                   v2(f1), 0, v2(f2), 0, v2(f3), 0; 
+                    0   v2(f1), 0, v2(f2), 0, v2(f3);
+                   v3(f1), 0, v3(f2), 0, v3(f3), 0; 
+                    0   v3(f1), 0, v3(f2), 0, v3(f3)]"""
+        
         #setp 3: find t (below...)
 
         '''
@@ -143,9 +161,11 @@ class Multi_Agent_Algorithm:
 """
 
 import sys
-sys.path.insert(1, "/home/max/Desktop/MagScopeSystem/src/python")
-from ArduinoHandler import ArduinoHandler
+p = "/Users/bizzarohd/Desktop/MagScopeSystem/src/python"
+sys.path.insert(1, p)
+
 from Velocity import Velocity
+from ArduinoHandler import ArduinoHandler
 from typing import List, Tuple, Union
 
 
@@ -157,9 +177,11 @@ class Robot:
         self.velocity_list.append(velocity)
 
 
+
+
+
 if __name__ == "__main__":
 
-    
     control_params = {
         "lower_thresh": np.array([0,0,0]),  #HSV
         "upper_thresh": np.array([180,255,95]),  #HSV
@@ -178,7 +200,7 @@ if __name__ == "__main__":
 
 
     Multi_Agent_Robot = Multi_Agent_Algorithm()
-    arduino = ArduinoHandler()
+    arduino = ArduinoHandler()    
     arduino.connect("/dev/ttyACM0")
 
     frame = 0
