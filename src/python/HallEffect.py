@@ -94,8 +94,8 @@ try:
                 s3 = self.readFIELD(self.chanNegY, negY)
                 s4 = self.readFIELD(self.chanNegX, negX)
 
-                print(s1,s2,s3,s4)
-                #sense_q.put([s1,s2,s3,s4])
+                #print(s1,s2,s3,s4)
+                sense_q.put([s1,s2,s3,s4])
 
     
 

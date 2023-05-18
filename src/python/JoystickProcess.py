@@ -33,6 +33,11 @@ class JoystickProcess():
     def handle_joystick(self, joystick_q):
         while not self.exit.is_set():
             
+            self.typ = 4
+            self.input1 = 0
+            self.input2 = 0
+            self.input3 = 0
+            
             # A Button --> Acoustic Module Toggle
             self.acoustic_status = self.joy.A()
 
@@ -42,7 +47,7 @@ class JoystickProcess():
                 self.input3 = 0
 
             #Right Joystick Function --> Roll
-            elif not self.joy.rightX() == 0 or not self.joy.rightY() == 0:
+            if not self.joy.rightX() == 0 or not self.joy.rightY() == 0:
                 Bxr = round(self.joy.rightX(),2)
                 Byr = round(self.joy.rightY(),2)
                     
@@ -55,7 +60,7 @@ class JoystickProcess():
                 
                 
             #Left Joystick Function --> Orient
-            elif not self.joy.leftX() == 0 or not self.joy.leftY() == 0:
+            if not self.joy.leftX() == 0 or not self.joy.leftY() == 0:
                 Bxl = round(self.joy.leftX(),2)
                 Byl = round(self.joy.leftY(),2)
                 self.typ = 2
@@ -65,44 +70,40 @@ class JoystickProcess():
 
 
             #Right Trigger Function --> Positive Z
-            elif self.joy.rightTrigger() > 0:
+            if self.joy.rightTrigger() > 0:
                 self.typ = 2
                 self.input3 = self.joy.rightTrigger()
             
             #Left Trigger Function --> Negative Z
-            elif self.joy.leftTrigger() > 0:
+            if self.joy.leftTrigger() > 0:
                 self.typ = 2
                 self.input3 = -self.joy.leftTrigger()
                 
                 
 
             #D-Pad --> Tweezer Quick Field
-            elif self.joy.dpadUp() != 0:
+            if self.joy.dpadUp() != 0:
                 self.typ = 3
                 self.input1 = 1 #Up
                 self.input2 = self.amplitude
-                self.input3 = 0
-            elif self.joy.dpadRight() != 0:
+             
+            if self.joy.dpadRight() != 0:
                 self.typ = 3
                 self.input1 = 2 #Right
                 self.input2 = self.amplitude
-                self.input3 = 0
-            elif self.joy.dpadDown() != 0:
+                
+            if self.joy.dpadDown() != 0:
                 self.typ = 3
                 self.input1 = 3 #Down
                 self.input2 = self.amplitude
-                self.input3 = 0
-            elif self.joy.dpadLeft() != 0:
+               
+            if self.joy.dpadLeft() != 0:
                 self.typ = 3
                 self.input1 = 4 #Left
                 self.input2 = self.amplitude
-                self.input3 = 0
                 
-            else:
-                self.typ = 4
-                self.input1 = 0
-                self.input2 = 0
-                self.input3 = 0
+                
+
             
             #update queue
             actions = [self.typ, self.input1, self.input2, self.input3, self.acoustic_status]
