@@ -18,7 +18,7 @@ try:
     from scipy.interpolate import interp1d
     from multiprocessing import Process, Queue, Event
     import time
-
+    
     class HallEffect:
         """
         Class for managing the Hall Effect sensors via i2c
@@ -94,8 +94,8 @@ try:
                 s3 = self.readFIELD(self.chanNegY, negY)
                 s4 = self.readFIELD(self.chanNegX, negX)
 
-                #print(s1,s2,s3,s4)
-                sense_q.put([s1,s2,s3,s4])
+                print(s1,s2,s3,s4)
+                #sense_q.put([s1,s2,s3,s4])
 
     
 
@@ -124,14 +124,13 @@ except Exception:
             pass
         
 
-"""
-if __name__ == "__main__":
+
+"""if __name__ == "__main__":
     Sense = HallEffect()
    
 
     
     
     Sense.showFIELD(None)
-
-
 """
+

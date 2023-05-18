@@ -125,10 +125,7 @@ class JoystickProcess():
 
         
         
-         
-        
-
-      
+               
 #if __name__ == "__main__":
 #    joystick_q = Queue()
 #    joystick_q.cancel_join_thread()
