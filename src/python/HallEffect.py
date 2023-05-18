@@ -50,7 +50,7 @@ try:
                 list of min max bounds
             """
             #call this in readField maybe
-            neg_max = float(100000001)
+            neg_max = float(100000002)
             pos_max = -float(100000000)
             return [neg_max, pos_max]
         
