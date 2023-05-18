@@ -577,6 +577,7 @@ class Tracker:
         # is reached
 
         
+        
         while True:
             fps_counter.update()
             success, frame = cam.read()
@@ -607,6 +608,10 @@ class Tracker:
             self.pix_2metric = ((resize_ratio[1]/106.2)  / 100) * self.camera_params["Obj"] *2 #divide by 2 cuz did scale calc on .5x adapter
             
             self.frame_num += 1  # increment frame
+
+            """
+            HANDLE STAGE MOTOR
+            """
 
             if self.num_bots > 0:
                 # DETECT ROBOTS AND UPDATE TRAJECTORY
