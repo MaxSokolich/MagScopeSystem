@@ -1,4 +1,5 @@
 private repository: https://github.com/MaxSokolich/MagScopeSystem/
+NOTE: a seperate repo is to be created that includes all scripts to control the custom 3D stage/microscope setup. 
 
 # MagScope System
 a repository consisting of all scripts neccesary to use the mag scope system. The magscope system is an edge computing platform and custom device capable of a variety of microrobotic manipulation operations. The device consists of a single board computer (Jetson AGX Orin) with a python GUI used to control various manipulation setups. The system is named MagScope which combines the words magnetic and microscope. 
@@ -12,6 +13,7 @@ These manipulation setups include:
 
 The overall cost of the system excluding a manipulation setup is around $6000 (see CAD_MODELS/Bill_of_Materials.txt) as opposed to $28,000 from a company named MangetobotIx out of Switzerland. Including their magnetic manipulation setup, the total cost for there system is $60,228. This number still excludes a microscope. 
 
+If only trying to track microrobots or use the PS4Controller, see the seperate folders TrackerProcess and ControllerProcess
 
 # To Add:
 Overall:
