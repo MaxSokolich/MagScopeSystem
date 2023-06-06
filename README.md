@@ -1,4 +1,5 @@
 private repository: https://github.com/MaxSokolich/MagScopeSystem/
+
 NOTE: a seperate repo is to be created that includes all scripts to control the custom 3D stage/microscope setup. 
 
 # MagScope System
@@ -13,7 +14,7 @@ These manipulation setups include:
 
 The overall cost of the system excluding a manipulation setup is around $6000 (see CAD_MODELS/Bill_of_Materials.txt) as opposed to $28,000 from a company named MangetobotIx out of Switzerland. Including their magnetic manipulation setup, the total cost for there system is $60,228. This number still excludes a microscope. 
 
-If only trying to track microrobots or use the PS4Controller, see the seperate folders TrackerProcess and ControllerProcess
+If only trying to track microrobots or use the PS4Controller, see the seperate folders TrackerProcess and ControllerProcess in /src/tests
 
 # To Add:
 Overall:
