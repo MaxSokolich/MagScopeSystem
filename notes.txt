@@ -3,31 +3,6 @@ Bugs:
 - still have sempahore leak on mac.
 
 
-ps5:
--gernreal guide to xboxdrv and bluetooth
-https://www.gamingonlinux.com/2019/01/setting-up-a-bluetooth-controller-for-linux-gaming/
-
-
-— install hidraw and create the neccesary rules
-https://github.com/nowrep/dualsensectl
-
-
-— something about ps5 evdev rules
-https://wiki.archlinux.org/title/Gamepad#Playstation_5_(Dualsense)_controller
-
--potentially a bluetooth to usb adapter or something
-https://www.supremegamegear.com/collections/ps5-controller-converter-adapter/products/mayflash-magic-s-pro-2-wireless-bluetooth-controller-usb-adapter-for-ps4-switch-windows-macos
-
-
-/etc/default/xboxdrv
-[xboxdrv]
-silent = true
-device-name = "Xbox 360 Wireless Receiver"
-mimic-xpad = true
-deadzone = 4000
-
-[xboxdrv-daemon]
-dbus = disabled
 
 
 Notes:
