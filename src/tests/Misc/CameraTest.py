@@ -2,7 +2,7 @@ import cv2
 import PySpin
 import EasyPySpin
 import time
-import numpy as np
+import numpy as n
 
 '''
 BFS-U3-50S5C-Color
