@@ -9,7 +9,7 @@ from src.python.algorithms.Orient_Algorithm_V2 import Orient_Algorithm
 
 from src.python.algorithms.PID_code_forMax import PID_Algorithm
 from src.python.algorithms.MultiAgent_Algorithm import Multi_Agent_Algorithm
-
+from src.python.algorithms.Orient_Bubble import PID_Algorithm
 
 class AlgorithmHandler:
     """
@@ -56,7 +56,7 @@ class AlgorithmHandler:
         self.Roll_Robot = Roll_Algorithm()
         self.Orient_Robot = PID_Algorithm()#Orient_Algorithm()
         self.Multi_Agent_Robot = Multi_Agent_Algorithm()
-        self.PID_Robot = PID_Algorithm()
+        self.PID_Robot = PID_Algorithm()  #this is now bubble_orient
         
 
     def run(self, 
