@@ -23,7 +23,7 @@ class PID_Algorithm:
         self.robot_list = []
         self.control_params = None
         self.start = time.time()
-        self.B_vec = np.array([1,0])
+        self.B_vec = np.array([1,1])
         self.T_R = 1
         self.thetas=np.array([])
         self.Ithetas=np.array([])
